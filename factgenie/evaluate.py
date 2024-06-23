@@ -27,10 +27,10 @@ LLM_ANNOTATION_DIR = os.path.join(DIR_PATH, "annotations")
 class LLMMetricFactory:
     @staticmethod
     def get_metric(config):
-        metric_type = config["type"]  # TODO (oplatek) rename to metric_type to be explicit in the config
+        metric_type = config["type"]  # TODO rename to metric_type to be explicit in the config
         model = config["model"]
 
-        # TODO (oplatek) change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
+        # TODO change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
         if metric_type == "openai":
             return OpenAIMetric(config)
         elif metric_type == "ollama":

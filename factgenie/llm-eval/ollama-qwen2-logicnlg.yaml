@@ -4,7 +4,7 @@ type: ollama-logicnlg
 table_str_f: to_json
 annotation_key: "annotations"
 model: qwen2:72b
-api_url: http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+api_url: http://LOCAL_ANONIMIZED_URL_FOR_OLLAMA:11434/api/generate
 model_args:
   max_tokens: 1024
   num_beams: 1

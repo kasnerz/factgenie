@@ -1,6 +1,6 @@
 type: ollama
 model: llama3
-api_url: http://tdll-3gpu2.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+api_url: http://LOCAL_ANONIMIZED_URL_FOR_OLLAMA:11434/api/generate
 model_args:
   max_tokens: 1024
   num_beams: 1

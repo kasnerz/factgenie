@@ -12,7 +12,7 @@ from tinyhtml import h
 class LogicnlgBase(Dataset):
     def __init__(self, splits=['dev'], **kwargs):
         self.type = "table"
-        self.splits = splits 
+        self.splits = splits
         super().__init__(**kwargs)
 
     def get_info(self):
@@ -23,15 +23,15 @@ class LogicnlgBase(Dataset):
 
     def load_data(self):
         """Overriding the default load_data function to load the data from HuggingFace datasets.
-        Still calling the postprocess_data internally! 
+        Still calling the postprocess_data internally!
         """
         assert set(self.splits) & set(["train", "dev", "test"]) == set(self.splits), f"Invalid splits {self.splits} for LogicNLG. Valid splits are ['train', 'dev', 'test']."
         d = {}
         for split in self.splits:
-            
+
             raw_data = load_dataset("kasnerz/logicnlg", split=split if split != "dev" else "validation")
             d[split] = self.postprocess_data(raw_data, split)
-        return d 
+        return d
 
     def postprocess_data(self, hf_dataset, split):
         examples = []
