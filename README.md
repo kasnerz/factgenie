@@ -1,11 +1,5 @@
 # factgenie
 
-![GitHub](https://img.shields.io/github/license/kasnerz/factgenie)
-![GitHub issues](https://img.shields.io/github/issues/kasnerz/factgenie)
-![Github stars](https://img.shields.io/github/stars/kasnerz/factgenie?style=social)
-<!-- ![PyPI](https://img.shields.io/pypi/v/factgenie) -->
-<!-- ![PyPI downloads](https://img.shields.io/pypi/dm/factgenie) -->
-
 Visualize and annotate errors in LLM outputs.
 
 🚧 **The project is in progress, use at your own risk.** 🚧
@@ -13,7 +7,7 @@ Visualize and annotate errors in LLM outputs.
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
 ## Intro
-Outputs from large language models (LLMs) may contain errors: semantic, factual, and lexical. 
+Outputs from large language models (LLMs) may contain factual errors. 
 
 With **factgenie**, you can have the errors highlighted 🌈:
 - From humans through a crowdsourcing service.
@@ -27,21 +21,22 @@ How does **factgenie** help with that?
 What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).
 
 ---
-*This project is meant as a framework and template for you dear researcher. Help us improve it! :wink:*
+*Please, keep in mind that this project is a spin-off of our custom code we used for research experiments. It may need additional effort on your side to make everything work as expected :wink:*
+
 ----
 
 ## Quickstart
 Make sure you have Python 3 installed (the project is tested with Python 3.10).
 
-The following commands install the package, start the webserver, and open the frontpage in the browser:
+The following commands will install the package, start the webserver, and open the frontpage in a browser:
 ```
 pip install -e .
 factgenie run --host=127.0.0.1 --port 8890
-xdg-open http://127.0.0.1:8890  # for Linux it opens the page for you
+xdg-open http://127.0.0.1:8890
 ```
 
 ## Step-by-step guide
-Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use case.
+Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use-case.
 
 ### 1) Gather your inputs and outputs
 
@@ -52,7 +47,7 @@ By input data, we mean anything that will help the annotators with assessing the
 
 See the [factgenie/data](factgenie/data) folder for example inputs and the [factgenie/outputs](factgenie/outputs) folder for example model outputs.
 
-The input data can have any format visualizable in the web interface - anything from plain text to advanced charts. The model outputs should be in plain text. 
+The input data can have any format visualizable in the web interface - anything from plain text to advanced charts. The model outputs are presumably in plain text. 
 
 ### 2) Prepare a data loader
 Write a data loader class for your dataset. The class needs to subclass the `Dataset` class in [factgenie/loaders/dataset.py](factgenie/loaders/dataset.py) and implement its methods.
@@ -86,44 +81,8 @@ After opening the page http://127.0.0.1:8890 in your browser, you should be able
 Go to `/browse`. Make sure that you can select your dataset in the navigation bar and browse through the examples.
 
 ### 4) Annotate the outputs with LLMs
-For collecting the annotations from a LLM, you will first need to get access to one. The options we recommend are:
+TODO
 
-- [OpenAI API](https://openai.com/api/): After you create an account, set the `OPENAI_API_KEY` environment variable to your API key. Note that you will need to pay per token for the service.
-- [Ollama](https://ollama.com): An open-source framework for running LLMs locally. After you start the model, create a config file in `factgenie/llm-eval` with the respective API URL (see `factgenie/llm-eval/ollama-llama3.yaml` for an example).
-
-In general, you can integrate factgenie with any API that allows decoding responses as JSON (or any API as long as you can get a JSON by postprocessing the response).
-
-You also need to customize the YAML configuration file in `factgenie/llm-eval` by setting the model prompt, optionally along with the system message, model parameters etc.
-Keep in mind the prompt needs to **ask the model to produce JSON outputs in the following format**:
-```
-{
-  "errors": [
-    { 
-      "text": [TEXT_SPAN],
-      "type": [ERROR_CATEGORY]},
-    ...
-  ]
-}
-```
-The provided examples should help you with setting up the prompt.
-
-Once you have the configuration file ready, you should:
-- Go to factgenie `/llm_eval` webpage.
-- Click on **New LLM eval** and select the campaign identifier.
-- In the **Data** section:
-  - Select the datasets and splits you want to annotate. 
-- In the **LLM config** section:
-  - Select your customized configuration file.
-- In the **Error categories** section:
-  - Select the error categories you specified in the prompt.
-
-Your eval should appear in the list:
-
-<img src="factgenie/static/img/github/llm_eval.png" width="100%" style="margin-bottom: 10px" alt="Main screen" />
-
-Now you need to go to the campaign details and run the evaluation. The annotated examples will be marked as `finished`:
-
-<img src="factgenie/static/img/github/llm_eval_detail.png" width="70%" style="margin-bottom: 10px" alt="Main screen" />
 
 ### 5) Annotate the outputs with human crowdworkers
 For collecting the annotations from human crowdworkers, you typically need to:
