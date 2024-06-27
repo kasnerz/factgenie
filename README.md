@@ -135,3 +135,14 @@ On the details page, you can monitor how individual batches get assigned and com
 Once the annotations are collected, you can view them on the `/browse`. The annotations from each campaign can be selected in the drop-down menu above model outputs.
 
 <img src="factgenie/static/img/github/annot.png" width="60%" style="display: flex; margin: auto;" alt="Main screen" />
+
+
+## Core Developers 
+
+### Optional use of Git Large File Storage (git lfs)
+- We use `git lfs` for storing instructional videos and it is useful for storing any large artefacts.
+- We would like to keep the `git lfs` completely optional so do not commit any large files which are required for running _factgenie_, i.e. use it just for documentation.
+- Links to `git lfs` documentation:
+   - [Git LFS configuration](https://docs.github.com/en/repositories/working-with-files/managing-large-files/configuring-git-large-file-storage)
+   - [Moving a large file from git to git lfs](https://docs.github.com/en/repositories/working-with-files/managing-large-files/moving-a-file-in-your-repository-to-git-large-file-storage)
+   - [Does every user need to use git lfs (no)](https://github.com/git-lfs/git-lfs/discussions/4644)
