@@ -157,6 +157,7 @@ class OllamaMetric(LLMMetric):
                 "options": {"seed": self.seed, "temperature": 0},
         }
         msg = f"Ollama API {self.API_URL} with args:\n\t{request_d}"
+        response, annotation_str, j = None, None, None 
         try:
             logger.debug(f"Calling {msg}")
             response = requests.post(self.API_URL, json=request_d)
@@ -166,7 +167,7 @@ class OllamaMetric(LLMMetric):
             logger.info(j)
             return self.postprocess_annotations(text=text, model_json=j)
         except Exception as e:
-            logger.error(f"Called {msg}\n\n and received {response=} before the error:{e}")
+            logger.error(f"Called {msg}\n\n and received\n\t{response=}\n\t{annotation_str=}\n\t{j=}\nbefore the error:{e}")
             traceback.print_exc()
             return {"error": str(e)}
 
@@ -205,7 +206,8 @@ class Llama3Metric(OllamaMetric):
         j = json.loads(output)
 
         # the model often tends to produce a nested list
-        if len(j[self.annotation_key]) == 1 and type(j[self.annotation_key][0]) == list:
+        annotations = j[self.annotation_key]
+        if isinstance(annotations, list) and len(annotations) >= 1 and isinstance(annotations[0], list):
             j[self.annotation_key] = j[self.annotation_key][0]
 
         return j
