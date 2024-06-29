@@ -12,4 +12,4 @@ default_error_categories:
     color: "#fff79f"
   - name: "Other"
     color: "#bbbbbb"
-logging_level: "DEBUG"
+logging_level: "INFO"

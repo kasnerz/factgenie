@@ -43,6 +43,15 @@ xdg-open http://127.0.0.1:5000  # for Linux it opens the page for you
 ## Step-by-step guide
 Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use case.
 
+### 0) Setup Dependencieso
+The `factgenie` uses [ollama](https://ollama.com/) to run local LLMs and [openai-python](https://github.com/openai/openai-python) API to OpenAI LLMs to gather annotations.
+For crowdsourcing campaigns, it was designed to easily integrate into [prolific.com](https://prolific.com) workflow.
+
+Read their documentation to set it up, we will prepare step-by-step guides in the future.
+
+For setting up the LLMs for annotation the `factgenie` needs just the `ollama` or `openai` url to connect to.
+From Prolific one needs to obtain a completion code which will be displayed to the annotators as proof of completed work for the [prolific.com](https://researcher-help.prolific.com/hc/en-gb/articles/360009223173-Data-collection#h_01HDJXW21T4R05T9YTD10GKMXY)
+
 ### 1) Gather your inputs and outputs
 
 Make sure you have **input data** and corresponding **model outputs** from the language model. 

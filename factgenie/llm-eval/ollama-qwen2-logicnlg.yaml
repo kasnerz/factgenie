@@ -1,4 +1,4 @@
-type: ollama-logicnlg
+type: ollama-logicnlg-markdown
 # valid values to_string (produces zero annotations), to_json ?, to_markdown ?
 # note that the example needs to be updated according to the table_str_f MANUALLY
 table_str_f: to_json
@@ -14,6 +14,17 @@ model_args:
   do_sample: false 
   seed: 424242
 system_msg: "You are an expert linguist and data scientiest focusing on the data-to-text annotation systems. You understand tabular data and you correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
+# The return format should be ["annotations": {...}] and at the same time we use annotations_categories below
+annotation_key: "annotations"
+annotations_categories: 
+  - name: "Incorrect"
+    color: "#ffbcbc"
+  - name: "Uncheckable"
+    color: "#e9d2ff"
+  - name: "Interesting"
+    color: "#27e6a6"
+  - name: "Obvious"
+    color: "#27e6a6"
 prompt_template: |
   Given the table title and table:
   ```
@@ -25,7 +36,7 @@ prompt_template: |
   ```
   Output the annotations as a JSON list of "annotations". Each item in the list contains fields  "reason", "text", and "type". The value of "text" is the annotated text. The value of "reason" is the reason for the annotation. The value of "type" is one of {{0, 1, 2, 3}} based on the following list:
   - 0: Incorrect fact: The fact in the text contradicts the data in the table.
-  - 1: General Knowledge: The fact in the text cannot be inferred from the data in the table.
+  - 1: Uncheckable: The fact in the text cannot be inferred from the data in the table.
   - 2: Interesting claim: The claim in the text is non-trivial and readers find it typically interesting.
   - 3: Obvious claim: The text is boring, considered common knowledge, irrelevant, or repetitive.
 

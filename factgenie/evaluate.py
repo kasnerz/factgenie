@@ -25,10 +25,45 @@ LLM_ANNOTATION_DIR = os.path.join(DIR_PATH, "annotations")
 
 
 class LLMMetricFactory:
+    """Register any new metric here. The get_metric is the factory method based on the config"""
+
+    @staticmethod
+    def metric_classes():
+        return  {
+            "openai": OpenAIMetric,
+            "ollama": OllamaMetric,
+            "ollama-llama3": Llama3Metric, 
+            "ollama-logicnlg-markdown": LogicNLGMarkdownOllamaMetric,
+        }
+
+
+    @staticmethod
+    def get_metric_name(config):
+        """Generate a metric name based on config values and validates that a metric name fits existing LLMMetric classes and starts with 'llm-' ie common format"""
+        metric_type = config["type"]
+        model = config["model"]
+        metric_name = config.get("metric_name", None)
+        if metric_name is None:
+            assert metric_type in  LLMMetricFactory.metric_classes(), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
+            metric_name = f"llm-{metric_type}-{model}"
+        assert metric_name.startswith("llm-"), f"Metric name {metric_name=} should start with 'llm-'"
+
+        found = False
+        for metric_class in LLMMetricFactory.metric_classes():
+            if metric_name.startswith(f"llm-{metric_class}"):
+                found = True
+                return metric_name
+        if not found:
+            raise ValueError(f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}")
+
     @staticmethod
     def get_metric(config):
         metric_type = config["type"]  # TODO (oplatek) rename to metric_type to be explicit in the config
         model = config["model"]
+
+        metric_name = LLMMetricFactory.get_metric_name(config)
+
+        logger.info(f"Creating metric:{metric_name}")
 
         # TODO (oplatek) change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
         if metric_type == "openai":
@@ -39,16 +74,18 @@ class LLMMetricFactory:
                 return Llama3Metric(config)
             else:
                 return OllamaMetric(config)
-        elif metric_type == "ollama-logicnlg":
+        elif metric_type == "ollama-logicnlg-markdown":
             return LogicNLGMarkdownOllamaMetric(config)
         else:
             raise NotImplementedError(f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!")
 
 
 class LLMMetric:
-    def __init__(self, config, metric_name):
-        self.metric_name = metric_name
+    def __init__(self, config):
+        self.metric_name = LLMMetricFactory.get_metric_name(config)
         self.annotation_key = config.get("annotation_key", "errors")
+        self._annotation_categories = config[f"{self.annotation_key}_categories"]
+        assert isinstance(self.annotation_categories, list) and len(self.annotation_categories) > 0, f"Annotation categories must be a non-empty list, got {self.annotation_categories=}"
 
         self.system_msg = config.get("system_msg", None)
         if self.system_msg is None:
@@ -59,6 +96,10 @@ class LLMMetric:
 
         if self.metric_prompt_template is None:
             raise ValueError("Prompt template (`prompt_template`) field is missing in the config")
+
+    @property
+    def annotation_categories(self):
+        return self._annotation_categories
 
     def postprocess_annotations(self, text, model_json):
         annotation_list = []
@@ -100,9 +141,8 @@ class LLMMetric:
 
 
 class OpenAIMetric(LLMMetric):
-    def __init__(self, config, name=None):
-        name = "llm-openai-" + config["model"] if name is None else name
-        super().__init__(config, name)
+    def __init__(self, config):
+        super().__init__(config)
         self.client = OpenAI()
         self.model = config["model"]
 
@@ -130,9 +170,8 @@ class OpenAIMetric(LLMMetric):
 
 
 class OllamaMetric(LLMMetric):
-    def __init__(self, config, name=None):
-        name = "llm-ollama-" + config["model"] if name is None else name
-        super().__init__(config, name)
+    def __init__(self, config):
+        super().__init__(config)
         self.API_URL = config.get("api_url", None)
 
         if self.API_URL is None:
@@ -174,9 +213,8 @@ class OllamaMetric(LLMMetric):
 
 class LogicNLGMarkdownOllamaMetric(OllamaMetric):
     def __init__(self, config):
-        name = "llm-ollama-logicnlg" + config["model"]
         self._table_str_f = config.get("table_str_f", "to_string")
-        super().__init__(config, name)
+        super().__init__(config)
 
     def preprocess_data_for_prompt(self, example):
         import pandas as pd  # requires tabulate
