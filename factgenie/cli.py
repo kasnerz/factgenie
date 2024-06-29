@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-# local imports in individual functions make CLI way faster
-from pathlib import Path
+# The cli is CLI entry point.
+# The local imports in individual functions make CLI way faster.
+# Use them as much as possible and minimize imports at the top of the file.
 import click
 from flask.cli import FlaskGroup
-import yaml
 
-from factgenie.evaluate import LLMMetricFactory
 
 
 @click.command()
@@ -26,9 +25,12 @@ def list_datasets():
 @click.option("--llm_metric_config", required=True, type=str, help="Path to the metric config file or just the metric name.")
 def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_name: str, llm_metric_config: str):
     """Runs the LLM evaluation from CLI wit no web server."""
+    from pathlib import Path
+    import yaml
     from slugify import slugify
     from factgenie import utils
     from factgenie.loaders import DATASET_CLASSES
+    from factgenie.evaluate import LLMMetricFactory
 
     campaign_id = slugify(campaign_name)
     campaign_data = [{"dataset": dataset_name, "split": split, "setup_id":llm_output_name}]
@@ -53,6 +55,8 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     announcer = None
 
     return utils.run_llm_eval(campaign_id, announcer, campaign, DATASETS, metric, threads, metric_name)
+
+from .main import app
 
 
 def create_app(**kwargs):
