@@ -10,8 +10,9 @@ import json
 
 
 class OurWorldInData(Dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs, name="owid")
+    def __init__(self, name=None, **kwargs):
+        name = "owid" if name is None else name
+        super().__init__(name=name, **kwargs)
         self.type = "csv"
 
     def get_info(self):
