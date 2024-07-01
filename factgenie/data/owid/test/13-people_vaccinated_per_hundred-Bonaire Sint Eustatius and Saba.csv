@@ -1,0 +1,7 @@
+# country: Bonaire Sint Eustatius and Saba
+# title: People vaccinated against COVID-19 per hundred
+# description: Share of the population that received a first COVID-19 vaccine dose.
+# unit: people
+date,value
+2021-04-09,21.17
+2021-09-01,70.64

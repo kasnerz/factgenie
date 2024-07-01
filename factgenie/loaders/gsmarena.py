@@ -8,8 +8,9 @@ from tinyhtml import h
 
 
 class GSMArena(Dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs, name="gsmarena")
+    def __init__(self, name=None, **kwargs):
+        name = "gsmarena" if name is None else name
+        super().__init__(name=name, **kwargs)
         self.type = "json"
 
     def get_info(self):
