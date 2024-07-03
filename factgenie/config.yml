@@ -2,7 +2,7 @@
 allow_annotate: true
 allow_browse: true
 debug: true
-host_prefix: "/namuddis/factgenie"
+host_prefix: ""
 default_error_categories:
   - name: "Incorrect"
     color: "#ffbcbc"
