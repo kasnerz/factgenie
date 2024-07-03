@@ -20,7 +20,9 @@
             "owid": "chart caption",
             "wikidata": "entity description"
         },
-        "name": "direct"
+        "name": "direct",
+        "id": "mistral",
+        "model": "mistral"
     },
     "generated": [
         {
