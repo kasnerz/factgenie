@@ -33,13 +33,7 @@ file_handler = logging.FileHandler("error.log")
 file_handler.setLevel(logging.ERROR)
 
 
-logging.basicConfig(
-    format="%(levelname)s - %(message)s",
-    level=logging.INFO,
-    handlers=[file_handler, logging.StreamHandler()],
-)
 logger = logging.getLogger(__name__)
-coloredlogs.install(level="INFO", logger=logger, fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 # https://maxhalford.github.io/blog/flask-sse-no-deps/
