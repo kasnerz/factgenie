@@ -11,8 +11,9 @@ from pathlib import Path
 
 
 class IceHockey(Dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs, name="ice_hockey")
+    def __init__(self, name=None, **kwargs):
+        name = "ice_hockey" if name is None else name
+        super().__init__(name=name, **kwargs)
         self.type = "json"
 
     def get_info(self):

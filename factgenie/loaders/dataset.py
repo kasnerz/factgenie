@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-
+import logging
 import json
 from pathlib import Path
 from collections import defaultdict
 import json2table
 from slugify import slugify
+
+logger = logging.getLogger(__name__)
 
 
 class Dataset:
@@ -90,6 +92,7 @@ class Dataset:
             if out["setup"]["id"] == setup_id:
                 return out["generated"][output_idx]["out"]
 
+        logger.warning(f"No output found for {setup_id=}, {output_idx=}, {split=}")
         return None
 
     def get_generated_outputs(self, split, output_idx):

@@ -133,6 +133,7 @@ class LLMMetric:
         return data
 
     def prompt(self, data, text):
+        assert isinstance(text, str) and len(text) > 0, f"Text must be a non-empty string, got {text=}"
         data4prompt = self.preprocess_data_for_prompt(data)
         return self.metric_prompt_template.format(data=data4prompt, text=text)
 

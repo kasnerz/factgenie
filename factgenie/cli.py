@@ -88,12 +88,12 @@ def create_app(**kwargs):
     file_handler.setLevel(logging.ERROR)
 
     logging.basicConfig(
-        format="%(levelname)s - %(message)s",
+        format="%(levelname)s (%(filename)s:%(lineno)d) - %(message)s",
         level=app.config.get("logging_level", "INFO"),
         handlers=[file_handler, logging.StreamHandler()],
     )
     logger = logging.getLogger(__name__)
-    coloredlogs.install(level=app.config.get("logging_level", "INFO"), logger=logger, fmt="%(asctime)s %(levelname)s %(message)s")
+    coloredlogs.install(level=app.config.get("logging_level", "INFO"), logger=logger, fmt="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s")
 
     app.config.update(SECRET_KEY=os.urandom(24))
 
