@@ -10,7 +10,7 @@ import traceback
 import shutil
 import datetime
 import zipfile
-from flask import Flask, render_template, jsonify, request, Response, make_response
+from flask import Flask, render_template, jsonify, request, Response, make_response, redirect, url_for
 from collections import defaultdict
 import urllib.parse
 from slugify import slugify
@@ -67,21 +67,43 @@ def annotate_url(current_url):
 
 
 # -----------------
+# Decorators
+# -----------------
+
+
+# Very simple decorator to protect routes
+def login_required(f):
+    def wrapper(*args, **kwargs):
+        if app.config["login"]["active"]:
+            auth = request.cookies.get("auth")
+            if not auth:
+                return redirect(url_for("login"))
+            username, password = auth.split(":")
+            if not utils.check_login(app, username, password):
+                return redirect(url_for("login"))
+
+        return f(*args, **kwargs)
+
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+
+# -----------------
 # Flask endpoints
 # -----------------
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     logger.info(f"Main page loaded")
 
     return render_template(
         "index.html",
-        allow_browse=app.config["allow_browse"],
-        allow_annotate=app.config["allow_annotate"],
         host_prefix=app.config["host_prefix"],
     )
 
 
 @app.route("/about", methods=["GET", "POST"])
+@login_required
 def about():
     logger.info(f"About page loaded")
 
@@ -93,9 +115,6 @@ def about():
 
 @app.route("/annotate", methods=["GET", "POST"])
 def annotate():
-    if app.config["allow_annotate"] is False:
-        return render_template("disabled.html")
-
     logger.info(f"Annotate page loaded")
 
     utils.generate_campaign_index(app)
@@ -120,6 +139,7 @@ def annotate():
 
 
 @app.route("/annotations", methods=["GET", "POST"])
+@login_required
 def manage_annotations():
     utils.generate_annotation_index(app)
 
@@ -129,10 +149,8 @@ def manage_annotations():
 
 
 @app.route("/browse", methods=["GET", "POST"])
+@login_required
 def browse():
-    if app.config["allow_browse"] is False:
-        return render_template("disabled.html")
-
     logger.info(f"Browse page loaded")
 
     utils.generate_annotation_index(app)
@@ -159,6 +177,7 @@ def browse():
 
 
 @app.route("/crowdsourcing", methods=["GET", "POST"])
+@login_required
 def crowdsourcing():
     logger.info(f"Crowdsourcing page loaded")
 
@@ -204,11 +223,13 @@ def crowdsourcing():
         campaigns=campaigns,
         default_campaign_id=default_campaign_id,
         default_error_categories=app.config["default_error_categories"],
+        is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
 
 
 @app.route("/crowdsourcing/detail", methods=["GET", "POST"])
+@login_required
 def crowdsourcing_detail():
     utils.generate_campaign_index(app)
 
@@ -243,6 +264,7 @@ def crowdsourcing_detail():
 
 
 @app.route("/crowdsourcing/new", methods=["POST"])
+@login_required
 def crowdsourcing_new():
     data = request.get_json()
 
@@ -298,6 +320,7 @@ def crowdsourcing_new():
 
 
 @app.route("/datasets", methods=["GET", "POST"])
+@login_required
 def manage_datasets():
     datasets = utils.get_dataset_overview(app)
 
@@ -305,6 +328,7 @@ def manage_datasets():
 
 
 @app.route("/delete_campaign", methods=["POST"])
+@login_required
 def delete_campaign():
     data = request.get_json()
     campaign_name = data.get("campaignId")
@@ -337,6 +361,7 @@ def render_example():
 
 
 @app.route("/export_annotations", methods=["GET", "POST"])
+@login_required
 def export_annotations():
     zip_buffer = BytesIO()
     campaign_id = request.args.get("campaign")
@@ -357,7 +382,23 @@ def export_annotations():
     return response
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if utils.check_login(app, username, password):
+            # redirect to the home page ("/")
+            resp = make_response(redirect("/"))
+            resp.set_cookie("auth", f"{username}:{password}")
+            return resp
+        else:
+            return "Login failed", 401
+    return render_template("login.html")
+
+
 @app.route("/llm_eval", methods=["GET", "POST"])
+@login_required
 def llm_eval():
     logger.info(f"LLM eval page loaded")
 
@@ -414,6 +455,7 @@ def llm_eval():
 
 
 @app.route("/llm_eval/detail", methods=["GET", "POST"])
+@login_required
 def llm_eval_detail():
     utils.generate_campaign_index(app)
 
@@ -441,6 +483,7 @@ def llm_eval_detail():
 
 
 @app.route("/llm_eval/new", methods=["GET", "POST"])
+@login_required
 def llm_eval_new():
     data = request.get_json()
 
@@ -460,6 +503,7 @@ def llm_eval_new():
 
 
 @app.route("/llm_eval/run", methods=["POST"])
+@login_required
 def llm_eval_run():
     data = request.get_json()
     campaign_id = data.get("campaignId")
@@ -489,6 +533,7 @@ def llm_eval_run():
 
 
 @app.route("/llm_eval/progress/<campaign_id>", methods=["GET"])
+@login_required
 def listen(campaign_id):
     if not app.db["announcers"].get(campaign_id):
         return Response(status=404)
@@ -503,6 +548,7 @@ def listen(campaign_id):
 
 
 @app.route("/llm_eval/pause", methods=["POST"])
+@login_required
 def llm_eval_pause():
     data = request.get_json()
     campaign_id = data.get("campaignId")

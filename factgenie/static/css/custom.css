@@ -777,3 +777,15 @@ a:hover {
 .main-page-link .bi {
     margin-right: 1rem;
 }
+
+.form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.form-box {
+    width: 100%;
+    max-width: 400px;
+}

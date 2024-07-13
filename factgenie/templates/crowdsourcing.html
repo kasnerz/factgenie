@@ -26,6 +26,17 @@
 
   <div class="mt-1">
 
+    <!-- if login is not enabled in the app config, show red warning -->
+    {% if not is_password_protected %}
+    <div class="alert alert-danger" role="alert">
+      <i class="fa fa-exclamation-triangle"></i>
+      <span>Warning: The app is unprotected. You should enable authentication in the app config file
+        (<code>factgenie/config.yml</code>) before sharing
+        the URL with the
+        public.</span>
+    </div>
+    {% endif %}
+
     <h3>List of crowdsourcing campaigns</h3>
     <div id="campaigns">
       <table class="table">

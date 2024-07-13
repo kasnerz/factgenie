@@ -1,6 +1,4 @@
 ---
-allow_annotate: true
-allow_browse: true
 debug: true
 host_prefix: ""
 default_error_categories:
@@ -12,4 +10,8 @@ default_error_categories:
     color: "#fff79f"
   - name: "Other"
     color: "#bbbbbb"
-logging_level: "INFO"
+logging_level: INFO
+login:
+  active: false
+  username: admin
+  password: factgenie

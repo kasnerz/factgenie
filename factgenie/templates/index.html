@@ -17,7 +17,7 @@
 <div class="container">
   <div class="row mt-5">
     <!-- <b>Actions</b> -->
-    <div class="col-md-4" {% if not allow_browse %}style="display: none;" {% endif %}>
+    <div class="col-md-4">
       <div class="card text-center mt-3" style="min-width: 100%;">
         <div class="card-body">
           <a href="{{ host_prefix }}/browse">
@@ -28,7 +28,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4" {% if not allow_annotate %}style="display: none;" {% endif %}>
+    <div class="col-md-4">
       <div class="card text-center mt-3">
         <div class="card-body">
           <a href="{{ host_prefix }}/llm_eval">
@@ -39,7 +39,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4" {% if not allow_annotate %}style="display: none;" {% endif %}>
+    <div class="col-md-4">
       <div class="card text-center mt-3">
         <div class="card-body">
           <a href="{{ host_prefix }}/crowdsourcing">
@@ -50,7 +50,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4" {% if not allow_browse %}style="display: none;" {% endif %}>
+    <div class="col-md-4">
       <div class="card text-center mt-3">
         <div class="card-body">
           <a href="{{ host_prefix }}/datasets">
@@ -61,7 +61,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4" {% if not allow_browse %}style="display: none;" {% endif %}>
+    <div class="col-md-4">
       <div class="card text-center mt-3">
         <div class="card-body">
           <a href="{{ host_prefix }}/annotations">
