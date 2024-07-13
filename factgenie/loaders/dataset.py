@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-
+import logging
 import json
 from pathlib import Path
 from collections import defaultdict
 import json2table
 from slugify import slugify
+
+logger = logging.getLogger(__name__)
 
 
 class Dataset:
@@ -45,13 +47,19 @@ class Dataset:
             for out in outs:
                 with open(out) as f:
                     j = json.load(f)
-
                     setup_id = slugify(j["setup"]["id"])
                     outputs[split][setup_id].append(j)
 
         return outputs
 
     def load_data(self):
+        """By default loads the data from factgenie/data/{name}/{split}.json.
+
+        Do override it if you want to load the data e.g. from HuggingFace
+
+        Notice it also calls postprocess_data internally!
+        
+        """
         splits = Path.glob(Path(self.data_path) / self.name, "*.json")
         splits = [split.stem for split in splits]
         examples = {split: [] for split in splits}
@@ -84,6 +92,7 @@ class Dataset:
             if out["setup"]["id"] == setup_id:
                 return out["generated"][output_idx]["out"]
 
+        logger.warning(f"No output found for {setup_id=}, {output_idx=}, {split=}")
         return None
 
     def get_generated_outputs(self, split, output_idx):
@@ -104,4 +113,4 @@ class Dataset:
         return outs_all
 
     def get_info(self):
-        return "TODO implement get_info()"
+        return "TODO for you: Override this function and fill relevant info for your particular dataset!"

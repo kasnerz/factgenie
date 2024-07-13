@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-
 import os
+import datetime
 import json
 import glob
 import time
 import logging
+from typing import Dict
 import pandas as pd
 import random
 import time
@@ -13,11 +14,13 @@ import traceback
 import yaml
 import queue
 
+from slugify import slugify
 from flask import jsonify
 from collections import defaultdict
 from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.evaluate import LLMMetric, LLMMetricFactory
+from factgenie.loaders.dataset import Dataset
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
@@ -30,13 +33,7 @@ file_handler = logging.FileHandler("error.log")
 file_handler.setLevel(logging.ERROR)
 
 
-logging.basicConfig(
-    format="%(levelname)s - %(message)s",
-    level=logging.INFO,
-    handlers=[file_handler, logging.StreamHandler()],
-)
 logger = logging.getLogger(__name__)
-coloredlogs.install(level="INFO", logger=logger, fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 # https://maxhalford.github.io/blog/flask-sse-no-deps/
@@ -84,9 +81,15 @@ def get_dataset(app, dataset_name):
     return app.db["datasets_obj"].get(dataset_name)
 
 
-def generate_metric_index(app):
-    # go through all the files in the LLM_CONFIG_DIR
-    # instantiate the class and return the object
+def generate_metric_index():
+    """
+    Goes through all the files in the LLM_CONFIG_DIR
+    instantiate the LLMMetric class 
+    and inserts the object in the metrics dictionary
+
+    Returns:
+        metrics: dictionary of LLMMetric objects with keys of metric names
+    """
     metrics = {}
 
     for file in os.listdir(LLM_CONFIG_DIR):
@@ -101,7 +104,7 @@ def generate_metric_index(app):
                 traceback.print_exc()
                 continue
 
-    app.db["metric_index"] = metrics
+    return metrics
 
 
 def generate_campaign_index(app):
@@ -269,12 +272,12 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
     return annotator_batch
 
 
-def generate_llm_eval_db(app, campaign_data):
+def generate_llm_eval_db(datasets: Dict[str, Dataset], campaign_data):
     # load all outputs
     all_examples = []
 
     for c in campaign_data:
-        dataset = app.db["datasets_obj"][c["dataset"]]
+        dataset = datasets[c["dataset"]]
         for i in range(dataset.get_example_count(c["split"])):
             all_examples.append(
                 {
@@ -347,6 +350,42 @@ def get_dataset_overview(app):
     return overview
 
 
+def llm_eval_new(campaign_id, metric, campaign_data, datasets):
+    campaign_id = slugify(campaign_id)
+
+    # create a new directory
+    if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
+        return jsonify({"error": "Campaign already exists"})
+
+    os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
+
+    # create the annotation CSV
+    db = generate_llm_eval_db(datasets, campaign_data)
+    db_path = os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv")
+    logger.info(f"DB with {len(db)} free examples created for {campaign_id} at {db_path}")
+    db.to_csv(db_path, index=False)
+
+    # save metadata
+    metadata_path = os.path.join(ANNOTATIONS_DIR, campaign_id, "metadata.json")
+    logger.info(f"Metadata for {campaign_id} saved at {metadata_path}")
+    with open(metadata_path, "w") as f:
+        json.dump(
+            {
+                "id": campaign_id,
+                "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "source": "model",
+                "status": "new",
+                "metric": metric.metric_name,
+                "error_categories": metric.annotation_categories,
+            },
+            f,
+            indent=4,
+        )
+
+    # create the campaign object
+    campaign = ModelCampaign(campaign_id=campaign_id)
+    return campaign
+
 def generate_default_id(campaign_index, prefix):
     i = 1
     default_campaign_id = f"{prefix}-{i}"
@@ -357,21 +396,28 @@ def generate_default_id(campaign_index, prefix):
     return default_campaign_id
 
 
-def run_llm_eval(app, campaign_id):
-    announcer = app.db["announcers"][campaign_id]
+def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
+    # save the annotation
+    annotation = {
+        "annotator_id": metric_name,
+        "dataset": dataset_name,
+        "setup": {"id": setup_id, "model": setup_id},
+        "split": split,
+        "example_idx": example_idx,
+        "annotations": annotation_set,
+    }
 
-    generate_campaign_index(app)
-    generate_metric_index(app)
+    # save the annotation
+    with open(os.path.join(save_dir, f"{metric_name}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
+        f.write(json.dumps(annotation) + "\n")
+    return annotation
 
-    campaign = app.db["campaign_index"]["model"][campaign_id]
 
-    # get the metric
-    metric_name = campaign.metadata["metric"]
-    metric = app.db["metric_index"][metric_name]
+def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name):
+    start_time = time.time()
+
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
     os.makedirs(save_dir, exist_ok=True)
-
-    start_time = time.time()
 
     # set metadata status
     campaign.metadata["status"] = "running"
@@ -381,7 +427,7 @@ def run_llm_eval(app, campaign_id):
     logger.info(f"Starting LLM evaluation for {campaign_id}")
 
     for i, row in db.iterrows():
-        if app.db["threads"][campaign_id]["running"] == False:
+        if threads[campaign_id]["running"] == False:
             break
 
         if row["status"] == "finished":
@@ -392,7 +438,7 @@ def run_llm_eval(app, campaign_id):
         setup_id = row["setup_id"]
         example_idx = row["example_idx"]
 
-        dataset = app.db["datasets_obj"][dataset_name]
+        dataset = datasets[dataset_name]
         example = dataset.get_example(split, example_idx)
 
         output = dataset.get_generated_output_for_setup(split=split, output_idx=example_idx, setup_id=setup_id)
@@ -401,20 +447,8 @@ def run_llm_eval(app, campaign_id):
 
         if "error" in annotation_set:
             return error(annotation_set["error"])
-
-        # save the annotation
-        annotation = {
-            "annotator_id": metric_name,
-            "dataset": dataset_name,
-            "setup": {"id": setup_id, "model": setup_id},
-            "split": split,
-            "example_idx": example_idx,
-            "annotations": annotation_set,
-        }
-
-        # save the annotation
-        with open(os.path.join(save_dir, f"{metric_name}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
-            f.write(json.dumps(annotation) + "\n")
+        
+        annotation = save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time)
 
         db.loc[i, "status"] = "finished"
         campaign.update_db(db)
@@ -426,11 +460,12 @@ def run_llm_eval(app, campaign_id):
         payload = {"finished_examples_cnt": finished_examples_cnt, "annotation": annotation}
 
         msg = format_sse(data=json.dumps(payload))
-        announcer.announce(msg=msg)
+        if announcer is not None:
+            announcer.announce(msg=msg)
         logger.info(f"{campaign_id}: {finished_examples_cnt}/{len(db)} examples")
 
     # if all fields are finished, set the metadata to finished
-    if db.status.unique() == "finished":
+    if len(db.status.unique()) == 1 and  db.status.unique()[0] == "finished":
         campaign.metadata["status"] = "finished"
         campaign.update_metadata()
 

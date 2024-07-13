@@ -1,0 +1,60 @@
+type: ollama-logicnlg-markdown
+# valid values to_string (produces zero annotations), to_json ?, to_markdown ?
+# note that the example needs to be updated according to the table_str_f MANUALLY
+table_str_f: to_json
+annotation_key: "annotations"
+model: qwen2:72b
+api_url: http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+model_args:
+  max_tokens: 1024
+  num_beams: 1
+  temperature: 0.0
+  top_p: 1.0
+  top_k: 0.0
+  do_sample: false 
+  seed: 424242
+system_msg: "You are an expert linguist and data scientiest focusing on the data-to-text annotation systems. You understand tabular data and you correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
+# The return format should be ["annotations": {...}] and at the same time we use annotations_categories below
+annotation_key: "annotations"
+annotations_categories: 
+  - name: "Incorrect"
+    color: "#ffbcbc"
+  - name: "Uncheckable"
+    color: "#e9d2ff"
+  - name: "Interesting"
+    color: "#27e6a6"
+  - name: "Obvious"
+    color: "#27e6a6"
+prompt_template: |
+  Given the table title and table:
+  ```
+  {data}
+  ```
+  Annotate all the factual errors and also interesting and boring aparts in the following text:
+  ```
+  {text}
+  ```
+  Output the annotations as a JSON list of "annotations". Each item in the list contains fields  "reason", "text", and "type". The value of "text" is the annotated text. The value of "reason" is the reason for the annotation. The value of "type" is one of {{0, 1, 2, 3}} based on the following list:
+  - 0: Incorrect fact: The fact in the text contradicts the data in the table.
+  - 1: Uncheckable: The fact in the text cannot be inferred from the data in the table.
+  - 2: Interesting claim: The claim in the text is non-trivial and readers find it typically interesting.
+  - 3: Obvious claim: The text is boring, considered common knowledge, irrelevant, or repetitive.
+
+  The list should be sorted by the position of the annotation in the text.
+
+  Also output your confidence how well you understood the task, the table and the text. Classify your confidence as "confident", "unsure", or "I have no idea" and provide feedback when you are not confident. 
+
+  *Example:*
+  table:
+  ```
+  Table title: figure skating at the 1964 winter olympics
+  [{{"rank":"1","name":"sjoukje dijkstra","nation":"netherlands","points":"2018.5","places":"9"}},{{"rank":"2","name":"regine heitzer","nation":"austria","points":"1945.5","places":"22"}},{{"rank":"3","name":"peggy fleming","nation":"united states","points":"1819.6","places":"59"}},{{"rank":"4","name":"christine haigler","nation":"united states","points":"1803.8","places":"74"}},{{"rank":"5","name":"albertina noyes","nation":"united states","points":"1798.9","places":"73"}}]
+  ```
+  text:
+  ```
+  Four women competed for the United States for figure skating in the 1964 Winter Olympics. The data comes from table Figure Skating at the 1964 winter games.
+  ```
+  output:
+  ```{{ "annotations": [{{"reason": "The table contains only 3 competitors from united states", "text": "Four", "type": 0}}, {{"reason": "Fans of United States want to know how many representatives they have in Olympic Games and for people it is hard to find all occurances. Especially in a large table.", "text": "Four women competed for the United States", "type": 1}}, {{"reason": "The note is superfluous", "text": "The data comes from table Figure Skating at the 1964 winter games.", type: 3}}], "confidence": "confident", "feedback": "" }}
+  ```
+  Note that some details may not be mentioned in the text: do not count omissions as errors. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.), do not count these as errors. It is ok not to report anything and produce empty list. Mark interesting only truly interesting parts and similarly mark obvious phrases only if they are trully boring and obvious.

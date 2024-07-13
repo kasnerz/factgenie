@@ -1,6 +1,6 @@
 type: ollama
 model: llama3
-api_url: http://tdll-3gpu2.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+api_url: http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate
 model_args:
   max_tokens: 1024
   num_beams: 1
@@ -10,6 +10,16 @@ model_args:
   do_sample: false 
   seed: 42
 system_msg: "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
+# Note that we require output format {"errors": [{...}]}
+errors_categories:
+  - name: "Incorrect"
+    color: "#ffbcbc"
+  - name: "Not checkable"
+    color: "#e9d2ff"
+  - name: "Misleading"
+    color: "#fff79f"
+  - name: "Other"
+    color: "#bbbbbb"
 prompt_template: |
   Given the data:
   ```

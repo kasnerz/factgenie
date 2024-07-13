@@ -8,7 +8,7 @@
 
 Visualize and annotate errors in LLM outputs.
 
-🚧 **The project is in progress, use at your own risk.** 🚧
+🚧 **The project is in progress; use at your own risk.** 🚧
 
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
@@ -20,29 +20,37 @@ With **factgenie**, you can have the errors highlighted 🌈:
 - From LLMs through an API.
 
 How does **factgenie** help with that?
-1. It helps you with **creating a user-friendly website** for collecting annotations from human crowdworkers.
+1. It helps you **create a user-friendly website** for collecting annotations from human crowdworkers.
 2. It helps you with **LLM API calls** for collecting equivalent annotations from LLM-based evaluators.
-3. It provides you a **visualization interface** for inspecting the annotated outputs.
+3. It provides you with **visualization interface** for inspecting the annotated outputs.
 
 What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).
 
 ---
-*Please, keep in mind that this project is a spin-off of our custom code we used for research experiments. It may need additional effort on your side to make everything work as expected :wink:*
-
+*This project is a framework and template for you, dear researcher. Help us improve it! :wink:*
 ----
 
 ## Quickstart
 Make sure you have Python 3 installed (the project is tested with Python 3.10).
 
-The following commands install the package, start the webserver, and open the frontpage in the browser:
+The following commands install the package, start the web server, and open the front page in the browser:
 ```
 pip install -e .
-factgenie run --host=127.0.0.1 --port 8890
-xdg-open http://127.0.0.1:8890
+factgenie run --host=127.0.0.1 --port 5000
+xdg-open http://127.0.0.1:5000  # for Linux it opens the page for you
 ```
 
 ## Step-by-step guide
-Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use-case.
+Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use case.
+
+### 0) Setup Dependencies
+The `factgenie` uses [ollama](https://ollama.com/) to run local LLMs and [openai-python](https://github.com/openai/openai-python) API to OpenAI LLMs to gather annotations.
+For crowdsourcing campaigns, it was designed to easily integrate into [prolific.com](https://prolific.com) workflow.
+
+Read their documentation to set it up, we will prepare step-by-step guides in the future.
+
+For setting up the LLMs for annotation, the `factgenie` needs just the `ollama` or `openai` URL to connect to.
+From Prolific, one needs to obtain a completion code, which will be displayed to the annotators as proof of completed work for the [prolific.com](https://researcher-help.prolific.com/hc/en-gb/articles/360009223173-Data-collection#h_01HDJXW21T4R05T9YTD10GKMXY)
 
 ### 1) Gather your inputs and outputs
 
@@ -87,14 +95,15 @@ After opening the page http://127.0.0.1:8890 in your browser, you should be able
 Go to `/browse`. Make sure that you can select your dataset in the navigation bar and browse through the examples.
 
 ### 4) Annotate the outputs with LLMs
-For collecting the annotations from a LLM, you will first need to get access to one. The options we recommend are:
+For collecting the annotations from an LLM, you will first need to get access to one. The options we recommend are:
 
 - [OpenAI API](https://openai.com/api/): After you create an account, set the `OPENAI_API_KEY` environment variable to your API key. Note that you will need to pay per token for the service.
 - [Ollama](https://ollama.com): An open-source framework for running LLMs locally. After you start the model, create a config file in `factgenie/llm-eval` with the respective API URL (see `factgenie/llm-eval/ollama-llama3.yaml` for an example).
 
 In general, you can integrate factgenie with any API that allows decoding responses as JSON (or any API as long as you can get a JSON by postprocessing the response).
 
-You also need to customize the YAML configuration file in `factgenie/llm-eval` by setting the model prompt, optionally along with the system message, model parameters etc. Keep in mind the the prompt needs to **ask the model to produce JSON outputs in the following format**:
+You also need to customize the YAML configuration file in `factgenie/llm-eval` by setting the model prompt optionally along with the system message, model parameters, etc.
+Keep in mind the prompt needs to **ask the model to produce JSON outputs in the following format**:
 ```
 {
   "errors": [
@@ -108,7 +117,7 @@ You also need to customize the YAML configuration file in `factgenie/llm-eval` b
 The provided examples should help you with setting up the prompt.
 
 Once you have the configuration file ready, you should:
-- Go to `/llm-eval`.
+- Go to factgenie `/llm_eval` webpage.
 - Click on **New LLM eval** and select the campaign identifier.
 - In the **Data** section:
   - Select the datasets and splits you want to annotate. 
@@ -117,7 +126,7 @@ Once you have the configuration file ready, you should:
 - In the **Error categories** section:
   - Select the error categories you specified in the prompt.
 
-You eval should appear in the list:
+Your eval should appear in the list:
 
 <img src="factgenie/static/img/github/llm_eval.png" width="100%" style="margin-bottom: 10px" alt="Main screen" />
 
@@ -125,8 +134,8 @@ Now you need to go to the campaign details and run the evaluation. The annotated
 
 <img src="factgenie/static/img/github/llm_eval_detail.png" width="70%" style="margin-bottom: 10px" alt="Main screen" />
 
-### 5) Annotate the outputs with human crowdworkers
-For collecting the annotations from human crowdworkers, you typically need to:
+### 5) Annotate the outputs with human crowd workers
+For collecting the annotations from human crowd workers, you typically need to:
 - prepare **user-friendly web interface** for collecting the annotations  ,
 - **monitor the progress** of the crowdworkers.
 
@@ -150,18 +159,18 @@ Your campaign should appear in the list:
 
 <img src="factgenie/static/img/github/list.png" width="100%" style="margin-bottom: 10px" alt="Main screen" />
 
-You can now preview the annotation page by clicking on the 👁️‍🗨️ icon. If this page gets opened by a crowdworker, the corresponding batch of examples will get assigned to them.
+You can now preview the annotation page by clicking on the 👁️‍🗨️ icon. If a crowd worker opens this page, the corresponding batch of examples will be assigned to them.
 
 Since we are using the dummy `PROLIFIC_PID` parameter (`test`), we can preview the page and submit annotations without having this particular batch assigned.
 
 #### Customizing the annotation page
 **And now it's your turn.** To customize the annotation page, go to `factgenie/templates/campaigns/<your_campaign_id>` and modify the `annotate.html` file. 
 
-You will typically need to write custom instructions for the crowdworkers, include Javascript libraries necessary for rendering your inputs, or write custom Javascript code.
+You will typically need to write custom instructions for the crowd workers, include Javascript libraries necessary for rendering your inputs, or write custom Javascript code.
 
 You can get inspired by the example campaign in `factgenie/templates/campaigns/`.
 
-Make sure that everything works from your point of view by submitting the annotations from the Preview page (and deleting the resulting files).
+Submit the annotations from the Preview page (and delete the resulting files) to ensure that everything works from your point of view.
 
 
 <img src="factgenie/static/img/github/page.png" width="100%" style="display: flex; margin: auto;" alt="Main screen" />
@@ -176,3 +185,14 @@ On the details page, you can monitor how individual batches get assigned and com
 Once the annotations are collected, you can view them on the `/browse`. The annotations from each campaign can be selected in the drop-down menu above model outputs.
 
 <img src="factgenie/static/img/github/annot.png" width="60%" style="display: flex; margin: auto;" alt="Main screen" />
+
+
+## Core Developers 
+
+### Optional use of Git Large File Storage (git lfs)
+- We use `git lfs` for storing instructional videos and it is useful for storing any large artefacts.
+- We would like to keep the `git lfs` completely optional. As a consequence, we ask you not to commit any large files that are required for running _factgenie_, i.e., use it just for documentation.
+- Links to `git lfs` documentation:
+   - [Git LFS configuration](https://docs.github.com/en/repositories/working-with-files/managing-large-files/configuring-git-large-file-storage)
+   - [Moving a large file from git to git lfs](https://docs.github.com/en/repositories/working-with-files/managing-large-files/moving-a-file-in-your-repository-to-git-large-file-storage)
+   - [Does every user need to use git lfs (no)](https://github.com/git-lfs/git-lfs/discussions/4644)

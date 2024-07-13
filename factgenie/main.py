@@ -5,20 +5,16 @@ import time
 import logging
 import pandas as pd
 import time
-import coloredlogs
 import threading
 import traceback
 import shutil
 import datetime
 from flask import Flask, render_template, jsonify, request, Response
 from collections import defaultdict
-from pathlib import Path
-from threading import Thread
 import urllib.parse
 from slugify import slugify
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
-from factgenie.loaders import DATASET_CLASSES
 from factgenie.evaluate import LLMMetric, Llama3Metric
 import factgenie.utils as utils
 
@@ -27,25 +23,16 @@ TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
 ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
 
+
+
 app = Flask("factgenie", template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
-app.config.update(SECRET_KEY=os.urandom(24))
 app.db = {}
 app.db["annotation_index"] = {}
 app.db["lock"] = threading.Lock()
 app.db["threads"] = {}
 app.db["announcers"] = {}
 
-
-file_handler = logging.FileHandler("error.log")
-file_handler.setLevel(logging.ERROR)
-
-logging.basicConfig(
-    format="%(levelname)s - %(message)s",
-    level=logging.INFO,
-    handlers=[file_handler, logging.StreamHandler()],
-)
 logger = logging.getLogger(__name__)
-coloredlogs.install(level="INFO", logger=logger, fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 # -----------------
@@ -136,7 +123,7 @@ def manage_annotations():
     utils.generate_annotation_index(app)
 
     annotations = app.db["annotation_index"]
-    breakpoint()
+    
     return render_template("manage_annotations.html", annotations=annotations, host_prefix=app.config["host_prefix"])
 
 
@@ -389,7 +376,7 @@ def llm_eval():
     default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
 
     # get a list of available metrics
-    utils.generate_metric_index(app)
+    app.db["metric_index"] = utils.generate_metric_index()
 
     llm_metrics = app.db["metric_index"]
 
@@ -436,42 +423,15 @@ def llm_eval_new():
     data = request.get_json()
 
     llm_config = data.get("llmConfig")
-    campaign_id = slugify(data.get("campaignId"))
+    campaign_id = data.get("campaignId")
     campaign_data = data.get("campaignData")
-    error_categories = data.get("errorCategories")
-    now = datetime.datetime.now()
 
-    utils.generate_metric_index(app)
+    app.db["metric_index"] = utils.generate_metric_index()
 
     metric = app.db["metric_index"][llm_config]
+    datasets = app.db["datasets_obj"]
 
-    # create a new directory
-    if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-        return jsonify({"error": "Campaign already exists"})
-
-    os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
-
-    # create the annotation CSV
-    db = utils.generate_llm_eval_db(app, campaign_data)
-    db.to_csv(os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv"), index=False)
-
-    # save metadata
-    with open(os.path.join(ANNOTATIONS_DIR, campaign_id, "metadata.json"), "w") as f:
-        json.dump(
-            {
-                "id": campaign_id,
-                "created": now.strftime("%Y-%m-%d %H:%M:%S"),
-                "source": "model",
-                "status": "new",
-                "metric": metric.metric_name,
-                "error_categories": error_categories,
-            },
-            f,
-            indent=4,
-        )
-
-    # create the campaign object
-    campaign = ModelCampaign(campaign_id=campaign_id)
+    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
     app.db["campaign_index"][campaign_id] = campaign
 
     return utils.success()
@@ -482,9 +442,10 @@ def llm_eval_run():
     data = request.get_json()
     campaign_id = data.get("campaignId")
 
-    app.db["announcers"][campaign_id] = utils.MessageAnnouncer()
+    app.db["announcers"][campaign_id] = announcer = utils.MessageAnnouncer()
 
     # TODO: so far it seems that the app is actually more responsive without threads :-O
+    # from threading import Thread
     # thread = Thread(target=utils.run_llm_eval, args=(app, campaign_id))
     # thread.daemon = True
     # thread.start()
@@ -493,7 +454,17 @@ def llm_eval_run():
         # "thread": thread,
         "running": True,
     }
-    return utils.run_llm_eval(app, campaign_id)
+    # return utils.run_llm_eval(app, campaign_id)
+    app.db["metric_index"] = utils.generate_metric_index()
+
+    campaign = app.db["campaign_index"]["model"][campaign_id]
+
+    threads = app.db["threads"]
+    datasets = app.db["datasets_obj"]
+
+    metric_name = campaign.metadata["metric"]
+    metric = app.db["metric_index"][metric_name]
+    return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name)
 
 
 @app.route("/llm_eval/progress/<campaign_id>", methods=["GET"])

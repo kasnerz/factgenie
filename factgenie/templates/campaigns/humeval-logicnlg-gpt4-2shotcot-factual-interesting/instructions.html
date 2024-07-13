@@ -1,0 +1,164 @@
+<p>
+    <!-- TODO (oplatek) {{ annotation_example_cnt }} does not work In this task, you will annotate <b>{{ annotation_example_cnt }} examples</b> in total. -->
+    In this task, you will annotate claims about a table. In each example you will see the table title, the table and a short claim itself.
+    For each example, you will see <b>data</b> on the left side and the corresponding generated <b>textual claim</b> on the right side.
+    Your task is to <b>annotate</b> in the text with respect to the data.
+</p>
+
+<p>
+    There are four types of annotations that you can mark in the generated text:
+</p>
+
+<ol>
+    <li><span style="background-color: #ffbcbc"><b>Incorrect fact</b></span>: 
+        The fact in the text contradicts the data.
+    </li>
+    <li><span style="background-color: #e9d2ff"><b>Uncheckable</b></span> :
+        The fact in the text cannot be checked given the data in the table. It may be true, but it is not commonly known all over the world by most of the people.
+    </li>
+    <li><span style="background-color: #27e6a6"><b>Interesting</b></span>:
+        The fact in the text is interesting for the expected audience.
+    </li>
+    <li><span style="background-color: #c9c0cc"><b>Obvious</b></span> :
+        The fact is boring, considered common knowledge, irrelevant, or repetitive. The opposite of interesting.
+    </li>
+</ol>
+
+<div class="accordion" id="accordion-all">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseOne">
+                How to mark and submit the annotations?
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordion-all">
+            <div class="accordion-body">
+                <p>
+                Annotate the text by dragging your mouse over the text, highlighting the text span.
+                Once you annotated or reviewed the text for all the categories, click the <b> ✅ Mark example as complete</b> button.
+                You can still update the annotation later.
+                You will be able to submit the annotations once they are all are marked as complete.
+                </p>
+
+                <p>
+                To switch between error categories, repeatedly click on the highlighted text (the last click removes the highlight).
+                Note that highlighting from the right to left can work better for longer spans.
+                </p>
+
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTwo">
+                How should I decide on the annotations?
+            </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordion-all">
+            <div class="accordion-body">
+                <ul>
+                    <li>Each error span should include all the words related to the
+                        error (but nothing else). </li>
+                    <li> If you think the fact
+                        is probably true, but
+                        cannot be derived from the data, mark it as not checkable. </li>
+                    <li>
+                        If you are not really sure if the fact
+                        should be marked as an error, leave it unmarked. </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- TODO oplatek provide an example of the annotated output e.g. se the LLM-eval annotations and just check them
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseSix">
+                An example of the annotated output
+            </button>
+        </h2>
+        <div id="collapseSix" class="accordion-collapse collapse" data-bs-parent="#accordion-all">
+            <div class="accordion-body">
+                An example of the data input and the corresponding text annotated with errors:
+
+                <hr>
+                <div class="example-data">
+                    <h6>data - Table title and table</h6>
+
+                    TODO
+
+
+                </div>
+                <hr>
+                <div class="example-text">
+                    <h6>text (product description)</h6>
+                </div>
+                <hr>
+                <h6>explanation</h6>
+                <div class="example-explanation">
+                    <ul>
+                        <li><span style="margin-right: 0px;background-color: #e9d2ff;">produced in
+                                Finland</span>: The country where the phone is produced is not
+                            mentioned in the data.</li>
+
+                        <li><span style="margin-right: 0px;background-color: #FFBCBC;">320x320</span>: The data mentions
+                            that the display has resolution 320x240px.</li>
+
+                        <li><span style="margin-right: 0px;background-color: #FFF79F;">available in black color</span>:
+                            Misleadingly
+                            suggests that the phone is not available in other colors.</li>
+                        <li><span style="margin-right: 0px;background-color: #bbbbbb;">The data seem to provide only
+                                partial information about the phone.</span>: The note is irrelevant for the phone
+                            description.</li>
+                </div>
+                <hr>
+                <i>Note that for the sake of brevity, this particular example is based on a small data input and
+                    contains many errors, which may not always be the case.</i>
+            </div>
+        </div>
+    </div>
+    -->
+
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseThree">
+                What kinds of tables and text can I encounter?
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordion-all">
+            <div class="accordion-body">
+
+                You can encounter the following kinds of input tables:
+                <ul>
+                    <li>Tables about a sport event, season, league, etc.</li>
+                    <li>Tables about a music album, artist, etc.</li>
+                    <li>Tables about elections.</li>
+                    <li>General tables with title like <i>list of programming syndicated by clear channel</i>, <i></i></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseFive">
+                What is the purpose of the research?
+            </button>
+        </h2>
+        <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#accordion-all">
+            <div class="accordion-body">
+                The research is conducted by the NLP research group at Charles University in Prague.
+                The research is a part of the European Union Funded ERC project <a href="https://cordis.europa.eu/project/id/101039303">Next-Generation Natural Language Generation</a> and was approved by the ethical committee of the project. 
+                <br><br>
+                By continuing, you agree that the anonymous annotations will be made available to the research community to help evaluating and improving data-to-text generation systems based on large language models.
+            </div>
+        </div>
+    </div>
+
+
+
+</div>

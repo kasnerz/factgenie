@@ -10,8 +10,9 @@ from datetime import datetime
 
 
 class OpenWeather(Dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs, name="openweather")
+    def __init__(self, name=None, **kwargs):
+        name = "openweather" if name is None else name
+        super().__init__(name=name, **kwargs)
         self.type = "json"
 
     def get_info(self):
