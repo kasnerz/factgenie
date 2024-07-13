@@ -39,7 +39,8 @@
         <tbody>
           {% for name, campaign in campaigns.items() %}
           <tr>
-            <td>{{ campaign.metadata.id }}</td>
+            <td><u><a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}">{{
+                  campaign.metadata.id }}</a></u></td>
             <td>{{ campaign.metadata.created }}</td>
             <!-- <td>{{ campaign.stats }}</td> -->
             <td> {% for status, count in campaign.stats.items() %}
@@ -47,11 +48,6 @@
               {% endfor %}
             </td>
             <td>
-              <!-- use font awesome icons for buttons -->
-              <a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}"
-                class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Show campaign details">
-                <i class="fa fa-list"></i>
-              </a>
               <a href="{{ host_prefix }}/export_annotations?campaign={{ campaign.metadata.id }}"
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
                 <i class="fa fa-download"></i>
