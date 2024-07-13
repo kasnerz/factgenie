@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>factgenie</title>
+  <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
+  <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
+  <meta name="viewport" content="width=1024">
+  <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
+</head>
+
+{% include 'navbar.html' %}
+
+<div class="container">
+  <div class="form-container">
+    <div class="mt-5 form-box">
+      <form action="{{ host_prefix }}/login" method="post">
+        <div class="mb-3 row">
+          <label for="username" class="col-sm-4 col-form-label">Username:</label>
+          <div class="col-sm-8">
+            <input type="text" class="form-control" id="username" name="username">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label for="password" class="col-sm-4 col-form-label">Password:</label>
+          <div class="col-sm-8">
+            <input type="password" class="form-control" id="password" name="password">
+          </div>
+        </div>
+        <div class="d-flex justify-content-center">
+          <button type="submit" class="btn btn-primary" value="Login">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = " {{ host_prefix }}"; </script>

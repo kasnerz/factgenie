@@ -72,6 +72,7 @@ def success():
     resp = jsonify(success=True)
     return resp
 
+
 def error(j):
     resp = jsonify(success=False, error=j)
     return resp
@@ -84,7 +85,7 @@ def get_dataset(app, dataset_name):
 def generate_metric_index():
     """
     Goes through all the files in the LLM_CONFIG_DIR
-    instantiate the LLMMetric class 
+    instantiate the LLMMetric class
     and inserts the object in the metrics dictionary
 
     Returns:
@@ -386,6 +387,7 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
     campaign = ModelCampaign(campaign_id=campaign_id)
     return campaign
 
+
 def generate_default_id(campaign_index, prefix):
     i = 1
     default_campaign_id = f"{prefix}-{i}"
@@ -394,6 +396,10 @@ def generate_default_id(campaign_index, prefix):
         i += 1
 
     return default_campaign_id
+
+
+def check_login(app, username, password):
+    return username == app.config["login"]["username"] and password == app.config["login"]["password"]
 
 
 def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
@@ -447,8 +453,10 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
 
         if "error" in annotation_set:
             return error(annotation_set["error"])
-        
-        annotation = save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time)
+
+        annotation = save_annotation(
+            save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time
+        )
 
         db.loc[i, "status"] = "finished"
         campaign.update_db(db)
@@ -465,7 +473,7 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
         logger.info(f"{campaign_id}: {finished_examples_cnt}/{len(db)} examples")
 
     # if all fields are finished, set the metadata to finished
-    if len(db.status.unique()) == 1 and  db.status.unique()[0] == "finished":
+    if len(db.status.unique()) == 1 and db.status.unique()[0] == "finished":
         campaign.metadata["status"] = "finished"
         campaign.update_metadata()
 
