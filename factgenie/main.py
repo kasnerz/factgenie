@@ -9,10 +9,12 @@ import threading
 import traceback
 import shutil
 import datetime
-from flask import Flask, render_template, jsonify, request, Response
+import zipfile
+from flask import Flask, render_template, jsonify, request, Response, make_response
 from collections import defaultdict
 import urllib.parse
 from slugify import slugify
+from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
 from factgenie.evaluate import LLMMetric, Llama3Metric
@@ -22,7 +24,6 @@ DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
 ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
-
 
 
 app = Flask("factgenie", template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
@@ -123,7 +124,7 @@ def manage_annotations():
     utils.generate_annotation_index(app)
 
     annotations = app.db["annotation_index"]
-    
+
     return render_template("manage_annotations.html", annotations=annotations, host_prefix=app.config["host_prefix"])
 
 
@@ -333,6 +334,27 @@ def render_example():
         example_data = {}
 
     return jsonify(example_data)
+
+
+@app.route("/export_annotations", methods=["GET", "POST"])
+def export_annotations():
+    zip_buffer = BytesIO()
+    campaign_id = request.args.get("campaign")
+
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        for root, dirs, files in os.walk(os.path.join(ANNOTATIONS_DIR, campaign_id)):
+            for file in files:
+                zip_file.write(
+                    os.path.join(root, file),
+                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id, "files")),
+                )
+
+    # Set response headers for download
+    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    response = make_response(zip_buffer.getvalue())
+    response.headers["Content-Type"] = "application/zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{now}.zip"
+    return response
 
 
 @app.route("/llm_eval", methods=["GET", "POST"])

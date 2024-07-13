@@ -52,6 +52,10 @@
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Show campaign details">
                 <i class="fa fa-list"></i>
               </a>
+              <a href="{{ host_prefix }}/export_annotations?campaign={{ campaign.metadata.id }}"
+                class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
+                <i class="fa fa-download"></i>
+              </a>
               <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'model')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the campaign">
                 <i class="fa fa-trash"></i>
