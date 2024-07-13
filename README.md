@@ -135,11 +135,22 @@ Now you need to go to the campaign details and run the evaluation. The annotated
 <img src="factgenie/static/img/github/llm_eval_detail.png" width="70%" style="margin-bottom: 10px" alt="Main screen" />
 
 ### 5) Annotate the outputs with human crowd workers
+
+
 For collecting the annotations from human crowd workers, you typically need to:
 - prepare **user-friendly web interface** for collecting the annotations  ,
 - **monitor the progress** of the crowdworkers.
 
 👉️ With factgenie, you won't need to spend almost any time with any of these!
+
+---
+❗️ **Important:** you should password-protect the application when you are running a human evaluation campaign so that annotators cannot access other pages. 
+
+To enable authentication for all the pages except for the annotation page, go to `factgenie/config.yml` and set:
+ - `login.active: true`
+ - `login.username: YOUR_USERNAME`
+ - `login.password: YOUR_PASSWORD`
+---
 
 #### Starting a campaign
 First, we will **start a new campaign**:

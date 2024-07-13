@@ -12,6 +12,6 @@ default_error_categories:
     color: "#bbbbbb"
 logging_level: INFO
 login:
-  active: true
+  active: false
   username: admin
   password: factgenie

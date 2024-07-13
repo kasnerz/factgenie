@@ -223,6 +223,7 @@ def crowdsourcing():
         campaigns=campaigns,
         default_campaign_id=default_campaign_id,
         default_error_categories=app.config["default_error_categories"],
+        is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
 
