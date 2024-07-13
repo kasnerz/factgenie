@@ -35,13 +35,13 @@
       </dl>
       <div>
         <a onclick="runLlmEval('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
-          id="run-button" title="Run evaluation"
-          style="display: {{ 'none' if metadata.status == 'running' else block }};">
-          <i class="fa fa-play"></i> {{ 'Run' if metadata.status == 'new' else 'Continue' }} evaluation
+          id="run-button" title="Run evaluation" {% if metadata.status=='finished' %} style="display: none;" {% endif
+          %}>
+          <i class="fa fa-play"></i> {{ 'Continue' if metadata.status == 'paused' else 'Run' }} evaluation
         </a>
-        <a onclick="stopLlmEval('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
-          id="stop-button" title="Stop evaluation"
-          style="display: {{ 'none' if metadata.status != 'running' else block }};">
+        <a onclick="pauseLlmEval('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+          id="stop-button" title="Stop evaluation" {% if metadata.status!='running' %} style="display: none;" {% endif
+          %}>
           <i class="fa fa-pause"></i> Pause evaluation
         </a>
       </div>

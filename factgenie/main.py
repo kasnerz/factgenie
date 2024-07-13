@@ -421,7 +421,7 @@ def llm_eval_detail():
     campaign = app.db["campaign_index"]["model"][campaign_id]
 
     if campaign.metadata["status"] == "running" and not app.db["announcers"].get(campaign_id):
-        campaign.metadata["status"] = "idle"
+        campaign.metadata["status"] = "paused"
         campaign.update_metadata()
 
     overview = campaign.get_overview()
@@ -473,7 +473,6 @@ def llm_eval_run():
     # thread.start()
 
     app.db["threads"][campaign_id] = {
-        # "thread": thread,
         "running": True,
     }
     # return utils.run_llm_eval(app, campaign_id)
@@ -503,14 +502,15 @@ def listen(campaign_id):
     return Response(stream(), mimetype="text/event-stream")
 
 
-@app.route("/llm_eval/stop", methods=["POST"])
-def llm_eval_stop():
+@app.route("/llm_eval/pause", methods=["POST"])
+def llm_eval_pause():
     data = request.get_json()
     campaign_id = data.get("campaignId")
-
-    # thread = app.db["threads"][campaign_id]["thread"]
-    # thread.join()
     app.db["threads"][campaign_id]["running"] = False
+
+    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign.metadata["status"] = "paused"
+    campaign.update_metadata()
 
     return utils.success()
 

@@ -741,18 +741,22 @@ function runLlmEval(campaignId) {
                 console.log(JSON.stringify(response));
             } else {
                 console.log(response);
+                $("#metadata-status").html("finished");
+                $("#run-button").hide();
+                $("#stop-button").hide();
+                $("#llm-eval-progress").hide();
             }
         }
     });
 }
 
-function stopLlmEval(campaignId) {
+function pauseLlmEval(campaignId) {
     $("#run-button").show();
     $("#stop-button").hide();
     $("#llm-eval-progress").hide();
 
     $.post({
-        url: `${url_prefix}/llm_eval/stop`,
+        url: `${url_prefix}/llm_eval/pause`,
         contentType: 'application/json',
         data: JSON.stringify({
             campaignId: campaignId
