@@ -718,9 +718,9 @@ a:hover {
     background-color: rgb(245, 245, 245) !important;
 }
 
-.nav-item {
+/* .nav-item {
     margin-right: 5px;
-}
+} */
 
 #rawarea {
     margin-top: 20px;
@@ -788,4 +788,24 @@ a:hover {
 .form-box {
     width: 100%;
     max-width: 400px;
+}
+
+.heading-img-inline {
+    width: 25px;
+    padding-bottom: 5px;
+    margin-right: 7px;
+}
+
+.new-campaign-form {
+    border-bottom-color: rgb(222, 226, 230);
+    border-left-color: rgb(222, 226, 230);
+    border-right-color: rgb(222, 226, 230);
+    border-top-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-style: solid;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 30px;
 }

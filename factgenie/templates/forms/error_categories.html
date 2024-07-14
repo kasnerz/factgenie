@@ -1,42 +1,7 @@
 <div class="form-group">
     <div class="accordion accordion-flush" id="accordionFlush-errors">
         <div class="accordion-item">
-            <h2 class="accordion-header" id="flush-headingOne-errors">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#flush-collapseOne-errors" aria-expanded="false"
-                    aria-controls="flush-collapseOne-errors">
-                    <i class="fa fa-pencil"></i>
-                    <span style=" margin-left: 10px;">Error categories</span>
-                </button>
-            </h2>
-            <div id="flush-collapseOne-errors" class="accordion-collapse collapse"
-                aria-labelledby="flush-headingOne-errors" data-bs-parent="#accordionFlush-errors">
-                <div class="accordion-body">
-                    <p>
-                        <small class="text-muted">Error categories used for annotation. The order of the category (0
-                            to n) corresponds to value of the <code>type</code> field in the annotation JSON. These
-                            categories will be available to human annotators. <b>For LLM
-                                eval, you also need to instruct the model to produce exactly these
-                                categories.</b></small>
-                    </p>
 
-                    <div id="error-categories">
-                        {% for error_category in default_error_categories %}
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <input type="text" class="form-control" id="errorCategoryName" name="errorCategoryName"
-                                value="{{ error_category.name }}">
-                            <input type="color" class="form-control" id="errorCategoryColor" name="errorCategoryColor"
-                                value="{{ error_category.color }}">
-                            <button type="button" class="btn btn-danger"
-                                onclick="deleteErrorCategory(this)">Delete</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm mt-1" onclick="addErrorCategory()">Add
-                        category</button>
-
-                </div>
-            </div>
         </div>
 
     </div>

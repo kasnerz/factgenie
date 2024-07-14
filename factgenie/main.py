@@ -402,31 +402,6 @@ def login():
 def llm_eval():
     logger.info(f"LLM eval page loaded")
 
-    datasets = app.db["datasets_obj"]
-    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
-
-    for dataset_name, dataset in datasets.items():
-        splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
-
-        for split in splits:
-            output_setups = dataset.outputs[split].keys()
-            model_outs["splits"].append(split)
-
-            for setup_id in output_setups:
-                model_outs["setup_ids"].append(setup_id)
-                model_outs["valid_triplets"].append(
-                    {
-                        "dataset": dataset_name,
-                        "split": split,
-                        "setup_id": setup_id,
-                        "example_count": dataset.get_example_count(split),
-                    }
-                )
-
-    for key in ["datasets", "splits", "setup_ids"]:
-        model_outs[key] = sorted(list(set(model_outs[key])))
-
     utils.generate_campaign_index(app)
 
     campaign_index = app.db["campaign_index"]["model"]
@@ -436,22 +411,31 @@ def llm_eval():
         campaigns[campaign_id]["metadata"] = campaign.metadata
         campaigns[campaign_id]["stats"] = campaign.get_stats()
 
-    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
-
-    # get a list of available metrics
-    app.db["metric_index"] = utils.generate_metric_index()
-
-    llm_metrics = app.db["metric_index"]
-
     return render_template(
         "llm_eval.html",
-        model_outs=model_outs,
         campaigns=campaigns,
-        default_error_categories=app.config["default_error_categories"],
-        default_campaign_id=default_campaign_id,
-        llm_metrics=list(llm_metrics.keys()),
         host_prefix=app.config["host_prefix"],
     )
+
+
+@app.route("/llm_eval/create", methods=["GET", "POST"])
+@login_required
+def llm_eval_create():
+    data = request.get_json()
+
+    llm_config = data.get("llmConfig")
+    campaign_id = data.get("campaignId")
+    campaign_data = data.get("campaignData")
+
+    app.db["metric_index"] = utils.generate_metric_index()
+
+    metric = app.db["metric_index"][llm_config]
+    datasets = app.db["datasets_obj"]
+
+    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
+    app.db["campaign_index"][campaign_id] = campaign
+
+    return utils.success()
 
 
 @app.route("/llm_eval/detail", methods=["GET", "POST"])
@@ -485,21 +469,49 @@ def llm_eval_detail():
 @app.route("/llm_eval/new", methods=["GET", "POST"])
 @login_required
 def llm_eval_new():
-    data = request.get_json()
-
-    llm_config = data.get("llmConfig")
-    campaign_id = data.get("campaignId")
-    campaign_data = data.get("campaignData")
-
-    app.db["metric_index"] = utils.generate_metric_index()
-
-    metric = app.db["metric_index"][llm_config]
     datasets = app.db["datasets_obj"]
+    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
 
-    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
-    app.db["campaign_index"][campaign_id] = campaign
+    for dataset_name, dataset in datasets.items():
+        splits = dataset.get_splits()
+        model_outs["datasets"].append(dataset_name)
 
-    return utils.success()
+        for split in splits:
+            output_setups = dataset.outputs[split].keys()
+            model_outs["splits"].append(split)
+
+            for setup_id in output_setups:
+                model_outs["setup_ids"].append(setup_id)
+                model_outs["valid_triplets"].append(
+                    {
+                        "dataset": dataset_name,
+                        "split": split,
+                        "setup_id": setup_id,
+                        "example_count": dataset.get_example_count(split),
+                    }
+                )
+
+    for key in ["datasets", "splits", "setup_ids"]:
+        model_outs[key] = sorted(list(set(model_outs[key])))
+
+    # get a list of available metrics
+    app.db["metric_index"] = utils.generate_metric_index()
+    llm_metrics = app.db["metric_index"]
+
+    utils.generate_campaign_index(app)
+
+    campaign_index = app.db["campaign_index"]["model"]
+
+    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
+
+    return render_template(
+        "llm_eval_new.html",
+        default_error_categories=app.config["default_error_categories"],
+        default_campaign_id=default_campaign_id,
+        model_outs=model_outs,
+        llm_metrics=list(llm_metrics.keys()),
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/llm_eval/run", methods=["POST"])

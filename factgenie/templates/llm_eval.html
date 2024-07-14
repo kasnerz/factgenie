@@ -19,13 +19,12 @@
 
 <div class="container w-75 mt-5">
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mb-5">← Main page</a>
-  <!-- button for modal popup: new campaign -->
-  <button type="button" class="btn btn-primary mb-5" data-bs-toggle="modal" data-bs-target="#new-eval-modal">New LLM
-    eval</button>
-
+  <a href="{{ host_prefix }}/llm_eval/new" class="btn btn-secondary mb-5">New LLM
+    eval</a>
 
   <div class="mt-1">
-    <h3>💻️ List of LLM evals</h3>
+    <h3><img src="{{ host_prefix }}/static/img/llm.png" class="heading-img-inline">
+      List of LLM evals</h3>
     <div id="campaigns">
       <table class="table">
         <thead>
@@ -52,9 +51,14 @@
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
                 <i class="fa fa-download"></i>
               </a>
+              <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                data-bs-target="#duplicate-eval-modal">
+                <i class="fa fa-clone"></i>
+              </a>
               <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'model')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the campaign">
                 <i class="fa fa-trash"></i>
+
               </a>
             </td>
           </tr>
@@ -65,79 +69,31 @@
 
   </div>
 
-
-  <div class="modal fade" id="new-eval-modal" tabindex="-1">
+  <div class="modal fade" id="duplicate-eval-modal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="about-modal-label">Run evaluation with a LLM</h5>
+          <h5 class="modal-title" id="about-modal-label">Duplicate eval</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body">
-          <div id='aboutarea' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
-            <div id="about-info" class="area-content">
-              <form id="annotation-campaign-form">
-                <div class="form-group">
-                  <label for="campaignId">Campaign Id</label>
-                  <input type="text" class="form-control" id="campaignId" name="campaignId"
-                    value="{{ default_campaign_id }}" required>
-                </div>
+          <div id='duplicate-main' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
 
-                {% include 'forms/data_selection.html' %}
-
-
-                <div class="accordion accordion-flush" id="accordion-llm-config">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="flush-headingTwo-data">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#flush-collapseTwo-data" aria-expanded="false"
-                        aria-controls="flush-collapseTwo-data">
-                        <i class="fa fa-code"></i>
-                        <span style="margin-left: 10px;">LLM config</span>
-
-                      </button>
-                    </h2>
-                    <div id="flush-collapseTwo-data" class="accordion-collapse collapse"
-                      aria-labelledby="flush-headingTwo-data" data-bs-parent="#llm-config">
-                      <div class="accordion-body">
-                        <!-- selectbox -->
-                        <div class="form-group">
-                          <p>
-                            <small class="text-muted">Add your custom configuration file to
-                              <code>factgenie/llm-eval</code>.</small>
-                          </p>
-                          <select class="form-select" id="llmConfig" name="llmConfig">
-                            {% for llm_metric_name in llm_metrics %}
-                            <option value="{{ llm_metric_name }}">{{ llm_metric_name }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {% include 'forms/error_categories.html' %}
-
-              </form>
-            </div>
           </div>
 
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary mt-3" onclick="createLLMEval();">Create eval</button>
+            <button type="submit" class="btn btn-primary mt-3" onclick="createLLMEval();">Duplicate eval</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-
 </div>
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
-  window.model_outs = {{ model_outs | tojson | safe }};
   window.mode = "llm_eval";
 </script>
 <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

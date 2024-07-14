@@ -606,7 +606,7 @@ function createLLMEval() {
     }
 
     $.post({
-        url: `${url_prefix}/llm_eval/new`,
+        url: `${url_prefix}/llm_eval/create`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
             campaignId: campaignId,
