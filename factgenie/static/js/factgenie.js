@@ -822,13 +822,13 @@ function createModelArgElem(key, value) {
     const newArg = $(`
         <div class="row mt-1">
         <div class="col-6">
-        <input type="text" class="form-control" id="modelArgName" name="modelArgName" value="${key}">
+        <input type="text" class="form-control"  name="modelArgName" value="${key}" placeholder="Key">
         </div>
         <div class="col-5">
-        <input type="text" class="form-control" id="modelArgValue" name="modelArgValue" value="${value}">
+        <input type="text" class="form-control" name="modelArgValue" value="${value}" placeholder="Value">
         </div>
         <div class="col-1">
-        <button type="button" class="btn btn-danger" onclick="deleteRow(this)">x</button>
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
         </div>
         </div>
     `);
@@ -839,13 +839,13 @@ function createAnnotationSpanCategoryElem(name, color) {
     const newCategory = $(`
         <div class="row mt-1">
         <div class="col-6">
-        <input type="text" class="form-control" id="annotationSpanCategoryName" name="annotationSpanCategoryName" value="${name}">
+        <input type="text" class="form-control" name="annotationSpanCategoryName" value="${name}" placeholder="Category name">
         </div>
         <div class="col-5">
-        <input type="color" class="form-control" id="annotationSpanCategoryColor" name="annotationSpanCategoryColor" value="${color}">
+        <input type="color" class="form-control" name="annotationSpanCategoryColor" value="${color}">
         </div>
         <div class="col-1">
-        <button type="button" class="btn btn-danger" onclick="deleteRow(this)">x</button>
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
         </div>
         </div>
     `);
@@ -856,19 +856,30 @@ function updateLLMMetricConfig() {
     const llmConfigValue = $('#llmConfig').val();
 
     if (llmConfigValue === "[None]") {
+        $("#model-name").html("");
         $("#prompt-template").html("");
+        $("#system-message").html("");
+        $("#api-url").html("");
         $("#model-arguments").empty();
         $("#annotation-span-categories").empty();
         return;
     }
-
     const cfg = window.llm_metrics[llmConfigValue];
 
+    const metric_type = cfg.metric_type;
+    const model_name = cfg.model;
     const prompt_template = cfg.prompt_template;
+    const system_msg = cfg.system_msg;
+    const api_url = cfg.api_url;
     const model_args = cfg.model_args;
     const annotationSpanCategories = cfg.annotation_span_categories;
 
+    // for metric, we need to select the appropriate one from the values in the select box
+    $("#metric-type").val(metric_type);
+    $("#model-name").html(model_name);
     $("#prompt-template").html(prompt_template);
+    $("#system-message").html(system_msg);
+    $("#api-url").html(api_url);
     $("#model-arguments").empty();
 
     $.each(model_args, function (key, value) {

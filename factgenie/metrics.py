@@ -87,6 +87,7 @@ class LLMMetricFactory:
 
 class LLMMetric:
     def __init__(self, config):
+        self.metric_type = config["type"]
         self.metric_name = LLMMetricFactory.get_metric_name(config)
         self.annotation_span_categories = config[f"annotation_span_categories"]
         assert (
@@ -103,12 +104,16 @@ class LLMMetric:
         if self.metric_prompt_template is None:
             raise ValueError("Prompt template (`prompt_template`) field is missing in the config")
 
+        self.api_url = config.get("api_url", None)
+
     def get_config(self):
         return {
-            "type": self.metric_name,
+            "metric_type": self.metric_type,
             "prompt_template": self.metric_prompt_template,
+            "system_msg": self.system_msg,
             "annotation_span_categories": self.annotation_span_categories,
             "model_args": self.model_args,
+            "model": self.model,
         }
 
     def postprocess_annotations(self, text, model_json):
@@ -156,6 +161,7 @@ class OpenAIMetric(LLMMetric):
         super().__init__(config)
         self.client = OpenAI()
         self.model = config["model"]
+        self.model_args = config.get("model_args")
 
     def annotate_example(self, data, text):
         try:
@@ -169,6 +175,7 @@ class OpenAIMetric(LLMMetric):
                     {"role": "system", "content": self.system_msg},
                     {"role": "user", "content": prompt},
                 ],
+                **model_args,
             )
             annotation_str = response.choices[0].message.content
             j = json.loads(annotation_str)
@@ -183,9 +190,9 @@ class OpenAIMetric(LLMMetric):
 class OllamaMetric(LLMMetric):
     def __init__(self, config):
         super().__init__(config)
-        self.API_URL = config.get("api_url", None)
+        self.api_url = config.get("api_url", None)
 
-        if self.API_URL is None:
+        if self.api_url is None:
             raise ValueError("API URL (`api_url`) field is missing in the config")
 
         self.model_args = config["model_args"]
@@ -206,11 +213,11 @@ class OllamaMetric(LLMMetric):
             "stream": False,
             "options": {"seed": self.seed, "temperature": 0},
         }
-        msg = f"Ollama API {self.API_URL} with args:\n\t{request_d}"
+        msg = f"Ollama API {self.api_url} with args:\n\t{request_d}"
         response, annotation_str, j = None, None, None
         try:
             logger.debug(f"Calling {msg}")
-            response = requests.post(self.API_URL, json=request_d)
+            response = requests.post(self.api_url, json=request_d)
             annotation_str = response.json()["response"]
 
             j = self.postprocess_output(annotation_str)

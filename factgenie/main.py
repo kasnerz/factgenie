@@ -17,7 +17,7 @@ from slugify import slugify
 from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
-from factgenie.metrics import LLMMetric, Llama3Metric
+from factgenie.metrics import LLMMetricFactory
 import factgenie.utils as utils
 
 DIR_PATH = os.path.dirname(__file__)
@@ -495,7 +495,9 @@ def llm_eval_new():
 
     # get a list of available metrics
     app.db["metric_index"] = utils.generate_metric_index()
-    llm_metrics = {metric : metrics.get_config() for metric, metrics in app.db["metric_index"].items()}
+    llm_metrics = {metric: metrics.get_config() for metric, metrics in app.db["metric_index"].items()}
+
+    metric_types = list(LLMMetricFactory.metric_classes().keys())
 
     utils.generate_campaign_index(app)
     campaign_index = app.db["campaign_index"]["model"]
@@ -507,6 +509,7 @@ def llm_eval_new():
         default_campaign_id=default_campaign_id,
         model_outs=model_outs,
         llm_metrics=llm_metrics,
+        metric_types=metric_types,
         host_prefix=app.config["host_prefix"],
     )
 

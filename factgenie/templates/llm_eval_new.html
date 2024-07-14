@@ -46,14 +46,13 @@
                 value="{{ default_campaign_id }}" required>
             </div>
             <div class="col-auto">
-              <i class="fa fa-question-circle" aria-hidden="true" data-bs-toggle="tooltip"
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
                 title="Unique campaign identifier"></i>
             </div>
           </div>
 
           <div class="row g-3 mb-3 align-items-center">
             <div class="col-auto">
-              <i class="fa fa-code"></i>
               <span style="margin-left: 5px;">Preset</span>
             </div>
             <div class="col-auto">
@@ -65,21 +64,75 @@
               </select>
             </div>
             <div class="col-auto">
-              <i class="fa fa-question-circle" aria-hidden="true" data-bs-toggle="tooltip" title="Add your custom preset to
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="Add your custom preset to
           factgenie/llm-eval"></i>
             </div>
           </div>
 
           <div class="rounded-box mt-3">
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-code"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Type</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Select one of the available metric types (or add your own class to `factgenie/metrics.py`)."></i>
+              </div>
+              <div class="form-group mt-1">
+                <select class="form-select" id="metric-type" name="metric-type">
+                  {% for metric_type in metric_types %}
+                  <option value="{{ metric_type }}">{{ metric_type }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-cube"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Model</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Name of the model used as the LLM evaluator"></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="model-name" name="model-name" rows="1"></textarea>
+              </div>
+            </div>
 
             <div class="row g-3 mb-3 align-items-center">
               <div class="col-auto">
                 <i class="fa fa-align-left"></i>
-                <span style=" margin-left: 5px; margin-right: 10px;">Prompt template</span>
+                <span style="margin-left: 5px; margin-right: 10px;">Prompt template</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Prompt for the model. The prompt is preprocessed by the respective class."></i>
               </div>
 
               <div class="form-group mt-1">
-                <textarea class="form-control" id="prompt-template" name="prompt-template" rows="8" required></textarea>
+                <textarea class="form-control" id="prompt-template" name="prompt-template" rows="8"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-user"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">System message</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Role that the system is playing in the conversation. May not be available for the selected model."></i>
+              </div>
+
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="system-message" name="system-message" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-link"></i>
+                <span style=" margin-left: 10px; margin-right: 10px;">API URL</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API URL. Not required for OpenAI models."></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="api-url" name="api-url" rows="1"></textarea>
               </div>
             </div>
 
@@ -87,33 +140,17 @@
               <div class="col-auto">
                 <i class="fa fa-cogs"></i>
                 <span style="margin-left: 10px; margin-right: 10px;">Model arguments</span>
-                <i class="fa fa-question-circle" aria-hidden="true" data-bs-toggle="tooltip"
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
                   title="API arguments to be passed to the model"></i>
               </div>
               <div id="model-arguments">
               </div>
               <div class="col-auto mt-1">
-                <button type=" button" class="btn btn-outline-secondary btn-sm" onclick="addModelArgument()">+</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addModelArgument();">+</button>
               </div>
             </div>
 
-            <div class="row g-3 mb-3 align-items-center">
-              <div class="col-auto">
-                <i class="fa fa-pencil"></i>
-                <span style=" margin-left: 10px; margin-right: 10px;">Annotation span categories</span>
-                <i class="fa fa-question-circle" aria-hidden="true" data-bs-toggle="tooltip" title="Categories used for annotation. The order of the category (0
-                  to n) corresponds to value of the `type` field in the annotation JSON. These
-                  categories will be available to human annotators. For LLM
-                    eval, you also need to instruct the model to produce exactly these
-                    categories."></i>
-              </div>
-              <div id="annotation-span-categories">
-              </div>
-              <div class="col-auto mt-1">
-                <button type="button" class="btn btn-outline-secondary btn-sm"
-                  onclick="addAnnotationSpanCategory()">+</button>
-              </div>
-            </div>
+            {% include 'forms/annotation_span_categories.html' %}
           </div>
           <div style="text-align: center;">
             <button type="button" class="btn btn-primary mt-3"
@@ -122,7 +159,6 @@
         </div>
 
         <div id="tab-data" class="tab-pane new-campaign-form" role="tabpanel" tabindex="1">
-          <h5> Data </h5>
           <p>
             <small class="text-muted">Select the combinations of datasets, splits, and model outputs (only
               the available
