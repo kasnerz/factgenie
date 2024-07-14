@@ -19,7 +19,7 @@ from flask import jsonify
 from collections import defaultdict
 from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
-from factgenie.evaluate import LLMMetric, LLMMetricFactory
+from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset
 
 DIR_PATH = os.path.dirname(__file__)
@@ -377,7 +377,7 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
                 "source": "model",
                 "status": "new",
                 "metric": metric.metric_name,
-                "error_categories": metric.annotation_categories,
+                "annotation_span_categories": metric.annotation_span_categories,
             },
             f,
             indent=4,

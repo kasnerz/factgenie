@@ -29,13 +29,12 @@ class LLMMetricFactory:
 
     @staticmethod
     def metric_classes():
-        return  {
+        return {
             "openai": OpenAIMetric,
             "ollama": OllamaMetric,
-            "ollama-llama3": Llama3Metric, 
+            "ollama-llama3": Llama3Metric,
             "ollama-logicnlg-markdown": LogicNLGMarkdownOllamaMetric,
         }
-
 
     @staticmethod
     def get_metric_name(config):
@@ -44,7 +43,9 @@ class LLMMetricFactory:
         model = config["model"]
         metric_name = config.get("metric_name", None)
         if metric_name is None:
-            assert metric_type in  LLMMetricFactory.metric_classes(), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
+            assert (
+                metric_type in LLMMetricFactory.metric_classes()
+            ), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
             metric_name = f"llm-{metric_type}-{model}"
         assert metric_name.startswith("llm-"), f"Metric name {metric_name=} should start with 'llm-'"
 
@@ -54,7 +55,9 @@ class LLMMetricFactory:
                 found = True
                 return metric_name
         if not found:
-            raise ValueError(f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}")
+            raise ValueError(
+                f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}"
+            )
 
     @staticmethod
     def get_metric(config):
@@ -77,15 +80,18 @@ class LLMMetricFactory:
         elif metric_type == "ollama-logicnlg-markdown":
             return LogicNLGMarkdownOllamaMetric(config)
         else:
-            raise NotImplementedError(f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!")
+            raise NotImplementedError(
+                f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!"
+            )
 
 
 class LLMMetric:
     def __init__(self, config):
         self.metric_name = LLMMetricFactory.get_metric_name(config)
-        self.annotation_key = config.get("annotation_key", "errors")
-        self._annotation_categories = config[f"{self.annotation_key}_categories"]
-        assert isinstance(self.annotation_categories, list) and len(self.annotation_categories) > 0, f"Annotation categories must be a non-empty list, got {self.annotation_categories=}"
+        self.annotation_span_categories = config[f"annotation_span_categories"]
+        assert (
+            isinstance(self.annotation_span_categories, list) and len(self.annotation_span_categories) > 0
+        ), f"Annotation categories must be a non-empty list, got {self.annotation_span_categories=}"
 
         self.system_msg = config.get("system_msg", None)
         if self.system_msg is None:
@@ -97,19 +103,23 @@ class LLMMetric:
         if self.metric_prompt_template is None:
             raise ValueError("Prompt template (`prompt_template`) field is missing in the config")
 
-    @property
-    def annotation_categories(self):
-        return self._annotation_categories
+    def get_config(self):
+        return {
+            "type": self.metric_name,
+            "prompt_template": self.metric_prompt_template,
+            "annotation_span_categories": self.annotation_span_categories,
+            "model_args": self.model_args,
+        }
 
     def postprocess_annotations(self, text, model_json):
         annotation_list = []
         current_pos = 0
 
-        if self.annotation_key not in model_json:
-            logger.error(f"Cannot find {self.annotation_key=} in {model_json=}")
+        if "annotation_span_categories" not in model_json:
+            logger.error(f"Cannot find the key `annotation_span_categories` in {model_json=}")
             return []
 
-        for annotation in model_json[self.annotation_key]:
+        for annotation in model_json["annotation_span_categories"]:
             # find the `start` index of the error in the text
             start_pos = text.lower().find(annotation["text"].lower(), current_pos)
 
@@ -190,14 +200,14 @@ class OllamaMetric(LLMMetric):
     def annotate_example(self, data, text):
         prompt = self.prompt(data=data, text=text)
         request_d = {
-                "model": self.model,
-                "prompt": prompt,
-                "format": "json",
-                "stream": False,
-                "options": {"seed": self.seed, "temperature": 0},
+            "model": self.model,
+            "prompt": prompt,
+            "format": "json",
+            "stream": False,
+            "options": {"seed": self.seed, "temperature": 0},
         }
         msg = f"Ollama API {self.API_URL} with args:\n\t{request_d}"
-        response, annotation_str, j = None, None, None 
+        response, annotation_str, j = None, None, None
         try:
             logger.debug(f"Calling {msg}")
             response = requests.post(self.API_URL, json=request_d)
@@ -207,7 +217,9 @@ class OllamaMetric(LLMMetric):
             logger.info(j)
             return self.postprocess_annotations(text=text, model_json=j)
         except Exception as e:
-            logger.error(f"Called {msg}\n\n and received\n\t{response=}\n\t{annotation_str=}\n\t{j=}\nbefore the error:{e}")
+            logger.error(
+                f"Called {msg}\n\n and received\n\t{response=}\n\t{annotation_str=}\n\t{j=}\nbefore the error:{e}"
+            )
             traceback.print_exc()
             return {"error": str(e)}
 
@@ -230,7 +242,7 @@ class LogicNLGMarkdownOllamaMetric(OllamaMetric):
             table_str = table.to_string()
         elif self._table_str_f == "to_json":
             # List of rows
-            table_str = table.to_json(orient='records')
+            table_str = table.to_json(orient="records")
         else:
             raise ValueError(f"Unknown table string function {self._table_str_f}")
 
@@ -245,8 +257,8 @@ class Llama3Metric(OllamaMetric):
         j = json.loads(output)
 
         # the model often tends to produce a nested list
-        annotations = j[self.annotation_key]
+        annotations = j["annotation_span_categories"]
         if isinstance(annotations, list) and len(annotations) >= 1 and isinstance(annotations[0], list):
-            j[self.annotation_key] = j[self.annotation_key][0]
+            j["annotation_span_categories"] = j["annotation_span_categories"][0]
 
         return j

@@ -118,7 +118,7 @@ function loadAnnotations() {
     $("#dataset-spinner").show();
 
     const promises = [];
-    const error_categories = metadata.error_categories;
+    const annotation_span_categories = metadata.annotation_span_categories;
 
     // prefetch the examples for annotation: we need them for YPet initialization
     for (const [annotation_idx, example] of Object.entries(annotation_set)) {
@@ -132,7 +132,7 @@ function loadAnnotations() {
         .then(() => {
             YPet.addInitializer(function (options) {
                 /* Configure the # and colors of Annotation types (minimum 1 required) */
-                YPet.AnnotationTypes = new AnnotationTypeList(error_categories);
+                YPet.AnnotationTypes = new AnnotationTypeList(annotation_span_categories);
                 var regions = {};
                 var paragraphs = {};
 
@@ -366,8 +366,8 @@ function getAnnotatedOutput(output, campaign_id) {
 
     if (annotations_campaign.length > 0) {
         const annotations = annotations_campaign[0];
-        const error_categories = annotations.metadata.error_categories;
-        annotated_content = annotateContent(content, annotations, error_categories);
+        const annotation_span_categories = annotations.metadata.annotation_span_categories;
+        annotated_content = annotateContent(content, annotations, annotation_span_categories);
     } else {
         annotated_content = content;
 
@@ -382,7 +382,7 @@ function getAnnotatedOutput(output, campaign_id) {
     return placeholder;
 }
 
-function annotateContent(content, annotations, error_categories) {
+function annotateContent(content, annotations, annotation_span_categories) {
     let offset = 0; // Track cumulative offset
     const annotationSet = annotations.annotations;
 
@@ -395,17 +395,17 @@ function annotateContent(content, annotations, error_categories) {
     annotationSet.forEach(annotation => {
         const annotationType = annotation.type;
 
-        if (!(annotationType in error_categories)) {
-            console.log("Warning: annotation type not found in error_categories: " + annotationType);
+        if (!(annotationType in annotation_span_categories)) {
+            console.log("Warning: annotation type not found in annotation_span_categories: " + annotationType);
             return;
         }
-        const color = error_categories[annotationType].color;
+        const color = annotation_span_categories[annotationType].color;
         const text = annotation.text;
 
         const start = annotation.start + offset;
         const end = start + text.length;
 
-        const error_name = error_categories[annotationType].name;
+        const error_name = annotation_span_categories[annotationType].name;
         const reason = annotation.reason;
         let tooltip_text;
 
@@ -597,7 +597,7 @@ function createLLMEval() {
     const campaignId = $('#campaignId').val();
     const llmConfig = $('#llmConfig').val();
     var campaignData = gatherCampaignData();
-    const errorCategories = getErrorCategories();
+    const annotationSpanCategories = getAnnotationSpanCategories();
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -612,7 +612,7 @@ function createLLMEval() {
             campaignId: campaignId,
             campaignData: campaignData,
             llmConfig: llmConfig,
-            errorCategories: errorCategories,
+            annotationSpanCategories: annotationSpanCategories,
         }),
         success: function (response) {
             console.log(response);
@@ -629,15 +629,15 @@ function createLLMEval() {
     });
 }
 
-function getErrorCategories() {
-    var errorCategories = [];
-    $("#error-categories").children().each(function () {
-        const name = $(this).find("#errorCategoryName").val();
-        const color = $(this).find("#errorCategoryColor").val();
-        errorCategories.push({ name: name, color: color });
+function getAnnotationSpanCategories() {
+    var annotationSpanCategories = [];
+    $("#annotation-span-categories").children().each(function () {
+        const name = $(this).find("#annotationSpanCategoryName").val();
+        const color = $(this).find("#annotationSpanCategoryColor").val();
+        annotationSpanCategories.push({ name: name, color: color });
     }
     );
-    return errorCategories;
+    return annotationSpanCategories;
 }
 
 function createHumanCampaign() {
@@ -648,7 +648,7 @@ function createHumanCampaign() {
     const sortOrder = $('#sortOrder').val();
 
     var campaignData = gatherCampaignData();
-    const errorCategories = getErrorCategories();
+    const annotationSpanCategories = getAnnotationSpanCategories();
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -666,7 +666,7 @@ function createHumanCampaign() {
             prolificCode: prolificCode,
             campaignData: campaignData,
             sortOrder: sortOrder,
-            errorCategories: errorCategories,
+            annotationSpanCategories: annotationSpanCategories,
         }),
         success: function (response) {
             console.log(response);
@@ -801,20 +801,87 @@ function deleteCampaign(campaignId, source) {
     });
 }
 
-function addErrorCategory() {
-    const errorCategories = $("#error-categories");
-    const newCategory = $(`
-    <div class="d-flex justify-content-between align-items-center mt-1">
-      <input type="text" class="form-control" id="errorCategoryName" name="errorCategoryName">
-      <input type="color" class="form-control" id="errorCategoryColor" name="errorCategoryColor">
-      <button type="button" class="btn btn-danger" onclick="deleteErrorCategory(this)">Delete</button>
-    </div>
-    `);
-    errorCategories.append(newCategory);
+function addAnnotationSpanCategory() {
+    const annotationSpanCategories = $("#annotation-span-categories");
+    const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+    const newCategory = createAnnotationSpanCategoryElem("", randomColor);
+    annotationSpanCategories.append(newCategory);
 }
 
-function deleteErrorCategory(button) {
-    $(button).parent().remove();
+function addModelArgument() {
+    const modelArguments = $("#model-arguments");
+    const newArg = createModelArgElem("", "");
+    modelArguments.append(newArg);
+}
+
+function deleteRow(button) {
+    $(button).parent().parent().remove();
+}
+
+function createModelArgElem(key, value) {
+    const newArg = $(`
+        <div class="row mt-1">
+        <div class="col-6">
+        <input type="text" class="form-control" id="modelArgName" name="modelArgName" value="${key}">
+        </div>
+        <div class="col-5">
+        <input type="text" class="form-control" id="modelArgValue" name="modelArgValue" value="${value}">
+        </div>
+        <div class="col-1">
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this)">x</button>
+        </div>
+        </div>
+    `);
+    return newArg;
+}
+
+function createAnnotationSpanCategoryElem(name, color) {
+    const newCategory = $(`
+        <div class="row mt-1">
+        <div class="col-6">
+        <input type="text" class="form-control" id="annotationSpanCategoryName" name="annotationSpanCategoryName" value="${name}">
+        </div>
+        <div class="col-5">
+        <input type="color" class="form-control" id="annotationSpanCategoryColor" name="annotationSpanCategoryColor" value="${color}">
+        </div>
+        <div class="col-1">
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this)">x</button>
+        </div>
+        </div>
+    `);
+    return newCategory;
+}
+
+function updateLLMMetricConfig() {
+    const llmConfigValue = $('#llmConfig').val();
+
+    if (llmConfigValue === "[None]") {
+        $("#prompt-template").html("");
+        $("#model-arguments").empty();
+        $("#annotation-span-categories").empty();
+        return;
+    }
+
+    const cfg = window.llm_metrics[llmConfigValue];
+
+    const prompt_template = cfg.prompt_template;
+    const model_args = cfg.model_args;
+    const annotationSpanCategories = cfg.annotation_span_categories;
+
+    $("#prompt-template").html(prompt_template);
+    $("#model-arguments").empty();
+
+    $.each(model_args, function (key, value) {
+        const newArg = createModelArgElem(key, value);
+        $("#model-arguments").append(newArg);
+    });
+
+    $("#annotation-span-categories").empty();
+
+    annotationSpanCategories.forEach((annotationSpanCategory) => {
+        const newCategory = createAnnotationSpanCategoryElem(annotationSpanCategory.name, annotationSpanCategory.color);
+        $("#annotation-span-categories").append(newCategory);
+    });
 }
 
 

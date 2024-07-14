@@ -11,47 +11,7 @@
             data-bs-parent="#accordion-data">
 
             <div class="accordion-body">
-                <p>
-                    <small class="text-muted">Select the combinations of datasets, splits, and model outputs (only
-                        the available
-                        combinations will be included in the evaluation).</small>
-                </p>
-                Datasets
-                <div class="form-group">
-                    {% for output in model_outs.datasets %}
-                    <input type="checkbox" class="btn-check btn-check-data btn-check-dataset"
-                        id="btn-check-dataset-{{ output }}" data-content="{{ output }}" autocomplete="off">
-                    <label class="btn btn-outline-secondary btn-sm" for="btn-check-dataset-{{ output }}">{{
-                        output
-                        }}</label>
-                    {% endfor %}
-                </div>
-                Splits
-                <div class="form-group">
-                    {% for output in model_outs.splits %}
-                    <input type="checkbox" class="btn-check btn-check-data btn-check-split"
-                        id="btn-check-split-{{ output }}" data-content="{{ output }}" autocomplete="off">
-                    <label class="btn btn-outline-secondary btn-sm" for="btn-check-split-{{ output }}">{{ output
-                        }}</label>
-                    {% endfor %}
-                </div>
-                Outputs
-                <div class="form-group">
-                    {% for output in model_outs.setup_ids %}
-                    <input type="checkbox" class="btn-check btn-check-data btn-check-output"
-                        id="btn-check-out-{{ output }}" data-content="{{ output }}" autocomplete="off">
-                    <label class="btn btn-outline-secondary btn-sm" for="btn-check-out-{{ output }}">{{ output
-                        }}</label>
-                    {% endfor %}
-                </div>
-                <button class="btn btn-secondary btn-sm mt-3" type="button" data-bs-toggle="collapse"
-                    onclick="updateSelectedDatasets()" data-bs-target="#selectedDatasets" aria-expanded="false"
-                    aria-controls="selectedDatasets">Show
-                    included data</button>
-                <div class="collapse" id="selectedDatasets">
-                    <div class="card card-body font-monospace" id="selectedDatasetsContent">
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>

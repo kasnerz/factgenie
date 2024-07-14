@@ -1,15 +1,6 @@
 ---
 debug: true
 host_prefix: ""
-default_error_categories:
-  - name: "Incorrect"
-    color: "#ffbcbc"
-  - name: "Not checkable"
-    color: "#e9d2ff"
-  - name: "Misleading"
-    color: "#fff79f"
-  - name: "Other"
-    color: "#bbbbbb"
 logging_level: INFO
 login:
   active: false

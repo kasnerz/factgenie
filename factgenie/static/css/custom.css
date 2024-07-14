@@ -1,17 +1,15 @@
 body {
     color: #3c4149;
-    /* max-width: 1200px; */
-    /* margin: 20px auto; */
-    /* padding: 0 10px; */
-    /* font: 18px/1.4 'Open Sans', sans-serif;
-    color: #495057;
-    background-color: #FFFFFF; */
 }
 
 a {
-    color: black;
-    --bs-pagination-color: black;
+    color: rgb(6, 6, 6);
+    /* --bs-pagination-color: black; */
     text-decoration: none;
+}
+
+a.underline-link:hover {
+    text-decoration: underline;
 }
 
 pre {
@@ -247,7 +245,7 @@ pre {
 }
 
 .btn-primary:hover {
-    color: #fff;
+    color: #fff !important;
     background-color: #005c88;
     border-color: #005279;
 }
@@ -284,9 +282,13 @@ pre {
 }
 
 .btn-outline-secondary:hover {
-    color: #fff;
+    color: rgb(0, 0, 0);
     background-color: #ececec;
     border-color: #c9c7c7;
+}
+
+.btn-secondary:hover {
+    color: rgb(255, 255, 255) !important;
 }
 
 .pipeline-checkbox:checked {
@@ -808,4 +810,12 @@ a:hover {
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding: 30px;
+}
+
+.rounded-box {
+    border-color: rgb(222, 226, 230);
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 10px;
+    padding: 20px;
 }

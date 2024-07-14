@@ -17,7 +17,7 @@ from slugify import slugify
 from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
-from factgenie.evaluate import LLMMetric, Llama3Metric
+from factgenie.metrics import LLMMetric, Llama3Metric
 import factgenie.utils as utils
 
 DIR_PATH = os.path.dirname(__file__)
@@ -222,7 +222,6 @@ def crowdsourcing():
         model_outs=model_outs,
         campaigns=campaigns,
         default_campaign_id=default_campaign_id,
-        default_error_categories=app.config["default_error_categories"],
         is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
@@ -273,7 +272,7 @@ def crowdsourcing_new():
     idle_time = int(data.get("idleTime"))
     prolific_code = data.get("prolificCode")
     campaign_data = data.get("campaignData")
-    error_categories = data.get("errorCategories")
+    annotation_span_categories = data.get("annotationSpanCategories")
     sort_order = data.get("sortOrder")
 
     # create a new directory
@@ -296,7 +295,7 @@ def crowdsourcing_new():
                 # "data": campaign_data,
                 "sort_order": sort_order,
                 "source": "human",
-                "error_categories": error_categories,
+                "annotation_span_categories": annotation_span_categories,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
             f,
@@ -496,20 +495,18 @@ def llm_eval_new():
 
     # get a list of available metrics
     app.db["metric_index"] = utils.generate_metric_index()
-    llm_metrics = app.db["metric_index"]
+    llm_metrics = {metric : metrics.get_config() for metric, metrics in app.db["metric_index"].items()}
 
     utils.generate_campaign_index(app)
-
     campaign_index = app.db["campaign_index"]["model"]
 
     default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
 
     return render_template(
         "llm_eval_new.html",
-        default_error_categories=app.config["default_error_categories"],
         default_campaign_id=default_campaign_id,
         model_outs=model_outs,
-        llm_metrics=list(llm_metrics.keys()),
+        llm_metrics=llm_metrics,
         host_prefix=app.config["host_prefix"],
     )
 
@@ -541,6 +538,7 @@ def llm_eval_run():
 
     metric_name = campaign.metadata["metric"]
     metric = app.db["metric_index"][metric_name]
+
     return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name)
 
 

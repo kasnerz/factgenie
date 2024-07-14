@@ -85,11 +85,13 @@
                     <hr>
 
                     <p>
-                      There are {{ metadata.error_categories | length }} types of errors that you can mark in the
+                      There are {{ metadata.annotation_span_categories | length }} types of errors that you can mark in
+                      the
                       generated text:</p>
                     <ol>
-                      {% for error_category in metadata.error_categories %}
-                      <li><span style="background-color: {{ error_category.color }}"><b>{{ error_category.name
+                      {% for annotation_span_category in metadata.annotation_span_categories %}
+                      <li><span style="background-color: {{ annotation_span_category.color }}"><b>{{
+                            annotation_span_category.name
                             }}</b></span></li>
                       {% endfor %}
                     </ol>

@@ -19,7 +19,7 @@
 
 <div class="container w-75 mt-5">
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mb-5">← Main page</a>
-  <a href="{{ host_prefix }}/llm_eval/new" class="btn btn-secondary mb-5">New LLM
+  <a href="{{ host_prefix }}/llm_eval/new" class="btn btn-primary mb-5">New LLM
     eval</a>
 
   <div class="mt-1">
@@ -38,8 +38,9 @@
         <tbody>
           {% for name, campaign in campaigns.items() %}
           <tr>
-            <td><u><a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}">{{
-                  campaign.metadata.id }}</a></u></td>
+            <td><a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}"
+                class="underline-link">{{
+                campaign.metadata.id }}</a></td>
             <td>{{ campaign.metadata.created }}</td>
             <!-- <td>{{ campaign.stats }}</td> -->
             <td> {% for status, count in campaign.stats.items() %}

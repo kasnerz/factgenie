@@ -109,7 +109,7 @@ Keep in mind the prompt needs to **ask the model to produce JSON outputs in the 
   "errors": [
     { 
       "text": [TEXT_SPAN],
-      "type": [ERROR_CATEGORY]},
+      "type": [ANNOTATION_SPAN_CATEGORY]},
     ...
   ]
 }

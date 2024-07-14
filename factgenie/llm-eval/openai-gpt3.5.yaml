@@ -3,7 +3,7 @@ model: gpt-3.5-turbo-1106
 # model: "gpt-4-1106-preview"
 system_msg: "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
 # The return format should be ["errors": {...}]
-errors_categories: 
+annotation_span_categories: 
   - name: "Incorrect"
     color: "#ffbcbc"
   - name: "Not checkable"
