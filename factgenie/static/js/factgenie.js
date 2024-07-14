@@ -118,7 +118,7 @@ function loadAnnotations() {
     $("#dataset-spinner").show();
 
     const promises = [];
-    const annotation_span_categories = metadata.annotation_span_categories;
+    const annotation_span_categories = metadata.config.annotation_span_categories;
 
     // prefetch the examples for annotation: we need them for YPet initialization
     for (const [annotation_idx, example] of Object.entries(annotation_set)) {
@@ -366,7 +366,7 @@ function getAnnotatedOutput(output, campaign_id) {
 
     if (annotations_campaign.length > 0) {
         const annotations = annotations_campaign[0];
-        const annotation_span_categories = annotations.metadata.annotation_span_categories;
+        const annotation_span_categories = annotations.metadata.config.annotation_span_categories;
 
         annotated_content = annotateContent(content, annotations, annotation_span_categories);
     } else {
@@ -593,15 +593,22 @@ function gatherCampaignData() {
 function gatherConfig() {
     var config = {};
 
-    config.metricType = $("#metric-type").val();
-    config.modelName = $("#model-name").val();
-    config.promptTemplate = $("#prompt-template").val();
-    config.systemMessage = $("#system-message").val();
-    config.apiUrl = $("#api-url").val();
-    config.modelArguments = getKeysAndValues($("#model-arguments"));
-    config.extraArguments = getKeysAndValues($("#extra-arguments"));
-    config.annotationSpanCategories = getAnnotationSpanCategories();
-
+    if (window.mode == "crowdsourcing") {
+        config.examplesPerBatch = $("#examplesPerBatch").val();
+        config.idleTime = $("#idleTime").val();
+        config.completionCode = $("#completionCode").val();
+        config.sortOrder = $("#sortOrder").val();
+        config.annotationSpanCategories = getAnnotationSpanCategories();
+    } else if (window.mode == "llm_eval") {
+        config.metricType = $("#metric-type").val();
+        config.modelName = $("#model-name").val();
+        config.promptTemplate = $("#prompt-template").val();
+        config.systemMessage = $("#system-message").val();
+        config.apiUrl = $("#api-url").val();
+        config.modelArguments = getKeysAndValues($("#model-arguments"));
+        config.extraArguments = getKeysAndValues($("#extra-arguments"));
+        config.annotationSpanCategories = getAnnotationSpanCategories();
+    }
     return config;
 }
 
@@ -664,13 +671,8 @@ function getKeysAndValues(div) {
 
 function createHumanCampaign() {
     const campaignId = $('#campaignId').val();
-    const examplesPerBatch = $('#examplesPerBatch').val();
-    const idleTime = $('#idleTime').val();
-    const prolificCode = $('#prolificCode').val() || ""; // Optional field
-    const sortOrder = $('#sortOrder').val();
-
+    const config = gatherConfig();
     var campaignData = gatherCampaignData();
-    const annotationSpanCategories = getAnnotationSpanCategories();
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -679,16 +681,12 @@ function createHumanCampaign() {
     }
 
     $.post({
-        url: `${url_prefix}/crowdsourcing/new`,
+        url: `${url_prefix}/crowdsourcing/create`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
             campaignId: campaignId,
-            examplesPerBatch: examplesPerBatch,
-            idleTime: idleTime,
-            prolificCode: prolificCode,
-            campaignData: campaignData,
-            sortOrder: sortOrder,
-            annotationSpanCategories: annotationSpanCategories,
+            config: config,
+            campaignData: campaignData
         }),
         success: function (response) {
             console.log(response);
@@ -696,10 +694,7 @@ function createHumanCampaign() {
             if (response.success !== true) {
                 alert(response.error);
             } else {
-                // hide modal
-                $('#new-campaign-modal').modal('hide');
-                // refresh list of campaigns
-                location.reload();
+                window.location.href = `${url_prefix}/crowdsourcing`;
             }
         }
     });
@@ -884,17 +879,17 @@ function saveConfig() {
     const filename = $("#config-save-filename").val() + ".yaml";
     const config = gatherConfig();
 
-    // if filename is in window.llm_metrics, show a confirmation dialog
-    if (filename in window.llm_metrics) {
+    if (filename in window.configs) {
         if (!confirm(`The configuration with the name ${filename} already exists. Do you want to overwrite it?`)) {
             return;
         }
     }
 
     $.post({
-        url: `${url_prefix}/llm_eval/save_config`,
+        url: `${url_prefix}/save_config`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
+            mode: window.mode,
             filename: filename,
             config: config
         }),
@@ -915,6 +910,36 @@ function saveConfig() {
     });
 
 }
+function updateCrowdsourcingConfig() {
+    const crowdsourcingConfig = $('#crowdsourcingConfig').val();
+
+    if (crowdsourcingConfig === "[None]") {
+        $("#examplesPerBatch").val("");
+        $("#idleTime").val("");
+        $("#completionCode").val("");
+        $("#annotation-span-categories").empty();
+        return;
+    }
+    const cfg = window.configs[crowdsourcingConfig];
+
+    const examplesPerBatch = cfg.examples_per_batch;
+    const idleTime = cfg.idle_time;
+    const completionCode = cfg.completion_code;
+    const sortOrder = cfg.sort_order;
+    const annotationSpanCategories = cfg.annotation_span_categories;
+
+    $("#examplesPerBatch").val(examplesPerBatch);
+    $("#idleTime").val(idleTime);
+    $("#completionCode").val(completionCode);
+    $("#sortOrder").val(sortOrder);
+    $("#annotation-span-categories").empty();
+
+    annotationSpanCategories.forEach((annotationSpanCategory) => {
+        const newCategory = createAnnotationSpanCategoryElem(annotationSpanCategory.name, annotationSpanCategory.color);
+        $("#annotation-span-categories").append(newCategory);
+    });
+}
+
 
 function updateLLMMetricConfig() {
     const llmConfigValue = $('#llmConfig').val();
@@ -929,7 +954,7 @@ function updateLLMMetricConfig() {
         $("#extra-arguments").empty();
         return;
     }
-    const cfg = window.llm_metrics[llmConfigValue];
+    const cfg = window.configs[llmConfigValue];
 
     const metric_type = cfg.type;
     const model_name = cfg.model;

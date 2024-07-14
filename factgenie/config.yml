@@ -3,6 +3,6 @@ debug: true
 host_prefix: ""
 logging_level: INFO
 login:
-  active: false
+  active: true
   username: admin
   password: factgenie

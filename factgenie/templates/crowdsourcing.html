@@ -19,10 +19,7 @@
 
 <div class="container w-75 mt-5">
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mb-5">← Main page</a>
-  <!-- button for modal popup: new campaign -->
-  <button type="button" class="btn btn-primary mb-5" data-bs-toggle="modal" data-bs-target="#new-campaign-modal">New
-    Campaign</button>
-
+  <a href="{{ host_prefix }}/crowdsourcing/new" class="btn btn-primary mb-5">New campaign</a>
 
   <div class="mt-1">
 
@@ -37,9 +34,11 @@
     </div>
     {% endif %}
 
-    <h3>List of crowdsourcing campaigns</h3>
+    <h3><img src="{{ host_prefix }}/static/img/pencil.png" class="heading-img-inline">
+      <b>List of crowdsourcing campaigns</b>
+    </h3>
     <div id="campaigns">
-      <table class="table">
+      <table class="table table-hover">
         <thead>
           <tr>
             <th scope="col">Id</th>
@@ -52,15 +51,16 @@
         <tbody>
           {% for name, campaign in campaigns.items() %}
           <tr>
-            <td><u><a href="{{ host_prefix }}/crowdsourcing/detail?campaign={{ campaign.metadata.id }}">{{
-                  campaign.metadata.id }}</a></u></td>
+            <td><a href="{{ host_prefix }}/crowdsourcing/detail?campaign={{ campaign.metadata.id }}"
+                class="blue-link">{{
+                campaign.metadata.id }}</a></td>
             <td>{{ campaign.metadata.created }}</td>
             <!-- <td>{{ campaign.stats }}</td> -->
             <td> {% for status, count in campaign.stats.items() %}
               <span class="badge bg-secondary">{{ status }}: {{ count }}</span>
               {% endfor %}
             </td>
-            <td>{{ campaign.metadata.prolific_code }}</td>
+            <td>{{ campaign.metadata.completion_code }}</td>
             <td>
               <a href="{{ host_prefix }}/annotate?campaign={{ campaign.metadata.id }}" class="btn btn-outline-secondary"
                 data-bs-toggle="tooltip" title="Preview the crowdsourcing page">
@@ -82,100 +82,11 @@
     </div>
   </div>
 
-
-  <div class="modal fade" id="new-campaign-modal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="about-modal-label">Create campaign</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id='aboutarea' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
-            <div id="about-info" class="area-content">
-              <form id="annotation-campaign-form">
-                <div class="form-group">
-                  <label for="campaignId">Campaign Id</label>
-                  <input type="text" class="form-control" id="campaignId" name="campaignId"
-                    value="{{ default_campaign_id }}" placeholder="Enter a unique identifier" required>
-                </div>
-
-                {% include 'forms/data_selection.html' %}
-
-                <div class="accordion accordion-flush" id="accordion-prolific">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="flush-headingOne-prolific">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#flush-collapseOne-prolific" aria-expanded="false"
-                        aria-controls="flush-collapseOne-prolific">
-                        <i class="fa fa-user"></i>
-                        <span style="margin-left: 10px;">Prolific</span>
-                      </button>
-                    </h2>
-                    <div id="flush-collapseOne-prolific" class="accordion-collapse collapse"
-                      aria-labelledby="flush-headingOne-prolific" data-bs-parent="#accordion-prolific">
-                      <div class="accordion-body">
-                        <div class="form-group">
-                          <label for="examplesPerBatch">Examples per batch</label>
-                          <div>
-                            <small class="text-muted">Number of examples shown to each annotator.</small>
-                          </div>
-                          <input type="number" class="form-control" id="examplesPerBatch" name="examplesPerBatch"
-                            placeholder="Batches of data to annotate" min="1" value=10 required>
-                        </div>
-                        <div class="form-group mt-2">
-                          <!-- select for sort order -->
-                          <label for="sortOrder">Shuffle outputs</label>
-                          <div>
-                            <small class="text-muted">How to shuffle outputs before batching.</small>
-                          </div>
-                          <select class="form-select" id="sortOrder" name="sortOrder">
-                            <option value="random">Dataset-level</option>
-                            <option value="example">Example-level</option>
-                          </select>
-                        </div>
-                        <div class="form-group mt-2">
-                          <label for="idleTime">Idle Time (minutes)</label>
-                          <div>
-                            <small class="text-muted">The time after which an unfinished example can be re-assigned to a
-                              new annotator.</small>
-                          </div>
-                          <input type="number" class="form-control" id="idleTime" name="idleTime" min="0" required
-                            value=120>
-                        </div>
-                        <div class="form-group mt-2">
-                          <label for="prolificCode">Prolific Completion Code</label>
-                          <div>
-                            <small class="text-muted">The code that will be shown to the annotator after submitting the
-                              annotations.</small>
-                          </div>
-                          <input type="text" class="form-control" id="prolificCode" name="prolificCode"
-                            placeholder="Enter prolific completion code">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {% include 'forms/annotation_span_categories.html' %}
-
-              </form>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary mt-3" onclick="createHumanCampaign(event)">Create
-              campaign</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
   window.campaigns = {{ campaigns | tojson | safe }};
-  window.model_outs = {{ model_outs | tojson | safe }};
   window.mode = "crowdsourcing";
 </script>
 <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

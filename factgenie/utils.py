@@ -26,7 +26,8 @@ DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
 ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
-LLM_CONFIG_DIR = os.path.join(DIR_PATH, "llm-eval")
+LLM_CONFIG_DIR = os.path.join(DIR_PATH, "config", "llm-eval")
+CROWDSOURCING_CONFIG_DIR = os.path.join(DIR_PATH, "config", "crowdsourcing")
 
 
 file_handler = logging.FileHandler("error.log")
@@ -82,7 +83,7 @@ def get_dataset(app, dataset_name):
     return app.db["datasets_obj"].get(dataset_name)
 
 
-def generate_metric_index():
+def load_llm_eval_configs():
     """
     Goes through all the files in the LLM_CONFIG_DIR
     instantiate the LLMMetric class
@@ -105,6 +106,24 @@ def generate_metric_index():
                 continue
 
     return metrics
+
+
+def load_crowdsourcing_configs():
+    configs = {}
+
+    for file in os.listdir(CROWDSOURCING_CONFIG_DIR):
+        if file.endswith(".yaml"):
+            try:
+                with open(os.path.join(CROWDSOURCING_CONFIG_DIR, file)) as f:
+                    config = yaml.safe_load(f)
+                    # TODO validate
+                    configs[file] = config
+            except Exception as e:
+                logger.error(f"Error while loading metric {file}")
+                traceback.print_exc()
+                continue
+
+    return configs
 
 
 def generate_campaign_index(app):
@@ -298,9 +317,12 @@ def generate_llm_eval_db(datasets: Dict[str, Dataset], campaign_data):
     return df
 
 
-def generate_campaign_db(app, campaign_data, examples_per_batch, sort_order):
+def generate_campaign_db(app, campaign_data, config):
     # load all outputs
     all_examples = []
+
+    examples_per_batch = config["examples_per_batch"]
+    sort_order = config["sort_order"]
 
     for c in campaign_data:
         dataset = app.db["datasets_obj"][c["dataset"]]
@@ -314,12 +336,12 @@ def generate_campaign_db(app, campaign_data, examples_per_batch, sort_order):
                 }
             )
 
-    if sort_order == "example":
+    if sort_order == "example-level":
         random.seed(42)
         random.shuffle(all_examples)
         # group outputs by example ids, dataset and split
         all_examples = sorted(all_examples, key=lambda x: (x["example_idx"], x["dataset"], x["split"]))
-    elif sort_order == "random":
+    elif sort_order == "dataset-level":
         random.seed(42)
         random.shuffle(all_examples)
     elif sort_order == "default":
@@ -396,6 +418,35 @@ def generate_default_id(campaign_index, prefix):
     return default_campaign_id
 
 
+def get_model_outs(app):
+    datasets = app.db["datasets_obj"]
+    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
+
+    for dataset_name, dataset in datasets.items():
+        splits = dataset.get_splits()
+        model_outs["datasets"].append(dataset_name)
+
+        for split in splits:
+            output_setups = dataset.outputs[split].keys()
+            model_outs["splits"].append(split)
+
+            for setup_id in output_setups:
+                model_outs["setup_ids"].append(setup_id)
+                model_outs["valid_triplets"].append(
+                    {
+                        "dataset": dataset_name,
+                        "split": split,
+                        "setup_id": setup_id,
+                        "example_count": dataset.get_example_count(split),
+                    }
+                )
+
+    for key in ["datasets", "splits", "setup_ids"]:
+        model_outs[key] = sorted(list(set(model_outs[key])))
+
+    return model_outs
+
+
 def check_login(app, username, password):
     return username == app.config["login"]["username"] and password == app.config["login"]["password"]
 
@@ -419,7 +470,7 @@ def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx
     return annotation
 
 
-def save_config(filename, config):
+def save_config(filename, config, mode):
     # https://github.com/yaml/pyyaml/issues/121#issuecomment-1018117110
     def yaml_multiline_string_pipe(dumper, data):
         text_list = [line.rstrip() for line in data.splitlines()]
@@ -430,11 +481,13 @@ def save_config(filename, config):
 
     yaml.add_representer(str, yaml_multiline_string_pipe)
 
-    with open(os.path.join(LLM_CONFIG_DIR, filename), "w") as f:
+    save_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+
+    with open(os.path.join(save_dir, filename), "w") as f:
         yaml.dump(config, f, indent=2, allow_unicode=True)
 
 
-def parse_config(config):
+def parse_llm_config(config):
     config = {
         "type": config.get("metricType"),
         "model": config.get("modelName"),
@@ -445,6 +498,18 @@ def parse_config(config):
         "extra_args": config.get("extraArguments"),
         "annotation_span_categories": config.get("annotationSpanCategories"),
     }
+    return config
+
+
+def parse_crowdsourcing_config(config):
+    config = {
+        "examples_per_batch": int(config.get("examplesPerBatch")),
+        "idle_time": int(config.get("idleTime")),
+        "completion_code": config.get("completionCode"),
+        "sort_order": config.get("sortOrder"),
+        "annotation_span_categories": config.get("annotationSpanCategories"),
+    }
+
     return config
 
 

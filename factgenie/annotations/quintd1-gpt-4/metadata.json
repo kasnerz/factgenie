@@ -1,23 +1,25 @@
 {
     "id": "quintd1-gpt-4",
     "source": "hidden",
-    "annotation_span_categories": [
-        {
-            "name": "Incorrect",
-            "color": "#ffbcbc"
-        },
-        {
-            "name": "Not checkable",
-            "color": "#e9d2ff"
-        },
-        {
-            "name": "Misleading",
-            "color": "#fff79f"
-        },
-        {
-            "name": "Other",
-            "color": "#bbbbbb"
-        }
-    ],
+    "config": {
+        "annotation_span_categories": [
+            {
+                "name": "Incorrect",
+                "color": "#ffbcbc"
+            },
+            {
+                "name": "Not checkable",
+                "color": "#e9d2ff"
+            },
+            {
+                "name": "Misleading",
+                "color": "#fff79f"
+            },
+            {
+                "name": "Other",
+                "color": "#bbbbbb"
+            }
+        ]
+    },
     "created": "2024-04-01 00:00:00"
 }

@@ -46,7 +46,7 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
         metric_name = LLMMetricFactory.get_metric_name({"metric_name": llm_metric_config})
 
     DATASETS = dict((name, cls()) for name, cls in DATASET_CLASSES.items())  # instantiate all datasets
-    metrics_index = utils.generate_metric_index()  # Loads all metrics configs factgenie/llm-evals/*.yaml
+    metrics_index = utils.load_llm_eval_configs()  # Loads all metrics configs factgenie/llm-evals/*.yaml
     metric = metrics_index[metric_name]
     campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, DATASETS)
 

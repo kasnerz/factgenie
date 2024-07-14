@@ -125,7 +125,7 @@ def annotate():
     utils.generate_campaign_index(app)
     campaign_id = request.args.get("campaign")
     campaign = app.db["campaign_index"]["human"][campaign_id]
-    compl_code = campaign.metadata["prolific_code"]
+    compl_code = campaign.metadata["config"]["completion_code"]
     prolific_pid = request.args.get("PROLIFIC_PID", "test")
     session_id = request.args.get("SESSION_ID", "test")
     study_id = request.args.get("STUDY_ID", "test")
@@ -186,47 +186,18 @@ def browse():
 def crowdsourcing():
     logger.info(f"Crowdsourcing page loaded")
 
-    datasets = app.db["datasets_obj"]
-    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
-
-    for dataset_name, dataset in datasets.items():
-        splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
-
-        for split in splits:
-            output_setups = dataset.outputs[split].keys()
-            model_outs["splits"].append(split)
-
-            for setup_id in output_setups:
-                model_outs["setup_ids"].append(setup_id)
-                model_outs["valid_triplets"].append(
-                    {
-                        "dataset": dataset_name,
-                        "split": split,
-                        "setup_id": setup_id,
-                        "example_count": dataset.get_example_count(split),
-                    }
-                )
-
-    for key in ["datasets", "splits", "setup_ids"]:
-        model_outs[key] = sorted(list(set(model_outs[key])))
-
     utils.generate_campaign_index(app)
 
     campaign_index = app.db["campaign_index"]["human"]
     campaigns = defaultdict(dict)
 
-    for campaign_id, campaign in campaign_index.items():
+    for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
         campaigns[campaign_id]["stats"] = campaign.get_stats()
 
-    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="campaign")
-
     return render_template(
         "crowdsourcing.html",
-        model_outs=model_outs,
         campaigns=campaigns,
-        default_campaign_id=default_campaign_id,
         is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
@@ -267,18 +238,16 @@ def crowdsourcing_detail():
     )
 
 
-@app.route("/crowdsourcing/new", methods=["POST"])
+@app.route("/crowdsourcing/create", methods=["POST"])
 @login_required
-def crowdsourcing_new():
+def crowdsourcing_create():
     data = request.get_json()
 
     campaign_id = slugify(data.get("campaignId"))
-    examples_per_batch = int(data.get("examplesPerBatch"))
-    idle_time = int(data.get("idleTime"))
-    prolific_code = data.get("prolificCode")
     campaign_data = data.get("campaignData")
-    annotation_span_categories = data.get("annotationSpanCategories")
-    sort_order = data.get("sortOrder")
+    config = data.get("config")
+
+    config = utils.parse_crowdsourcing_config(config)
 
     # create a new directory
     if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
@@ -287,7 +256,7 @@ def crowdsourcing_new():
     os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
 
     # create the annotation CSV
-    db = utils.generate_campaign_db(app, campaign_data, examples_per_batch, sort_order)
+    db = utils.generate_campaign_db(app, campaign_data, config=config)
     db.to_csv(os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv"), index=False)
 
     # save metadata
@@ -295,12 +264,8 @@ def crowdsourcing_new():
         json.dump(
             {
                 "id": campaign_id,
-                "idle_time": idle_time,
-                "prolific_code": prolific_code,
-                # "data": campaign_data,
-                "sort_order": sort_order,
                 "source": "human",
-                "annotation_span_categories": annotation_span_categories,
+                "config": config,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
             f,
@@ -318,9 +283,31 @@ def crowdsourcing_new():
     # create the campaign object
     campaign = HumanCampaign(campaign_id=campaign_id)
 
+    utils.generate_campaign_index(app)
     app.db["campaign_index"]["human"][campaign_id] = campaign
 
     return utils.success()
+
+
+@app.route("/crowdsourcing/new", methods=["GET", "POST"])
+@login_required
+def crowdsourcing_new():
+    model_outs = utils.get_model_outs(app)
+
+    utils.generate_campaign_index(app)
+    campaign_index = app.db["campaign_index"]["human"]
+
+    configs = utils.load_crowdsourcing_configs()
+
+    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="campaign")
+
+    return render_template(
+        "crowdsourcing_new.html",
+        default_campaign_id=default_campaign_id,
+        model_outs=model_outs,
+        configs=configs,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/datasets", methods=["GET", "POST"])
@@ -431,7 +418,7 @@ def llm_eval_create():
     campaign_data = data.get("campaignData")
     config = data.get("config")
 
-    config = utils.parse_config(config)
+    config = utils.parse_llm_config(config)
     try:
         metric = LLMMetricFactory.from_config(config)
     except Exception as e:
@@ -476,33 +463,10 @@ def llm_eval_detail():
 @app.route("/llm_eval/new", methods=["GET", "POST"])
 @login_required
 def llm_eval_new():
-    datasets = app.db["datasets_obj"]
-    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
-
-    for dataset_name, dataset in datasets.items():
-        splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
-
-        for split in splits:
-            output_setups = dataset.outputs[split].keys()
-            model_outs["splits"].append(split)
-
-            for setup_id in output_setups:
-                model_outs["setup_ids"].append(setup_id)
-                model_outs["valid_triplets"].append(
-                    {
-                        "dataset": dataset_name,
-                        "split": split,
-                        "setup_id": setup_id,
-                        "example_count": dataset.get_example_count(split),
-                    }
-                )
-
-    for key in ["datasets", "splits", "setup_ids"]:
-        model_outs[key] = sorted(list(set(model_outs[key])))
+    model_outs = utils.get_model_outs(app)
 
     # get a list of available metrics
-    app.db["metric_index"] = utils.generate_metric_index()
+    app.db["metric_index"] = utils.load_llm_eval_configs()
     llm_metrics = {metric: metrics.get_config() for metric, metrics in app.db["metric_index"].items()}
 
     metric_types = list(LLMMetricFactory.metric_classes().keys())
@@ -575,15 +539,21 @@ def llm_eval_pause():
     return resp
 
 
-@app.route("/llm_eval/save_config", methods=["POST"])
-def llm_eval_save_config():
+@app.route("/save_config", methods=["POST"])
+def save_config():
     data = request.get_json()
     filename = data.get("filename")
     config = data.get("config")
+    mode = data.get("mode")
 
-    config = utils.parse_config(config)
+    if mode == "llm_eval":
+        config = utils.parse_llm_config(config)
+    elif mode == "crowdsourcing":
+        config = utils.parse_crowdsourcing_config(config)
+    else:
+        return jsonify({"error": f"Invalid mode: {mode}"})
 
-    utils.save_config(filename, config)
+    utils.save_config(filename, config, mode=mode)
 
     return utils.success()
 
