@@ -741,10 +741,14 @@ function runLlmEval(campaignId) {
                 console.log(JSON.stringify(response));
             } else {
                 console.log(response);
-                $("#metadata-status").html("finished");
-                $("#run-button").hide();
-                $("#stop-button").hide();
-                $("#llm-eval-progress").hide();
+
+                if (response.status == "finished") {
+                    $("#metadata-status").html("finished");
+                    $("#run-button").hide();
+                    $("#download-button").show();
+                    $("#stop-button").hide();
+                    $("#llm-eval-progress").hide();
+                }
             }
         }
     });
@@ -753,6 +757,7 @@ function runLlmEval(campaignId) {
 function pauseLlmEval(campaignId) {
     $("#run-button").show();
     $("#stop-button").hide();
+    $("#download-button").show();
     $("#llm-eval-progress").hide();
 
     $.post({

@@ -371,14 +371,14 @@ def export_annotations():
             for file in files:
                 zip_file.write(
                     os.path.join(root, file),
-                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id, "files")),
+                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id)),
                 )
 
     # Set response headers for download
-    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    timestamp = int(time.time())
     response = make_response(zip_buffer.getvalue())
     response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{now}.zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
     return response
 
 
@@ -570,7 +570,8 @@ def llm_eval_pause():
     campaign.metadata["status"] = "paused"
     campaign.update_metadata()
 
-    return utils.success()
+    resp = jsonify(success=True, status=campaign.metadata["status"])
+    return resp
 
 
 @app.route("/submit_annotations", methods=["POST"])

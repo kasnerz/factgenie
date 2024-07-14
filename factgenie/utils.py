@@ -420,7 +420,7 @@ def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, exampl
 
 
 def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name):
-    start_time = time.time()
+    start_time = int(time.time())
 
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
     os.makedirs(save_dir, exist_ok=True)
@@ -477,4 +477,4 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
         campaign.metadata["status"] = "finished"
         campaign.update_metadata()
 
-    return success()
+    return jsonify(success=True, status=campaign.metadata["status"])
