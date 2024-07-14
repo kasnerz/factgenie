@@ -367,6 +367,7 @@ function getAnnotatedOutput(output, campaign_id) {
     if (annotations_campaign.length > 0) {
         const annotations = annotations_campaign[0];
         const annotation_span_categories = annotations.metadata.annotation_span_categories;
+
         annotated_content = annotateContent(content, annotations, annotation_span_categories);
     } else {
         annotated_content = content;
@@ -594,16 +595,14 @@ function createLLMEval() {
     const campaignId = $('#campaignId').val();
     const llmConfig = $('#llmConfig').val();
     const metricType = $("#metric-type").val();
-    const modelName = $("#model-name").html();
-    const promptTemplate = $("#prompt-template").html();
-    const systemMessage = $("#system-message").html();
-    const apiUrl = $("#api-url").html();
+    const modelName = $("#model-name").val();
+    const promptTemplate = $("#prompt-template").val();
+    const systemMessage = $("#system-message").val();
+    const apiUrl = $("#api-url").val();
     const modelArguments = getKeysAndValues($("#model-arguments"));
     const extraArguments = getKeysAndValues($("#extra-arguments"));
     const annotationSpanCategories = getAnnotationSpanCategories();
     var campaignData = gatherCampaignData();
-
-    // TODO validation!
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -633,10 +632,8 @@ function createLLMEval() {
             if (response.success !== true) {
                 alert(response.error);
             } else {
-                // hide modal
-                $('#new-eval-modal').modal('hide');
-                // refresh list of campaigns
-                location.reload();
+                // redirect to the campaign list ("/llm_eval")
+                window.location.href = `${url_prefix}/llm_eval`;
             }
         }
     });
@@ -644,12 +641,12 @@ function createLLMEval() {
 
 function getAnnotationSpanCategories() {
     var annotationSpanCategories = [];
+
     $("#annotation-span-categories").children().each(function () {
-        const name = $(this).find("#annotationSpanCategoryName").val();
-        const color = $(this).find("#annotationSpanCategoryColor").val();
+        const name = $(this).find("input[name='annotationSpanCategoryName']").val();
+        const color = $(this).find("input[name='annotationSpanCategoryColor']").val();
         annotationSpanCategories.push({ name: name, color: color });
-    }
-    );
+    });
     return annotationSpanCategories;
 }
 
@@ -896,7 +893,7 @@ function updateLLMMetricConfig() {
     }
     const cfg = window.llm_metrics[llmConfigValue];
 
-    const metric_type = cfg.metric_type;
+    const metric_type = cfg.type;
     const model_name = cfg.model;
     const prompt_template = cfg.prompt_template;
     const system_msg = cfg.system_msg;

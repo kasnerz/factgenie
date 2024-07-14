@@ -28,8 +28,6 @@
         <dd class="col-sm-9" id="metadata-created"> {{ metadata.created }} </dd>
         <dt class="col-sm-3"> Status </dt>
         <dd class="col-sm-9" id="metadata-status"> {{ metadata.status }} </dd>
-        <dt class="col-sm-3"> Metric </dt>
-        <dd class="col-sm-9" id="metadata-metric"> {{ metadata.metric }} </dd>
         <dt class="col-sm-3"> Examples </dt>
         <dd class="col-sm-9" id="metadata-example-cnt"> {{ finished_examples | length }} / {{ overview | length }} </dd>
       </dl>
@@ -49,6 +47,9 @@
           style="display: none;" {% endif %}>
           <i class="fa fa-download"></i> Download annotations
         </a>
+        <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#config-modal"><i
+            class="fa fa-cog"></i> Show
+          configuration</a>
       </div>
       <div class="progress mt-3" style="display: {{ 'none' if metadata.status != 'running' else block }};"
         id="llm-eval-progress">
@@ -120,11 +121,27 @@
 
         </div>
       </div>
-
-
-
     </div>
   </div>
+
+  <div class="modal fade" id="config-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="about-modal-label">Config</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id='configarea' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
+            <!-- indent nicely -->
+            <pre>{{ metadata.config | prettify_json }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <script>
     // variable to be used in factgenie.js
     window.url_prefix = "{{ host_prefix }}";

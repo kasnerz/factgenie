@@ -24,9 +24,10 @@
 
   <div class="mt-1">
     <h3><img src="{{ host_prefix }}/static/img/llm.png" class="heading-img-inline">
-      List of LLM evaluation campaigns</h3>
+      <b>List of LLM evaluation campaigns</b>
+    </h3>
     <div id="campaigns">
-      <table class="table">
+      <table class="table table-hover">
         <thead>
           <tr>
             <th scope="col">Id</th>
@@ -38,8 +39,7 @@
         <tbody>
           {% for name, campaign in campaigns.items() %}
           <tr>
-            <td><a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}"
-                class="underline-link">{{
+            <td><a href="{{ host_prefix }}/llm_eval/detail?campaign={{ campaign.metadata.id }}" class="blue-link">{{
                 campaign.metadata.id }}</a></td>
             <td>{{ campaign.metadata.created }}</td>
             <!-- <td>{{ campaign.stats }}</td> -->

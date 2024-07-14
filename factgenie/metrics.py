@@ -32,102 +32,131 @@ class LLMMetricFactory:
         return {
             "openai": OpenAIMetric,
             "ollama": OllamaMetric,
-            "ollama-llama3": Llama3Metric,
             "ollama-logicnlg-markdown": LogicNLGMarkdownOllamaMetric,
         }
 
     @staticmethod
-    def get_metric_name(config):
-        """Generate a metric name based on config values and validates that a metric name fits existing LLMMetric classes and starts with 'llm-' ie common format"""
+    def from_config(config):
         metric_type = config["type"]
-        model = config["model"]
-        metric_name = config.get("metric_name", None)
-        if metric_name is None:
-            assert (
-                metric_type in LLMMetricFactory.metric_classes()
-            ), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
-            metric_name = f"llm-{metric_type}-{model}"
-        assert metric_name.startswith("llm-"), f"Metric name {metric_name=} should start with 'llm-'"
+        classes = LLMMetricFactory.metric_classes()
 
-        found = False
-        for metric_class in LLMMetricFactory.metric_classes():
-            if metric_name.startswith(f"llm-{metric_class}"):
-                found = True
-                return metric_name
-        if not found:
-            raise ValueError(
-                f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}"
-            )
+        if metric_type not in classes:
+            raise ValueError(f"Metric type {metric_type} is not implemented.")
 
-    @staticmethod
-    def get_metric(config):
-        metric_type = config["type"]  # TODO (oplatek) rename to metric_type to be explicit in the config
-        model = config["model"]
+        return classes[metric_type](config)
 
-        metric_name = LLMMetricFactory.get_metric_name(config)
+    # @staticmethod
+    # def get_metric_name(config):
+    #     """Generate a metric name based on config values and validates that a metric name fits existing LLMMetric classes and starts with 'llm-' ie common format"""
+    #     metric_type = config["type"]
+    #     model = config["model"]
+    #     metric_name = config.get("metric_name", None)
+    #     if metric_name is None:
+    #         assert (
+    #             metric_type in LLMMetricFactory.metric_classes()
+    #         ), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
+    #         metric_name = f"llm-{metric_type}-{model}"
+    #     assert metric_name.startswith("llm-"), f"Metric name {metric_name=} should start with 'llm-'"
 
-        logger.info(f"Creating metric:{metric_name}")
+    #     found = False
+    #     for metric_class in LLMMetricFactory.metric_classes():
+    #         if metric_name.startswith(f"llm-{metric_class}"):
+    #             found = True
+    #             return metric_name
+    #     if not found:
+    #         raise ValueError(
+    #             f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}"
+    #         )
 
-        # TODO (oplatek) change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
-        if metric_type == "openai":
-            return OpenAIMetric(config)
-        elif metric_type == "ollama":
-            # we implemented specific input postprocessing for Llama 3
-            if model.startswith("llama3"):
-                return Llama3Metric(config)
-            else:
-                return OllamaMetric(config)
-        elif metric_type == "ollama-logicnlg-markdown":
-            return LogicNLGMarkdownOllamaMetric(config)
-        else:
-            raise NotImplementedError(
-                f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!"
-            )
+    # @staticmethod
+    # def get_metric(config):
+    #     metric_type = config["type"]  # TODO (oplatek) rename to metric_type to be explicit in the config
+    #     model = config["model"]
+
+    #     metric_name = LLMMetricFactory.get_metric_name(config)
+
+    #     logger.info(f"Creating metric:{metric_name}")
+
+    # # TODO (oplatek) change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
+    # if metric_type == "openai":
+    #     return OpenAIMetric(config)
+    # elif metric_type == "ollama":
+    #     # we implemented specific input postprocessing for Llama 3
+    #     if model.startswith("llama3"):
+    #         return Llama3Metric(config)
+    #     else:
+    #         return OllamaMetric(config)
+    # elif metric_type == "ollama-logicnlg-markdown":
+    #     return LogicNLGMarkdownOllamaMetric(config)
+    # else:
+    #     raise NotImplementedError(
+    #         f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!"
+    #     )
 
 
 class LLMMetric:
     def __init__(self, config):
-        self.metric_type = config["type"]
-        self.metric_name = LLMMetricFactory.get_metric_name(config)
-        self.annotation_span_categories = config["annotation_span_categories"]
-        assert (
-            isinstance(self.annotation_span_categories, list) and len(self.annotation_span_categories) > 0
-        ), f"Annotation categories must be a non-empty list, got {self.annotation_span_categories=}"
+        self.validate_config(config)
+        self.config = config
 
-        self.system_msg = config.get("system_msg", None)
-        if self.system_msg is None:
-            logger.warning("System message (`system_msg`) field not set, using an empty string")
-            self.system_msg = ""
+        if "extra_args" in config:
+            # the key in the model output that contains the annotations
+            self.annotation_key = config["extra_args"].get("annotation_key", "errors")
 
-        self.metric_prompt_template = config.get("prompt_template", None)
+    def get_required_fields(self):
+        return {
+            "type": str,
+            "annotation_span_categories": list,
+            "prompt_template": str,
+            "model": str,
+            "model_args": dict,
+        }
 
-        if self.metric_prompt_template is None:
-            raise ValueError("Prompt template (`prompt_template`) field is missing in the config")
+    def get_optional_fields(self):
+        return {
+            "system_msg": str,
+            "api_url": str,
+            "extra_args": dict,
+        }
 
-        self.api_url = config.get("api_url", None)
-        self.extra_args = config.get("extra_args", {})
+    def get_annotator_id(self):
+        return "llm-" + self.config["type"] + "-" + self.config["model"]
 
     def get_config(self):
-        return {
-            "metric_type": self.metric_type,
-            "prompt_template": self.metric_prompt_template,
-            "system_msg": self.system_msg,
-            "annotation_span_categories": self.annotation_span_categories,
-            "model_args": self.model_args,
-            "model": self.model,
-            "api_url": self.api_url,
-            "extra_args": self.extra_args,
-        }
+        return self.config
+
+    def validate_config(self, config):
+        for field in self.get_required_fields():
+            assert field in config, f"Field `{field}` is missing in the config. Keys: {config.keys()}"
+
+        for field, field_type in self.get_required_fields().items():
+            assert isinstance(
+                config[field], field_type
+            ), f"Field `{field}` must be of type {field_type}, got {config[field]=}"
+
+        for field, field_type in self.get_optional_fields().items():
+            if field in config:
+                assert isinstance(
+                    config[field], field_type
+                ), f"Field `{field}` must be of type {field_type}, got {config[field]=}"
+            else:
+                # set the default value for the data type
+                config[field] = field_type()
+
+        # warn if there are any extra fields
+        for field in config:
+            if field not in self.get_required_fields() and field not in self.get_optional_fields():
+                logger.warning(f"Field `{field}` is not recognized in the config.")
 
     def postprocess_annotations(self, text, model_json):
         annotation_list = []
         current_pos = 0
 
-        if "annotation_span_categories" not in model_json:
-            logger.error(f"Cannot find the key `annotation_span_categories` in {model_json=}")
+        if self.annotation_key not in model_json:
+            logger.error(f"Cannot find the key `{self.annotation_key}` in {model_json=}")
             return []
 
-        for annotation in model_json["annotation_span_categories"]:
+        for annotation in model_json[self.annotation_key]:
             # find the `start` index of the error in the text
             start_pos = text.lower().find(annotation["text"].lower(), current_pos)
 
@@ -152,8 +181,8 @@ class LLMMetric:
 
     def prompt(self, data, text):
         assert isinstance(text, str) and len(text) > 0, f"Text must be a non-empty string, got {text=}"
-        data4prompt = self.preprocess_data_for_prompt(data)
-        return self.metric_prompt_template.format(data=data4prompt, text=text)
+        data_for_prompt = self.preprocess_data_for_prompt(data)
+        return self.config["prompt_template"].format(data=data_for_prompt, text=text)
 
     def annotate_example(self, data, text):
         raise NotImplementedError("Override this method in the subclass to call the LLM API")
@@ -163,8 +192,27 @@ class OpenAIMetric(LLMMetric):
     def __init__(self, config):
         super().__init__(config)
         self.client = OpenAI()
-        self.model = config["model"]
-        self.model_args = config.get("model_args")
+        self.parse_model_args()
+
+    def get_required_fields(self):
+        return {
+            "type": str,
+            "annotation_span_categories": list,
+            "prompt_template": str,
+            "model": str,
+        }
+
+    def get_optional_fields(self):
+        return {
+            "system_msg": str,
+            "model_args": dict,
+            "api_url": str,  # TODO can be removed, but we receive it from the UI
+            "extra_args": dict,  # TODO can be removed, but we receive it from the UI
+        }
+
+    def parse_model_args(self):
+        if "temperature" in self.config["model_args"]:
+            self.config["model_args"]["temperature"] = float(self.config["model_args"]["temperature"])
 
     def annotate_example(self, data, text):
         try:
@@ -172,13 +220,13 @@ class OpenAIMetric(LLMMetric):
 
             logger.debug(f"Calling OpenAI API with prompt: {prompt}")
             response = self.client.chat.completions.create(
-                model=self.model,
+                model=self.config["model"],
                 response_format={"type": "json_object"},
                 messages=[
-                    {"role": "system", "content": self.system_msg},
+                    {"role": "system", "content": self.config["system_msg"]},
                     {"role": "user", "content": prompt},
                 ],
-                **model_args,
+                **self.config.get("model_args", {}),
             )
             annotation_str = response.choices[0].message.content
             j = json.loads(annotation_str)
@@ -193,35 +241,39 @@ class OpenAIMetric(LLMMetric):
 class OllamaMetric(LLMMetric):
     def __init__(self, config):
         super().__init__(config)
-        self.api_url = config.get("api_url", None)
-
-        if self.api_url is None:
-            raise ValueError("API URL (`api_url`) field is missing in the config")
-
-        self.model_args = config["model_args"]
-        self.model = config["model"]
-        self.seed = self.model_args.get("seed", None)
 
     def postprocess_output(self, output):
         output = output.strip()
         j = json.loads(output)
+
+        if self.config["model"].startswith("llama3"):
+            # the model often tends to produce a nested list
+            annotations = j[self.annotation_key]
+            if isinstance(annotations, list) and len(annotations) >= 1 and isinstance(annotations[0], list):
+                j[self.annotation_key] = j[self.annotation_key][0]
+
         return j
 
     def annotate_example(self, data, text):
         prompt = self.prompt(data=data, text=text)
         request_d = {
-            "model": self.model,
+            "model": self.config["model"],
             "prompt": prompt,
             "format": "json",
             "stream": False,
-            "options": {"seed": self.seed, "temperature": 0},
+            "options": self.config,
         }
-        msg = f"Ollama API {self.api_url} with args:\n\t{request_d}"
+        msg = f"Ollama API {self.config['api_url']} with args:\n\t{request_d}"
         response, annotation_str, j = None, None, None
         try:
             logger.debug(f"Calling {msg}")
-            response = requests.post(self.api_url, json=request_d)
-            annotation_str = response.json()["response"]
+            response = requests.post(self.config["api_url"], json=request_d)
+            response_json = response.json()
+
+            if "error" in response_json:
+                return response_json
+
+            annotation_str = response_json["response"]
 
             j = self.postprocess_output(annotation_str)
             logger.info(j)
@@ -231,13 +283,23 @@ class OllamaMetric(LLMMetric):
                 f"Called {msg}\n\n and received\n\t{response=}\n\t{annotation_str=}\n\t{j=}\nbefore the error:{e}"
             )
             traceback.print_exc()
-            return {"error": str(e)}
+            return {"error": str(traceback.format_exc())}
 
 
 class LogicNLGMarkdownOllamaMetric(OllamaMetric):
     def __init__(self, config):
         super().__init__(config)
-        self._table_str_f = self.extra_args.get("table_str_f", "to_string")
+        self._table_str_f = self.config["extra_args"].get("table_str_f", "to_string")
+
+    def get_required_fields(self):
+        return {
+            "type": str,
+            "annotation_span_categories": list,
+            "prompt_template": str,
+            "model": str,
+            "model_args": dict,
+            "extra_args": dict,
+        }
 
     def preprocess_data_for_prompt(self, example):
         import pandas as pd  # requires tabulate
@@ -259,16 +321,3 @@ class LogicNLGMarkdownOllamaMetric(OllamaMetric):
         data2prompt = f"Table title: {table_title}\n{table_str}"
 
         return data2prompt
-
-
-class Llama3Metric(OllamaMetric):
-    def postprocess_output(self, output):
-        output = output.strip()
-        j = json.loads(output)
-
-        # the model often tends to produce a nested list
-        annotations = j["annotation_span_categories"]
-        if isinstance(annotations, list) and len(annotations) >= 1 and isinstance(annotations[0], list):
-            j["annotation_span_categories"] = j["annotation_span_categories"][0]
-
-        return j

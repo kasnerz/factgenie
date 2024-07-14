@@ -66,6 +66,11 @@ def annotate_url(current_url):
     return f"{base_url}annotate"
 
 
+@app.template_filter("prettify_json")
+def prettify_json(value):
+    return json.dumps(value, sort_keys=True, indent=4, separators=(",", ": "))
+
+
 # -----------------
 # Decorators
 # -----------------
@@ -406,7 +411,7 @@ def llm_eval():
     campaign_index = app.db["campaign_index"]["model"]
     campaigns = defaultdict(dict)
 
-    for campaign_id, campaign in campaign_index.items():
+    for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
         campaigns[campaign_id]["stats"] = campaign.get_stats()
 
@@ -424,19 +429,22 @@ def llm_eval_create():
 
     campaign_id = data.get("campaignId")
     campaign_data = data.get("campaignData")
-    # llm_config = data.get("llmConfig")
-    metric_type = data.get("metricType")
-    model_name = data.get("modelName")
-    prompt_template = data.get("promptTemplate")
-    system_message = data.get("systemMessage")
-    api_url = data.get("apiUrl")
-    model_arguments = data.get("modelArguments")
-    extra_arguments = data.get("extraArguments")
-    annotation_span_categories = data.get("annotationSpanCategories")
 
-    app.db["metric_index"] = utils.generate_metric_index()
+    config = {
+        "type": data.get("metricType"),
+        "model": data.get("modelName"),
+        "prompt_template": data.get("promptTemplate"),
+        "system_msg": data.get("systemMessage"),
+        "api_url": data.get("apiUrl"),
+        "model_args": data.get("modelArguments"),
+        "extra_args": data.get("extraArguments"),
+        "annotation_span_categories": data.get("annotationSpanCategories"),
+    }
+    try:
+        metric = LLMMetricFactory.from_config(config)
+    except Exception as e:
+        return jsonify({"error": f"Error while creating metric: {e}"})
 
-    metric = app.db["metric_index"][llm_config]
     datasets = app.db["datasets_obj"]
 
     campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
@@ -540,17 +548,21 @@ def llm_eval_run():
         "running": True,
     }
     # return utils.run_llm_eval(app, campaign_id)
-    app.db["metric_index"] = utils.generate_metric_index()
+    # app.db["metric_index"] = utils.generate_metric_index()
 
+    utils.generate_campaign_index(app)
     campaign = app.db["campaign_index"]["model"][campaign_id]
 
     threads = app.db["threads"]
     datasets = app.db["datasets_obj"]
 
-    metric_name = campaign.metadata["metric"]
-    metric = app.db["metric_index"][metric_name]
+    # metric_name = campaign.metadata["metric"]
+    # metric = app.db["metric_index"][metric_name]
 
-    return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name)
+    config = campaign.metadata["config"]
+    metric = LLMMetricFactory.from_config(config)
+
+    return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads)
 
 
 @app.route("/llm_eval/progress/<campaign_id>", methods=["GET"])

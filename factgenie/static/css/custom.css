@@ -4,12 +4,16 @@ body {
 
 a {
     color: rgb(6, 6, 6);
-    /* --bs-pagination-color: black; */
+    --bs-pagination-color: black;
     text-decoration: none;
 }
 
 a.underline-link:hover {
     text-decoration: underline;
+}
+
+a.blue-link {
+    color: #02587f;
 }
 
 pre {

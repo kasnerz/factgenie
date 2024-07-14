@@ -95,11 +95,10 @@ def generate_metric_index():
 
     for file in os.listdir(LLM_CONFIG_DIR):
         if file.endswith(".yaml"):
-            with open(os.path.join(LLM_CONFIG_DIR, file)) as f:
-                config = yaml.safe_load(f)
             try:
-                metric = LLMMetricFactory.get_metric(config)
-                metrics[metric.metric_name] = metric
+                with open(os.path.join(LLM_CONFIG_DIR, file)) as f:
+                    config = yaml.safe_load(f)
+                    metrics[file] = LLMMetricFactory.from_config(config)
             except Exception as e:
                 logger.error(f"Error while loading metric {file}")
                 traceback.print_exc()
@@ -376,8 +375,7 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "source": "model",
                 "status": "new",
-                "metric": metric.metric_name,
-                "annotation_span_categories": metric.annotation_span_categories,
+                "config": metric.config,
             },
             f,
             indent=4,
@@ -402,10 +400,12 @@ def check_login(app, username, password):
     return username == app.config["login"]["username"] and password == app.config["login"]["password"]
 
 
-def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
+def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
     # save the annotation
+    annotator_id = metric.get_annotator_id()
+
     annotation = {
-        "annotator_id": metric_name,
+        "annotator_id": annotator_id,
         "dataset": dataset_name,
         "setup": {"id": setup_id, "model": setup_id},
         "split": split,
@@ -414,12 +414,12 @@ def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, exampl
     }
 
     # save the annotation
-    with open(os.path.join(save_dir, f"{metric_name}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
+    with open(os.path.join(save_dir, f"{annotator_id}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
         f.write(json.dumps(annotation) + "\n")
     return annotation
 
 
-def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name):
+def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
     start_time = int(time.time())
 
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
@@ -455,7 +455,7 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
             return error(annotation_set["error"])
 
         annotation = save_annotation(
-            save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time
+            save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time
         )
 
         db.loc[i, "status"] = "finished"
