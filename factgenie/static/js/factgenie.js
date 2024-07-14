@@ -590,18 +590,27 @@ function gatherCampaignData() {
 
 }
 
+function gatherConfig() {
+    var config = {};
+
+    config.metricType = $("#metric-type").val();
+    config.modelName = $("#model-name").val();
+    config.promptTemplate = $("#prompt-template").val();
+    config.systemMessage = $("#system-message").val();
+    config.apiUrl = $("#api-url").val();
+    config.modelArguments = getKeysAndValues($("#model-arguments"));
+    config.extraArguments = getKeysAndValues($("#extra-arguments"));
+    config.annotationSpanCategories = getAnnotationSpanCategories();
+
+    return config;
+}
+
 
 function createLLMEval() {
     const campaignId = $('#campaignId').val();
-    const llmConfig = $('#llmConfig').val();
-    const metricType = $("#metric-type").val();
-    const modelName = $("#model-name").val();
-    const promptTemplate = $("#prompt-template").val();
-    const systemMessage = $("#system-message").val();
-    const apiUrl = $("#api-url").val();
-    const modelArguments = getKeysAndValues($("#model-arguments"));
-    const extraArguments = getKeysAndValues($("#extra-arguments"));
-    const annotationSpanCategories = getAnnotationSpanCategories();
+    // const llmConfig = $('#llmConfig').val();
+
+    const config = gatherConfig();
     var campaignData = gatherCampaignData();
 
     // if no datasets are selected, show an alert
@@ -616,15 +625,8 @@ function createLLMEval() {
         data: JSON.stringify({
             campaignId: campaignId,
             campaignData: campaignData,
-            llmConfig: llmConfig,
-            metricType: metricType,
-            modelName: modelName,
-            promptTemplate: promptTemplate,
-            systemMessage: systemMessage,
-            apiUrl: apiUrl,
-            modelArguments: modelArguments,
-            extraArguments: extraArguments,
-            annotationSpanCategories: annotationSpanCategories,
+            // llmConfig: llmConfig,
+            config: config
         }),
         success: function (response) {
             console.log(response);
@@ -878,6 +880,42 @@ function createAnnotationSpanCategoryElem(name, color) {
     return newCategory;
 }
 
+function saveConfig() {
+    const filename = $("#config-save-filename").val() + ".yaml";
+    const config = gatherConfig();
+
+    // if filename is in window.llm_metrics, show a confirmation dialog
+    if (filename in window.llm_metrics) {
+        if (!confirm(`The configuration with the name ${filename} already exists. Do you want to overwrite it?`)) {
+            return;
+        }
+    }
+
+    $.post({
+        url: `${url_prefix}/llm_eval/save_config`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            filename: filename,
+            config: config
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // change color of the button save-cfg-submit to green for a second with the label "Saved!", then back to normal
+                $("#save-cfg-submit").removeClass("btn-primary").addClass("btn-success").text("Saved!");
+                setTimeout(function () {
+                    $('#save-cfg-modal').modal('hide');
+                    $("#save-cfg-submit").removeClass("btn-success").addClass("btn-primary").text("Save");
+                }, 1500);
+            }
+        }
+    });
+
+}
+
 function updateLLMMetricConfig() {
     const llmConfigValue = $('#llmConfig').val();
 
@@ -901,7 +939,6 @@ function updateLLMMetricConfig() {
     const model_args = cfg.model_args;
     const annotationSpanCategories = cfg.annotation_span_categories;
     const extra_args = cfg.extra_args;
-
 
     // for metric, we need to select the appropriate one from the values in the select box
     $("#metric-type").val(metric_type);

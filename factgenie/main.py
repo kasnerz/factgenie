@@ -429,17 +429,9 @@ def llm_eval_create():
 
     campaign_id = data.get("campaignId")
     campaign_data = data.get("campaignData")
+    config = data.get("config")
 
-    config = {
-        "type": data.get("metricType"),
-        "model": data.get("modelName"),
-        "prompt_template": data.get("promptTemplate"),
-        "system_msg": data.get("systemMessage"),
-        "api_url": data.get("apiUrl"),
-        "model_args": data.get("modelArguments"),
-        "extra_args": data.get("extraArguments"),
-        "annotation_span_categories": data.get("annotationSpanCategories"),
-    }
+    config = utils.parse_config(config)
     try:
         metric = LLMMetricFactory.from_config(config)
     except Exception as e:
@@ -538,26 +530,14 @@ def llm_eval_run():
 
     app.db["announcers"][campaign_id] = announcer = utils.MessageAnnouncer()
 
-    # TODO: so far it seems that the app is actually more responsive without threads :-O
-    # from threading import Thread
-    # thread = Thread(target=utils.run_llm_eval, args=(app, campaign_id))
-    # thread.daemon = True
-    # thread.start()
-
     app.db["threads"][campaign_id] = {
         "running": True,
     }
-    # return utils.run_llm_eval(app, campaign_id)
-    # app.db["metric_index"] = utils.generate_metric_index()
-
     utils.generate_campaign_index(app)
     campaign = app.db["campaign_index"]["model"][campaign_id]
 
     threads = app.db["threads"]
     datasets = app.db["datasets_obj"]
-
-    # metric_name = campaign.metadata["metric"]
-    # metric = app.db["metric_index"][metric_name]
 
     config = campaign.metadata["config"]
     metric = LLMMetricFactory.from_config(config)
@@ -593,6 +573,19 @@ def llm_eval_pause():
 
     resp = jsonify(success=True, status=campaign.metadata["status"])
     return resp
+
+
+@app.route("/llm_eval/save_config", methods=["POST"])
+def llm_eval_save_config():
+    data = request.get_json()
+    filename = data.get("filename")
+    config = data.get("config")
+
+    config = utils.parse_config(config)
+
+    utils.save_config(filename, config)
+
+    return utils.success()
 
 
 @app.route("/submit_annotations", methods=["POST"])

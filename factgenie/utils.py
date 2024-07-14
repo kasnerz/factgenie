@@ -419,6 +419,35 @@ def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx
     return annotation
 
 
+def save_config(filename, config):
+    # https://github.com/yaml/pyyaml/issues/121#issuecomment-1018117110
+    def yaml_multiline_string_pipe(dumper, data):
+        text_list = [line.rstrip() for line in data.splitlines()]
+        fixed_data = "\n".join(text_list)
+        if len(text_list) > 1:
+            return dumper.represent_scalar("tag:yaml.org,2002:str", fixed_data, style="|")
+        return dumper.represent_scalar("tag:yaml.org,2002:str", fixed_data)
+
+    yaml.add_representer(str, yaml_multiline_string_pipe)
+
+    with open(os.path.join(LLM_CONFIG_DIR, filename), "w") as f:
+        yaml.dump(config, f, indent=2, allow_unicode=True)
+
+
+def parse_config(config):
+    config = {
+        "type": config.get("metricType"),
+        "model": config.get("modelName"),
+        "prompt_template": config.get("promptTemplate"),
+        "system_msg": config.get("systemMessage"),
+        "api_url": config.get("apiUrl"),
+        "model_args": config.get("modelArguments"),
+        "extra_args": config.get("extraArguments"),
+        "annotation_span_categories": config.get("annotationSpanCategories"),
+    }
+    return config
+
+
 def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
     start_time = int(time.time())
 
