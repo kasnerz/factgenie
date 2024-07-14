@@ -89,7 +89,7 @@ class LLMMetric:
     def __init__(self, config):
         self.metric_type = config["type"]
         self.metric_name = LLMMetricFactory.get_metric_name(config)
-        self.annotation_span_categories = config[f"annotation_span_categories"]
+        self.annotation_span_categories = config["annotation_span_categories"]
         assert (
             isinstance(self.annotation_span_categories, list) and len(self.annotation_span_categories) > 0
         ), f"Annotation categories must be a non-empty list, got {self.annotation_span_categories=}"
@@ -105,6 +105,7 @@ class LLMMetric:
             raise ValueError("Prompt template (`prompt_template`) field is missing in the config")
 
         self.api_url = config.get("api_url", None)
+        self.extra_args = config.get("extra_args", {})
 
     def get_config(self):
         return {
@@ -114,6 +115,8 @@ class LLMMetric:
             "annotation_span_categories": self.annotation_span_categories,
             "model_args": self.model_args,
             "model": self.model,
+            "api_url": self.api_url,
+            "extra_args": self.extra_args,
         }
 
     def postprocess_annotations(self, text, model_json):
@@ -233,8 +236,8 @@ class OllamaMetric(LLMMetric):
 
 class LogicNLGMarkdownOllamaMetric(OllamaMetric):
     def __init__(self, config):
-        self._table_str_f = config.get("table_str_f", "to_string")
         super().__init__(config)
+        self._table_str_f = self.extra_args.get("table_str_f", "to_string")
 
     def preprocess_data_for_prompt(self, example):
         import pandas as pd  # requires tabulate

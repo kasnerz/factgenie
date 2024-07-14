@@ -1,17 +1,57 @@
-<div class="accordion accordion-flush" id="accordion-data">
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="flush-headingOne-data">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                data-bs-target="#flush-collapseOne-data" aria-expanded="false" aria-controls="flush-collapseOne-data">
-                <i class="fa fa-database"></i>
-                <span style="margin-left: 10px;">Data</span>
-            </button>
-        </h2>
-        <div id="flush-collapseOne-data" class="accordion-collapse collapse" aria-labelledby="flush-headingOne-data"
-            data-bs-parent="#accordion-data">
+<p>
+    <small class="text-muted">Select the combinations of datasets, splits, and model outputs (only
+        the available
+        combinations will be included in the evaluation).</small>
+</p>
 
-            <div class="accordion-body">
+<div id="data-select-area" class="row">
+    <div class="col-md-4">
+        Datasets
+        <div class="form-group mt-1">
+            {% for output in model_outs.datasets %}
+            <div class="form-check form-switch">
+                <input class="form-check-input btn-check-dataset" type="checkbox" role="switch"
+                    id="btn-check-dataset-{{ output }}" data-content="{{ output }}">
+                <label class="form-check-label btn-check-dataset-label" for="btn-check-dataset-{{ output }}">{{
+                    output
+                    }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        Splits
+        <div class="form-group mt-1">
+            {% for output in model_outs.splits %}
+            <div class="form-check form-switch">
+                <input class="form-check-input btn-check-split" type="checkbox" role="switch"
+                    id="btn-check-split-{{ output }}" data-content="{{ output }}">
+                <label class="form-check-label btn-check-split-label" for="btn-check-split-{{ output }}">{{
+                    output
+                    }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        Outputs
+        <div class="form-group mt-1">
+            {% for output in model_outs.setup_ids %}
+            <div class="form-check form-switch">
+                <input class="form-check-input btn-check-out" type="checkbox" role="switch"
+                    id="btn-check-out-{{ output }}" data-content="{{ output }}">
+                <label class="form-check-label btn-check-out-label" for="btn-check-out-{{ output }}">{{
+                    output
+                    }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 
+    <div class="mt-3">
+        Selected combinations
+        <div id="selectedDatasets">
+            <div class="card card-body small overflow-auto" id="selectedDatasetsContent">
             </div>
         </div>
     </div>

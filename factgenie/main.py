@@ -422,9 +422,17 @@ def llm_eval():
 def llm_eval_create():
     data = request.get_json()
 
-    llm_config = data.get("llmConfig")
     campaign_id = data.get("campaignId")
     campaign_data = data.get("campaignData")
+    # llm_config = data.get("llmConfig")
+    metric_type = data.get("metricType")
+    model_name = data.get("modelName")
+    prompt_template = data.get("promptTemplate")
+    system_message = data.get("systemMessage")
+    api_url = data.get("apiUrl")
+    model_arguments = data.get("modelArguments")
+    extra_arguments = data.get("extraArguments")
+    annotation_span_categories = data.get("annotationSpanCategories")
 
     app.db["metric_index"] = utils.generate_metric_index()
 

@@ -543,13 +543,13 @@ $("#hideOverlayBtn").click(function () {
     $("#overlay-start").fadeOut();
 });
 
-$(".btn-check-data").click(function () {
+$("#data-select-area input[type='checkbox']").change(function () {
     updateSelectedDatasets();
 });
 
 function updateSelectedDatasets() {
     var selectedData = gatherCampaignData();
-    $("#selectedDatasetsContent").html(selectedData.map(d => `${d.dataset} / ${d.split} / ${d.setup_id}`).join("<br>"));
+    $("#selectedDatasetsContent").html("<ul>" + selectedData.map(d => `<li>${d.dataset} ▸ ${d.split} ▸ ${d.setup_id}</li>`).join("\n") + "</ul>");
 }
 
 function gatherCampaignData() {
@@ -557,7 +557,6 @@ function gatherCampaignData() {
     var campaign_splits = [];
     var campaign_outputs = [];
 
-    // get `data-content` attribute of buttons which have the "checked" property
     $(".btn-check-dataset").each(function () {
         if ($(this).prop("checked")) {
             campaign_datasets.push($(this).attr("data-content"));
@@ -568,13 +567,11 @@ function gatherCampaignData() {
             campaign_splits.push($(this).attr("data-content"));
         }
     });
-    $(".btn-check-output").each(function () {
+    $(".btn-check-out").each(function () {
         if ($(this).prop("checked")) {
             campaign_outputs.push($(this).attr("data-content"));
         }
     });
-
-
     // get all available combinations of datasets, splits, and outputs
     var combinations = [];
     var valid_triplets = model_outs.valid_triplets;
@@ -596,8 +593,17 @@ function gatherCampaignData() {
 function createLLMEval() {
     const campaignId = $('#campaignId').val();
     const llmConfig = $('#llmConfig').val();
-    var campaignData = gatherCampaignData();
+    const metricType = $("#metric-type").val();
+    const modelName = $("#model-name").html();
+    const promptTemplate = $("#prompt-template").html();
+    const systemMessage = $("#system-message").html();
+    const apiUrl = $("#api-url").html();
+    const modelArguments = getKeysAndValues($("#model-arguments"));
+    const extraArguments = getKeysAndValues($("#extra-arguments"));
     const annotationSpanCategories = getAnnotationSpanCategories();
+    var campaignData = gatherCampaignData();
+
+    // TODO validation!
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -612,6 +618,13 @@ function createLLMEval() {
             campaignId: campaignId,
             campaignData: campaignData,
             llmConfig: llmConfig,
+            metricType: metricType,
+            modelName: modelName,
+            promptTemplate: promptTemplate,
+            systemMessage: systemMessage,
+            apiUrl: apiUrl,
+            modelArguments: modelArguments,
+            extraArguments: extraArguments,
             annotationSpanCategories: annotationSpanCategories,
         }),
         success: function (response) {
@@ -638,6 +651,16 @@ function getAnnotationSpanCategories() {
     }
     );
     return annotationSpanCategories;
+}
+
+function getKeysAndValues(div) {
+    var args = {};
+    div.children().each(function () {
+        const key = $(this).find("input[name='argName']").val();
+        const value = $(this).find("input[name='argValue']").val();
+        args[key] = value;
+    });
+    return args;
 }
 
 function createHumanCampaign() {
@@ -810,7 +833,13 @@ function addAnnotationSpanCategory() {
 
 function addModelArgument() {
     const modelArguments = $("#model-arguments");
-    const newArg = createModelArgElem("", "");
+    const newArg = createArgElem("", "");
+    modelArguments.append(newArg);
+}
+
+function addExtraArgument() {
+    const modelArguments = $("#extra-arguments");
+    const newArg = createArgElem("", "");
     modelArguments.append(newArg);
 }
 
@@ -818,14 +847,14 @@ function deleteRow(button) {
     $(button).parent().parent().remove();
 }
 
-function createModelArgElem(key, value) {
+function createArgElem(key, value) {
     const newArg = $(`
         <div class="row mt-1">
         <div class="col-6">
-        <input type="text" class="form-control"  name="modelArgName" value="${key}" placeholder="Key">
+        <input type="text" class="form-control"  name="argName" value="${key}" placeholder="Key">
         </div>
         <div class="col-5">
-        <input type="text" class="form-control" name="modelArgValue" value="${value}" placeholder="Value">
+        <input type="text" class="form-control" name="argValue" value="${value}" placeholder="Value">
         </div>
         <div class="col-1">
         <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
@@ -862,6 +891,7 @@ function updateLLMMetricConfig() {
         $("#api-url").html("");
         $("#model-arguments").empty();
         $("#annotation-span-categories").empty();
+        $("#extra-arguments").empty();
         return;
     }
     const cfg = window.llm_metrics[llmConfigValue];
@@ -873,6 +903,8 @@ function updateLLMMetricConfig() {
     const api_url = cfg.api_url;
     const model_args = cfg.model_args;
     const annotationSpanCategories = cfg.annotation_span_categories;
+    const extra_args = cfg.extra_args;
+
 
     // for metric, we need to select the appropriate one from the values in the select box
     $("#metric-type").val(metric_type);
@@ -881,10 +913,16 @@ function updateLLMMetricConfig() {
     $("#system-message").html(system_msg);
     $("#api-url").html(api_url);
     $("#model-arguments").empty();
+    $("#extra-arguments").empty();
 
     $.each(model_args, function (key, value) {
-        const newArg = createModelArgElem(key, value);
+        const newArg = createArgElem(key, value);
         $("#model-arguments").append(newArg);
+    });
+
+    $.each(extra_args, function (key, value) {
+        const newArg = createArgElem(key, value);
+        $("#extra-arguments").append(newArg);
     });
 
     $("#annotation-span-categories").empty();

@@ -27,8 +27,11 @@
 
       <ul class="nav nav-tabs nav-justified mt-5">
         <li class="nav-item">
-          <a class="nav-link active" id="nav-tabs-config" aria-current="page" href="#tab-config"
-            data-bs-toggle="pill">Configuration</a>
+          <a class="nav-link active" id="nav-tabs-campaign" aria-current="page" href="#tab-campaign"
+            data-bs-toggle="pill">Campaign</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="nav-tabs-config" href="#tab-config" data-bs-toggle="pill">Configuration</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" id="nav-tabs-data" href="#tab-data" data-bs-toggle="pill">Data</a>
@@ -36,8 +39,8 @@
       </ul>
 
       <div class="tab-content">
-        <div id="tab-config" role="tabpanel" class="tab-pane active new-campaign-form" tabindex="0">
-          <div class="row g-3 mb-3 mt-1 align-items-center">
+        <div id="tab-campaign" role="tabpanel" class="tab-pane active new-campaign-form" tabindex="0">
+          <div class="row g-3 mb-3 align-items-center">
             <div class="col-auto">
               <label for="campaignId">Campaign Id</label>
             </div>
@@ -47,10 +50,15 @@
             </div>
             <div class="col-auto">
               <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
-                title="Unique campaign identifier"></i>
+                title="Create a unique campaign identifier"></i>
             </div>
           </div>
-
+          <div style="text-align: center;">
+            <button type="button" class="btn btn-primary mt-3"
+              onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-config")).show()'>Next</button>
+          </div>
+        </div>
+        <div id="tab-config" role="tabpanel" class="tab-pane new-campaign-form" tabindex="1">
           <div class="row g-3 mb-3 align-items-center">
             <div class="col-auto">
               <span style="margin-left: 5px;">Preset</span>
@@ -69,7 +77,7 @@
             </div>
           </div>
 
-          <div class="rounded-box mt-3">
+          <div class="rounded-box mt-4">
             <div class="row g-3 mb-3 align-items-center">
               <div class="col-auto">
                 <i class="fa fa-code"></i>
@@ -151,71 +159,33 @@
             </div>
 
             {% include 'forms/annotation_span_categories.html' %}
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-list-ul"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Extra arguments</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Any other parameters used by the metric."></i>
+              </div>
+
+              <div id="extra-arguments">
+              </div>
+              <div class="col-auto mt-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addExtraArgument();">+</button>
+              </div>
+            </div>
           </div>
           <div style="text-align: center;">
+            <button type="button" class="btn btn-outline-secondary mt-3"
+              onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-campaign")).show()'>Back</button>
             <button type="button" class="btn btn-primary mt-3"
               onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-data")).show()'>Next</button>
           </div>
         </div>
 
-        <div id="tab-data" class="tab-pane new-campaign-form" role="tabpanel" tabindex="1">
-          <p>
-            <small class="text-muted">Select the combinations of datasets, splits, and model outputs (only
-              the available
-              combinations will be included in the evaluation).</small>
-          </p>
+        <div id="tab-data" class="tab-pane new-campaign-form" role="tabpanel" tabindex="2">
 
-          <div class="row">
-            <div class="col-md-3">
-              Datasets
-              <div class="form-group mt-1">
-                {% for output in model_outs.datasets %}
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="btn-check-dataset-{{ output }}"
-                    data-content="{{ output }}">
-                  <label class="form-check-label" for="btn-check-dataset-{{ output }}">{{
-                    output
-                    }}</label>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-            <div class="col-md-2">
-              Splits
-              <div class="form-group mt-1">
-                {% for output in model_outs.splits %}
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="btn-check-split-{{ output }}"
-                    data-content="{{ output }}">
-                  <label class="form-check-label" for="btn-check-split-{{ output }}">{{
-                    output
-                    }}</label>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-            <div class="col-md-3">
-              Outputs
-              <div class="form-group mt-1">
-                {% for output in model_outs.setup_ids %}
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="btn-check-out-{{ output }}"
-                    data-content="{{ output }}">
-                  <label class="form-check-label" for="btn-check-out-{{ output }}">{{
-                    output
-                    }}</label>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-            <div class="col-md-4">
-              Selected combinations
-              <div id="selectedDatasets">
-                <div class="card card-body font-monospace font-sm" id="selectedDatasetsContent">
-                </div>
-              </div>
-            </div>
-          </div>
+          {% include 'forms/data_selection.html' %}
 
           <div style="text-align: center;">
             <button type="button" class="btn btn-outline-secondary mt-3"
