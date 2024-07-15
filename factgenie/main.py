@@ -82,10 +82,10 @@ def login_required(f):
         if app.config["login"]["active"]:
             auth = request.cookies.get("auth")
             if not auth:
-                return redirect(url_for("login"))
+                return redirect(app.config["host_prefix"] + url_for("login"))
             username, password = auth.split(":")
             if not utils.check_login(app, username, password):
-                return redirect(url_for("login"))
+                return redirect(app.config["host_prefix"] + url_for("login"))
 
         return f(*args, **kwargs)
 
@@ -430,12 +430,12 @@ def login():
         password = request.form["password"]
         if utils.check_login(app, username, password):
             # redirect to the home page ("/")
-            resp = make_response(redirect("/"))
+            resp = make_response(redirect(app.config["host_prefix"] + "/"))
             resp.set_cookie("auth", f"{username}:{password}")
             return resp
         else:
             return "Login failed", 401
-    return render_template("login.html")
+    return render_template("login.html", host_prefix=app.config["host_prefix"])
 
 
 @app.route("/llm_eval", methods=["GET", "POST"])
