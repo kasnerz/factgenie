@@ -6,6 +6,7 @@
   <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
   <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
+  <link href="{{ host_prefix }}/static/css/font-awesome.css" rel="stylesheet">
   <meta name="viewport" content="width=1024">
   <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
   <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
@@ -22,15 +23,17 @@
 
   <div class="mt-5">
     <h3><img src="{{ host_prefix }}/static/img/datasets.png" class="heading-img-inline">
-      <b>List of datasets</b>
+      <b>List of datasets</b> <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+        title="To add a dataset, create a loader in `loaders` (subclassing the `Dataset` class) and register the dataset in `loaders/__init__.py`."></i>
     </h3>
+
     <table class="table table-hover mt-3">
       <thead>
         <tr>
-          <th scope="col"></th>
-          <th scope="col">Dataset</th>
-          <th scope="col">Splits</th>
-          <th scope="col">Examples</th>
+          <th scope="col" width="5%"></th>
+          <th scope="col" width="15%">Dataset</th>
+          <th scope="col" width="10%">Splits</th>
+          <th scope="col" width="10%">Examples</th>
           <th scope="col">Description</th>
         </tr>
       </thead>
@@ -43,7 +46,8 @@
               }}</a></td>
           <td>
             {% for split in dataset.splits %}
-            <div class="sub-row">{{ split }}</div>
+            <div class="sub-row"><a
+                href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ split }}&example_idx=0">{{ split }}</a></div>
             {% endfor %}
           </td>
           <td>
@@ -64,3 +68,4 @@
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
 </script>
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
