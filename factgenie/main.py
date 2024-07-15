@@ -20,6 +20,8 @@ from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
 from factgenie.metrics import LLMMetricFactory
 import factgenie.utils as utils
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
@@ -32,6 +34,7 @@ app.db["annotation_index"] = {}
 app.db["lock"] = threading.Lock()
 app.db["threads"] = {}
 app.db["announcers"] = {}
+app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +65,9 @@ def time_elapsed(timestamp):
 def annotate_url(current_url):
     # get the base url (without any "browse", "crowdsourcing" or "crowdsourcing/campaign" in it)
     parsed = urllib.parse.urlparse(current_url)
-    base_url = f"{parsed.scheme}://{parsed.netloc}/"
-    return f"{base_url}annotate"
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    host_prefix = app.config["host_prefix"]
+    return f"{base_url}{host_prefix}/annotate"
 
 
 @app.template_filter("prettify_json")
