@@ -222,10 +222,14 @@ def free_idle_examples(db):
 
 def select_batch_idx(db, seed):
     free_examples = db[db["status"] == "free"]
+    assigned_examples = db[db["status"] == "assigned"]
 
-    # if no free examples, take the oldest assigned example
-    if len(free_examples) == 0:
-        free_examples = db[db["status"] == "assigned"]
+    if len(free_examples) == 0 and len(assigned_examples) == 0:
+        raise ValueError("No examples available")
+
+    # if no free examples but still assigned examples, take the oldest assigned example
+    if len(free_examples) == 0 and len(assigned_examples) > 0:
+        free_examples = assigned_examples
         free_examples = free_examples.sort_values(by=["start"])
         free_examples = free_examples.head(1)
 
@@ -246,7 +250,12 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
 
         seed = random.seed(str(start) + prolific_pid + session_id + study_id)
 
-        batch_idx = select_batch_idx(db, seed)
+        try:
+            batch_idx = select_batch_idx(db, seed)
+        except ValueError:
+            # no available batches
+            return []
+
         if prolific_pid != "test":
             db = free_idle_examples(db)
 

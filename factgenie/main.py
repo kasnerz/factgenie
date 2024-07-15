@@ -133,6 +133,15 @@ def annotate():
     db = campaign.db
     metadata = campaign.metadata
     annotation_set = utils.get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id)
+
+    if not annotation_set:
+        # no more available examples
+        return render_template(
+            "campaigns/closed.html",
+            host_prefix=app.config["host_prefix"],
+            metadata=metadata,
+        )
+
     return render_template(
         f"campaigns/{campaign.campaign_id}/annotate.html",
         host_prefix=app.config["host_prefix"],
