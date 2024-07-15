@@ -188,10 +188,8 @@ def crowdsourcing():
 
     utils.generate_campaign_index(app)
 
-    llm_configs = utils.load_llm_eval_configs()
-    llm_configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
-
-    crowdsourcing_configs = utils.load_crowdsourcing_configs()
+    llm_configs = utils.load_configs(mode="llm_eval")
+    crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
 
     campaign_index = app.db["campaign_index"]["crowdsourcing"]
     campaigns = defaultdict(dict)
@@ -304,7 +302,7 @@ def crowdsourcing_new():
     utils.generate_campaign_index(app)
     campaign_index = app.db["campaign_index"]["crowdsourcing"]
 
-    configs = utils.load_crowdsourcing_configs()
+    configs = utils.load_configs(mode="crowdsourcing")
 
     default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="campaign")
 
@@ -355,14 +353,11 @@ def duplicate_config():
     if mode_from == mode_to:
         campaign = app.db["campaign_index"][mode_from][campaign_id]
         config = campaign.metadata["config"]
-    elif mode_from == "llm_eval" and mode_to == "crowdsourcing":
+    else:
+        # currently we only support copying the annotation_span_categories between modes
         campaign = app.db["campaign_index"][mode_from][campaign_id]
         llm_config = campaign.metadata["config"]
-
-        # copy only the supported fields
         config = {"annotation_span_categories": llm_config["annotation_span_categories"]}
-    else:
-        raise NotImplementedError(f"Conversion from {mode_from} to {mode_to} not implemented")
 
     utils.save_config(filename, config, mode=mode_to)
 
@@ -444,10 +439,8 @@ def llm_eval():
     campaign_index = app.db["campaign_index"]["llm_eval"]
     campaigns = defaultdict(dict)
 
-    llm_configs = utils.load_llm_eval_configs()
-    llm_configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
-
-    crowdsourcing_configs = utils.load_crowdsourcing_configs()
+    llm_configs = utils.load_configs(mode="llm_eval")
+    crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
 
     for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
@@ -519,9 +512,7 @@ def llm_eval_new():
     model_outs = utils.get_model_outs(app)
 
     # get a list of available metrics
-    llm_configs = utils.load_llm_eval_configs()
-    configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
-
+    llm_configs = utils.load_configs(mode="llm_eval")
     metric_types = list(LLMMetricFactory.metric_classes().keys())
 
     utils.generate_campaign_index(app)
@@ -533,7 +524,7 @@ def llm_eval_new():
         "llm_eval_new.html",
         default_campaign_id=default_campaign_id,
         model_outs=model_outs,
-        configs=configs,
+        configs=llm_configs,
         metric_types=metric_types,
         host_prefix=app.config["host_prefix"],
     )

@@ -84,7 +84,7 @@ def get_dataset(app, dataset_name):
     return app.db["datasets_obj"].get(dataset_name)
 
 
-def load_llm_eval_configs():
+def load_configs(mode):
     """
     Goes through all the files in the LLM_CONFIG_DIR
     instantiate the LLMMetric class
@@ -93,31 +93,15 @@ def load_llm_eval_configs():
     Returns:
         metrics: dictionary of LLMMetric objects with keys of metric names
     """
-    metrics = {}
-
-    for file in os.listdir(LLM_CONFIG_DIR):
-        if file.endswith(".yaml"):
-            try:
-                with open(os.path.join(LLM_CONFIG_DIR, file)) as f:
-                    config = yaml.safe_load(f)
-                    metrics[file] = LLMMetricFactory.from_config(config)
-            except Exception as e:
-                logger.error(f"Error while loading metric {file}")
-                traceback.print_exc()
-                continue
-
-    return metrics
-
-
-def load_crowdsourcing_configs():
     configs = {}
 
-    for file in os.listdir(CROWDSOURCING_CONFIG_DIR):
+    config_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+
+    for file in os.listdir(config_dir):
         if file.endswith(".yaml"):
             try:
-                with open(os.path.join(CROWDSOURCING_CONFIG_DIR, file)) as f:
+                with open(os.path.join(config_dir, file)) as f:
                     config = yaml.safe_load(f)
-                    # TODO validate
                     configs[file] = config
             except Exception as e:
                 logger.error(f"Error while loading metric {file}")
