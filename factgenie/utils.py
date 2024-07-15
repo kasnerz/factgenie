@@ -359,7 +359,7 @@ def get_dataset_overview(app):
         overview[name] = {
             "splits": dataset.get_splits(),
             "description": dataset.get_info(),
-            "example_count": dataset.get_example_count(),
+            "example_count": {split: dataset.get_example_count(split) for split in dataset.get_splits()},
             "type": dataset.type,
         }
 

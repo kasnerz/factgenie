@@ -20,29 +20,47 @@
   </div> -->
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mt-5">← Main page</a>
 
-  <div class="row">
-    {% for name, dataset in datasets.items() %}
-    <div class="col-md-3">
-      <div class="card text-center mt-5">
-        <div class="card-body">
-          <img src="{{ host_prefix }}/static/img/datatypes/{{ dataset.type }}.png" class="intro-img">
-          <a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0">
-            <h5 class="card-title">{{ name }}</h5>
-          </a>
-          <p class="card-text">{{ dataset.description | safe }}</p>
-          <p class="card-text"><b>splits</b>: {% for split in dataset.splits %}{{ split }}{% if not loop.last %}, {%
-            endif %}{%
-            endfor %}<br>
-            <b>examples</b>: {{ dataset.example_count }}
-          </p>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
+  <div class="mt-5">
+    <h3><img src="{{ host_prefix }}/static/img/datasets.png" class="heading-img-inline">
+      <b>List of datasets</b>
+    </h3>
+    <table class="table table-hover mt-3">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">Dataset</th>
+          <th scope="col">Splits</th>
+          <th scope="col">Examples</th>
+          <th scope="col">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, dataset in datasets.items() %}
+        <tr>
+          <td><img src="{{ host_prefix }}/static/img/datatypes/{{ dataset.type }}.png" class="intro-img"></td>
+          <td><a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0"
+              class="blue-link">{{ name
+              }}</a></td>
+          <td>
+            {% for split in dataset.splits %}
+            <div class="sub-row">{{ split }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {% for split in dataset.splits %}
+            {{ dataset.example_count[split] }}<br>
+            {% endfor %}
+          </td>
+          <td class="underline-link">{{ dataset.description | safe }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+</div>
 
 
-  <script>
-    // variable to be used in factgenie.js
-    window.url_prefix = "{{ host_prefix }}";
-  </script>
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = "{{ host_prefix }}";
+</script>
