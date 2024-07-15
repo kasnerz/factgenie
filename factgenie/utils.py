@@ -13,6 +13,7 @@ import coloredlogs
 import traceback
 import yaml
 import queue
+import shutil
 
 from slugify import slugify
 from flask import jsonify
@@ -138,9 +139,9 @@ def generate_campaign_index(app):
         campaign_source = metadata.get("source")
         campaign_id = metadata["id"]
 
-        if campaign_source == "human":
+        if campaign_source == "crowdsourcing":
             campaign = HumanCampaign(campaign_id=campaign_id)
-        elif campaign_source == "model":
+        elif campaign_source == "llm_eval":
             campaign = ModelCampaign(campaign_id=campaign_id)
         else:
             logger.warning(f"Unknown campaign source: {campaign_source}")
@@ -395,7 +396,7 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
             {
                 "id": campaign_id,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "source": "model",
+                "source": "llm_eval",
                 "status": "new",
                 "config": metric.config,
             },
@@ -468,6 +469,39 @@ def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx
     with open(os.path.join(save_dir, f"{annotator_id}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
         f.write(json.dumps(annotation) + "\n")
     return annotation
+
+
+def duplicate_eval(app, campaign_id, new_campaign_id):
+    # copy the directory except for the annotations
+    old_campaign_dir = os.path.join(ANNOTATIONS_DIR, campaign_id)
+    new_campaign_dir = os.path.join(ANNOTATIONS_DIR, new_campaign_id)
+
+    # if new campaign dir exists, return error
+    if os.path.exists(new_campaign_dir):
+        return error("Campaign already exists")
+
+    shutil.copytree(old_campaign_dir, new_campaign_dir, ignore=shutil.ignore_patterns("files"))
+
+    # copy the db
+    old_db = pd.read_csv(os.path.join(old_campaign_dir, "db.csv"))
+    new_db = old_db.copy()
+    new_db["status"] = "free"
+
+    new_db.to_csv(os.path.join(new_campaign_dir, "db.csv"), index=False)
+
+    # update the metadata
+    metadata_path = os.path.join(new_campaign_dir, "metadata.json")
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+
+    metadata["id"] = new_campaign_id
+    metadata["created"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    metadata["status"] = "new"
+
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
+
+    return success()
 
 
 def save_config(filename, config, mode):

@@ -124,7 +124,7 @@ def annotate():
 
     utils.generate_campaign_index(app)
     campaign_id = request.args.get("campaign")
-    campaign = app.db["campaign_index"]["human"][campaign_id]
+    campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
     compl_code = campaign.metadata["config"]["completion_code"]
     prolific_pid = request.args.get("PROLIFIC_PID", "test")
     session_id = request.args.get("SESSION_ID", "test")
@@ -188,7 +188,12 @@ def crowdsourcing():
 
     utils.generate_campaign_index(app)
 
-    campaign_index = app.db["campaign_index"]["human"]
+    llm_configs = utils.load_llm_eval_configs()
+    llm_configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
+
+    crowdsourcing_configs = utils.load_crowdsourcing_configs()
+
+    campaign_index = app.db["campaign_index"]["crowdsourcing"]
     campaigns = defaultdict(dict)
 
     for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
@@ -198,6 +203,8 @@ def crowdsourcing():
     return render_template(
         "crowdsourcing.html",
         campaigns=campaigns,
+        llm_configs=llm_configs,
+        crowdsourcing_configs=crowdsourcing_configs,
         is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
@@ -209,7 +216,7 @@ def crowdsourcing_detail():
     utils.generate_campaign_index(app)
 
     campaign_id = request.args.get("campaign")
-    db = app.db["campaign_index"]["human"][campaign_id].db
+    db = app.db["campaign_index"]["crowdsourcing"][campaign_id].db
     # replace NaN with empty string
     db = db.where(pd.notnull(db), "")
 
@@ -264,7 +271,7 @@ def crowdsourcing_create():
         json.dump(
             {
                 "id": campaign_id,
-                "source": "human",
+                "source": "crowdsourcing",
                 "config": config,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
@@ -284,7 +291,7 @@ def crowdsourcing_create():
     campaign = HumanCampaign(campaign_id=campaign_id)
 
     utils.generate_campaign_index(app)
-    app.db["campaign_index"]["human"][campaign_id] = campaign
+    app.db["campaign_index"]["crowdsourcing"][campaign_id] = campaign
 
     return utils.success()
 
@@ -295,7 +302,7 @@ def crowdsourcing_new():
     model_outs = utils.get_model_outs(app)
 
     utils.generate_campaign_index(app)
-    campaign_index = app.db["campaign_index"]["human"]
+    campaign_index = app.db["campaign_index"]["crowdsourcing"]
 
     configs = utils.load_crowdsourcing_configs()
 
@@ -333,6 +340,45 @@ def delete_campaign():
     del app.db["campaign_index"][source][campaign_name]
 
     return utils.success()
+
+
+@app.route("/duplicate_config", methods=["POST"])
+def duplicate_config():
+    data = request.get_json()
+    filename = data.get("filename")
+    mode_from = data.get("modeFrom")
+    mode_to = data.get("modeTo")
+    campaign_id = data.get("campaignId")
+
+    utils.generate_campaign_index(app)
+
+    if mode_from == mode_to:
+        campaign = app.db["campaign_index"][mode_from][campaign_id]
+        config = campaign.metadata["config"]
+    elif mode_from == "llm_eval" and mode_to == "crowdsourcing":
+        campaign = app.db["campaign_index"][mode_from][campaign_id]
+        llm_config = campaign.metadata["config"]
+
+        # copy only the supported fields
+        config = {"annotation_span_categories": llm_config["annotation_span_categories"]}
+    else:
+        raise NotImplementedError(f"Conversion from {mode_from} to {mode_to} not implemented")
+
+    utils.save_config(filename, config, mode=mode_to)
+
+    return utils.success()
+
+
+@app.route("/duplicate_eval", methods=["POST"])
+def duplicate_eval():
+    data = request.get_json()
+    mode = data.get("mode")
+    campaign_id = data.get("campaignId")
+    new_campaign_id = data.get("newCampaignId")
+
+    ret = utils.duplicate_eval(app, campaign_id, new_campaign_id)
+
+    return ret
 
 
 @app.route("/example", methods=["GET", "POST"])
@@ -395,8 +441,13 @@ def llm_eval():
 
     utils.generate_campaign_index(app)
 
-    campaign_index = app.db["campaign_index"]["model"]
+    campaign_index = app.db["campaign_index"]["llm_eval"]
     campaigns = defaultdict(dict)
+
+    llm_configs = utils.load_llm_eval_configs()
+    llm_configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
+
+    crowdsourcing_configs = utils.load_crowdsourcing_configs()
 
     for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
@@ -404,6 +455,8 @@ def llm_eval():
 
     return render_template(
         "llm_eval.html",
+        llm_configs=llm_configs,
+        crowdsourcing_configs=crowdsourcing_configs,
         campaigns=campaigns,
         host_prefix=app.config["host_prefix"],
     )
@@ -438,7 +491,7 @@ def llm_eval_detail():
     utils.generate_campaign_index(app)
 
     campaign_id = request.args.get("campaign")
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
 
     if campaign.metadata["status"] == "running" and not app.db["announcers"].get(campaign_id):
         campaign.metadata["status"] = "paused"
@@ -466,13 +519,13 @@ def llm_eval_new():
     model_outs = utils.get_model_outs(app)
 
     # get a list of available metrics
-    app.db["metric_index"] = utils.load_llm_eval_configs()
-    llm_metrics = {metric: metrics.get_config() for metric, metrics in app.db["metric_index"].items()}
+    llm_configs = utils.load_llm_eval_configs()
+    configs = {metric: metrics.get_config() for metric, metrics in llm_configs.items()}
 
     metric_types = list(LLMMetricFactory.metric_classes().keys())
 
     utils.generate_campaign_index(app)
-    campaign_index = app.db["campaign_index"]["model"]
+    campaign_index = app.db["campaign_index"]["llm_eval"]
 
     default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
 
@@ -480,7 +533,7 @@ def llm_eval_new():
         "llm_eval_new.html",
         default_campaign_id=default_campaign_id,
         model_outs=model_outs,
-        llm_metrics=llm_metrics,
+        configs=configs,
         metric_types=metric_types,
         host_prefix=app.config["host_prefix"],
     )
@@ -498,7 +551,7 @@ def llm_eval_run():
         "running": True,
     }
     utils.generate_campaign_index(app)
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
 
     threads = app.db["threads"]
     datasets = app.db["datasets_obj"]
@@ -531,7 +584,7 @@ def llm_eval_pause():
     campaign_id = data.get("campaignId")
     app.db["threads"][campaign_id]["running"] = False
 
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
     campaign.metadata["status"] = "paused"
     campaign.update_metadata()
 
@@ -569,7 +622,7 @@ def submit_annotations():
 
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
     os.makedirs(save_dir, exist_ok=True)
-    campaign = app.db["campaign_index"]["human"][campaign_id]
+    campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
 
     with app.db["lock"]:
         db = campaign.db

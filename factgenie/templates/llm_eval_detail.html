@@ -123,36 +123,21 @@
       </div>
     </div>
   </div>
+</div>
 
-  <div class="modal fade" id="config-modal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="about-modal-label">Config</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id='configarea' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
-            <!-- indent nicely -->
-            <pre>{{ metadata.config | prettify_json }}</pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+{% include 'forms/config_modal.html' %}
 
-
-  <script>
-    // variable to be used in factgenie.js
-    window.url_prefix = "{{ host_prefix }}";
-    window.campaigns = "{{ campaigns }}";
-    window.llm_eval_examples = "{{ overview | length }}";
-  </script>
-  <script>
-    $(document).ready(function () {
-      if ("{{ metadata.status }}" == "running") {
-        startLLMEvalListener("{{ campaign_id }}");
-      }
-    });
-  </script>
-  <script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = "{{ host_prefix }}";
+  window.campaigns = "{{ campaigns }}";
+  window.llm_eval_examples = "{{ overview | length }}";
+</script>
+<script>
+  $(document).ready(function () {
+    if ("{{ metadata.status }}" == "running") {
+      startLLMEvalListener("{{ campaign_id }}");
+    }
+  });
+</script>
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>

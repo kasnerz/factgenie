@@ -875,7 +875,65 @@ function createAnnotationSpanCategoryElem(name, color) {
     return newCategory;
 }
 
-function saveConfig() {
+function duplicateConfig(btnElem, filenameElemId, modeTo, campaignId) {
+    const filename = $("#" + filenameElemId).val() + ".yaml";
+    const modeFrom = window.mode;
+
+    // TODO warn overwrite
+    $.post({
+        url: `${url_prefix}/duplicate_config`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            campaignId: campaignId,
+            modeFrom: modeFrom,
+            modeTo: modeTo,
+            filename: filename,
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // change color of the button save-cfg-submit to green for a second with the label "Saved!", then back to normal
+                const origText = $(btnElem).text();
+                $(btnElem).removeClass("btn-primary").addClass("btn-success").text("Saved!");
+                setTimeout(function () {
+                    $('#save-cfg-modal').modal('hide');
+                    $(btnElem).removeClass("btn-success").addClass("btn-primary").text(origText);
+                }, 1500);
+            }
+        }
+    });
+}
+
+function duplicateEval(inputDuplicateId, campaignId) {
+    newCampaignId = $(`#${inputDuplicateId}`).val();
+
+    $.post({
+        url: `${url_prefix}/duplicate_eval`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            campaignId: campaignId,
+            newCampaignId: newCampaignId,
+            mode: window.mode
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // hide the modal and reload the page
+                $('#duplicate-eval-modal').modal('hide');
+                location.reload();
+            }
+        }
+    });
+}
+
+
+function saveConfig(mode) {
     const filename = $("#config-save-filename").val() + ".yaml";
     const config = gatherConfig();
 
@@ -884,12 +942,11 @@ function saveConfig() {
             return;
         }
     }
-
     $.post({
         url: `${url_prefix}/save_config`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
-            mode: window.mode,
+            mode: mode,
             filename: filename,
             config: config
         }),

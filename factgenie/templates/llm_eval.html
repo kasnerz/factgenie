@@ -52,17 +52,17 @@
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
                 <i class="fa fa-download"></i>
               </a>
-              <!-- <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-                data-bs-target="#duplicate-eval-modal">
+              <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#duplicate-eval-modal-{{
+                  campaign.metadata.id }}">
                 <i class="fa fa-clone"></i>
-              </a> -->
-              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'model')" class="btn btn-outline-danger"
+              </a>
+              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'llm_eval')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the campaign">
                 <i class="fa fa-trash"></i>
-
               </a>
             </td>
           </tr>
+          {% include 'forms/duplicate_modal.html' %}
           {% endfor %}
         </tbody>
 
@@ -70,31 +70,11 @@
 
   </div>
 
-  <div class="modal fade" id="duplicate-eval-modal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="about-modal-label">Duplicate eval</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
 
-        <div class="modal-body">
-          <div id='duplicate-main' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
 
-          </div>
-
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary mt-3" onclick="createLLMEval();">Duplicate eval</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-<script>
-  // variable to be used in factgenie.js
-  window.url_prefix = "{{ host_prefix }}";
-  window.mode = "llm_eval";
-</script>
-<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+  <script>
+    // variable to be used in factgenie.js
+    window.url_prefix = "{{ host_prefix }}";
+    window.mode = "llm_eval";
+  </script>
+  <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

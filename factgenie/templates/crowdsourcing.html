@@ -70,12 +70,17 @@
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
                 <i class="fa fa-download"></i>
               </a>
-              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'human')" class="btn btn-outline-danger"
+              <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                data-bs-target="#duplicate-eval-modal-{{ campaign.metadata.id }}">
+                <i class="fa fa-clone"></i>
+              </a>
+              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'crowdsourcing')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the campaign">
                 <i class="fa fa-trash"></i>
               </a>
             </td>
           </tr>
+          {% include 'forms/duplicate_modal.html' %}
           {% endfor %}
         </tbody>
 
