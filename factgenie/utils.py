@@ -207,6 +207,29 @@ def get_example_data(app, dataset_name, split, example_idx):
     }
 
 
+def get_model_outputs_overview(app, datasets):
+    model_outputs = {}
+
+    for dataset_name, dataset_info in datasets.items():
+        dataset = get_dataset(app=app, dataset_name=dataset_name)
+        splits = dataset.get_splits()
+
+        model_outputs[dataset_name] = {}
+
+        for split in splits:
+            model_outputs[dataset_name][split] = {}
+            outputs = dataset.get_generated_output_for_split(split)
+
+            for setup_id, output in outputs.items():
+                output_info = {}
+                output_info["setup_id"] = setup_id
+                output_info["example_count"] = len(outputs[setup_id][0]["generated"])
+
+                model_outputs[dataset_name][split][setup_id] = output_info
+
+    return model_outputs
+
+
 def free_idle_examples(db):
     start = int(time.time())
 
