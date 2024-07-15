@@ -58,7 +58,7 @@ class Dataset:
         Do override it if you want to load the data e.g. from HuggingFace
 
         Notice it also calls postprocess_data internally!
-        
+
         """
         splits = Path.glob(Path(self.data_path) / self.name, "*.json")
         splits = [split.stem for split in splits]
@@ -86,6 +86,17 @@ class Dataset:
             },
         )
         return html
+
+    def delete_generated_outputs(self, split, setup):
+        path = Path(f"{self.output_path}/{self.name}/{split}/{setup}.json")
+
+        if path.exists():
+            path.unlink()
+
+        self.outputs[split].pop(setup, None)
+
+    def get_generated_output_for_split(self, split):
+        return self.outputs[split]
 
     def get_generated_output_for_setup(self, split, output_idx, setup_id):
         for out in self.outputs[split][setup_id]:

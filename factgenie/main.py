@@ -156,16 +156,6 @@ def annotate():
     )
 
 
-@app.route("/annotations", methods=["GET", "POST"])
-@login_required
-def manage_annotations():
-    utils.generate_annotation_index(app)
-
-    annotations = app.db["annotation_index"]
-
-    return render_template("manage_annotations.html", annotations=annotations, host_prefix=app.config["host_prefix"])
-
-
 @app.route("/browse", methods=["GET", "POST"])
 @login_required
 def browse():
@@ -328,14 +318,6 @@ def crowdsourcing_new():
     )
 
 
-@app.route("/datasets", methods=["GET", "POST"])
-@login_required
-def manage_datasets():
-    datasets = utils.get_dataset_overview(app)
-
-    return render_template("manage_datasets.html", datasets=datasets, host_prefix=app.config["host_prefix"])
-
-
 @app.route("/delete_campaign", methods=["POST"])
 @login_required
 def delete_campaign():
@@ -349,6 +331,21 @@ def delete_campaign():
         shutil.rmtree(os.path.join(TEMPLATES_DIR, "campaigns", campaign_name))
 
     del app.db["campaign_index"][source][campaign_name]
+
+    return utils.success()
+
+@app.route("/delete_model_outputs", methods=["POST"])
+@login_required
+def delete_model_outputs():
+    data = request.get_json()
+    
+    # get dataset, split, setup
+    dataset_name = data.get("dataset")
+    split = data.get("split")
+    setup = data.get("setup")
+
+    dataset = app.db["datasets_obj"][dataset_name]
+    dataset.delete_generated_outputs(split, setup)
 
     return utils.success()
 
@@ -593,6 +590,31 @@ def llm_eval_pause():
 
     resp = jsonify(success=True, status=campaign.metadata["status"])
     return resp
+
+
+@app.route("/datasets", methods=["GET", "POST"])
+@login_required
+def manage_datasets():
+    datasets = utils.get_dataset_overview(app)
+
+    return render_template("manage_datasets.html", datasets=datasets, host_prefix=app.config["host_prefix"])
+
+
+
+@app.route("/model_outputs", methods=["GET", "POST"])
+@login_required
+def manage_model_outputs():
+    utils.generate_annotation_index(app)
+
+    datasets = utils.get_dataset_overview(app)
+    model_outputs = utils.get_model_outputs_overview(app, datasets)
+
+    return render_template(
+        "manage_model_outputs.html",
+        datasets=datasets,
+        model_outputs=model_outputs,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/save_config", methods=["POST"])
