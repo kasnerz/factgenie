@@ -17,7 +17,7 @@ from slugify import slugify
 from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
-from factgenie.evaluate import LLMMetric, Llama3Metric
+from factgenie.metrics import LLMMetricFactory
 import factgenie.utils as utils
 
 DIR_PATH = os.path.dirname(__file__)
@@ -64,6 +64,11 @@ def annotate_url(current_url):
     parsed = urllib.parse.urlparse(current_url)
     base_url = f"{parsed.scheme}://{parsed.netloc}/"
     return f"{base_url}annotate"
+
+
+@app.template_filter("prettify_json")
+def prettify_json(value):
+    return json.dumps(value, sort_keys=True, indent=4, separators=(",", ": "))
 
 
 # -----------------
@@ -119,8 +124,8 @@ def annotate():
 
     utils.generate_campaign_index(app)
     campaign_id = request.args.get("campaign")
-    campaign = app.db["campaign_index"]["human"][campaign_id]
-    compl_code = campaign.metadata["prolific_code"]
+    campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
+    compl_code = campaign.metadata["config"]["completion_code"]
     prolific_pid = request.args.get("PROLIFIC_PID", "test")
     session_id = request.args.get("SESSION_ID", "test")
     study_id = request.args.get("STUDY_ID", "test")
@@ -181,48 +186,23 @@ def browse():
 def crowdsourcing():
     logger.info(f"Crowdsourcing page loaded")
 
-    datasets = app.db["datasets_obj"]
-    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
-
-    for dataset_name, dataset in datasets.items():
-        splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
-
-        for split in splits:
-            output_setups = dataset.outputs[split].keys()
-            model_outs["splits"].append(split)
-
-            for setup_id in output_setups:
-                model_outs["setup_ids"].append(setup_id)
-                model_outs["valid_triplets"].append(
-                    {
-                        "dataset": dataset_name,
-                        "split": split,
-                        "setup_id": setup_id,
-                        "example_count": dataset.get_example_count(split),
-                    }
-                )
-
-    for key in ["datasets", "splits", "setup_ids"]:
-        model_outs[key] = sorted(list(set(model_outs[key])))
-
     utils.generate_campaign_index(app)
 
-    campaign_index = app.db["campaign_index"]["human"]
+    llm_configs = utils.load_configs(mode="llm_eval")
+    crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
+
+    campaign_index = app.db["campaign_index"]["crowdsourcing"]
     campaigns = defaultdict(dict)
 
-    for campaign_id, campaign in campaign_index.items():
+    for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
         campaigns[campaign_id]["stats"] = campaign.get_stats()
 
-    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="campaign")
-
     return render_template(
         "crowdsourcing.html",
-        model_outs=model_outs,
         campaigns=campaigns,
-        default_campaign_id=default_campaign_id,
-        default_error_categories=app.config["default_error_categories"],
+        llm_configs=llm_configs,
+        crowdsourcing_configs=crowdsourcing_configs,
         is_password_protected=app.config["login"]["active"],
         host_prefix=app.config["host_prefix"],
     )
@@ -234,7 +214,7 @@ def crowdsourcing_detail():
     utils.generate_campaign_index(app)
 
     campaign_id = request.args.get("campaign")
-    db = app.db["campaign_index"]["human"][campaign_id].db
+    db = app.db["campaign_index"]["crowdsourcing"][campaign_id].db
     # replace NaN with empty string
     db = db.where(pd.notnull(db), "")
 
@@ -263,18 +243,16 @@ def crowdsourcing_detail():
     )
 
 
-@app.route("/crowdsourcing/new", methods=["POST"])
+@app.route("/crowdsourcing/create", methods=["POST"])
 @login_required
-def crowdsourcing_new():
+def crowdsourcing_create():
     data = request.get_json()
 
     campaign_id = slugify(data.get("campaignId"))
-    examples_per_batch = int(data.get("examplesPerBatch"))
-    idle_time = int(data.get("idleTime"))
-    prolific_code = data.get("prolificCode")
     campaign_data = data.get("campaignData")
-    error_categories = data.get("errorCategories")
-    sort_order = data.get("sortOrder")
+    config = data.get("config")
+
+    config = utils.parse_crowdsourcing_config(config)
 
     # create a new directory
     if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
@@ -283,7 +261,7 @@ def crowdsourcing_new():
     os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
 
     # create the annotation CSV
-    db = utils.generate_campaign_db(app, campaign_data, examples_per_batch, sort_order)
+    db = utils.generate_campaign_db(app, campaign_data, config=config)
     db.to_csv(os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv"), index=False)
 
     # save metadata
@@ -291,12 +269,8 @@ def crowdsourcing_new():
         json.dump(
             {
                 "id": campaign_id,
-                "idle_time": idle_time,
-                "prolific_code": prolific_code,
-                # "data": campaign_data,
-                "sort_order": sort_order,
-                "source": "human",
-                "error_categories": error_categories,
+                "source": "crowdsourcing",
+                "config": config,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
             f,
@@ -314,9 +288,31 @@ def crowdsourcing_new():
     # create the campaign object
     campaign = HumanCampaign(campaign_id=campaign_id)
 
-    app.db["campaign_index"]["human"][campaign_id] = campaign
+    utils.generate_campaign_index(app)
+    app.db["campaign_index"]["crowdsourcing"][campaign_id] = campaign
 
     return utils.success()
+
+
+@app.route("/crowdsourcing/new", methods=["GET", "POST"])
+@login_required
+def crowdsourcing_new():
+    model_outs = utils.get_model_outs(app)
+
+    utils.generate_campaign_index(app)
+    campaign_index = app.db["campaign_index"]["crowdsourcing"]
+
+    configs = utils.load_configs(mode="crowdsourcing")
+
+    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="campaign")
+
+    return render_template(
+        "crowdsourcing_new.html",
+        default_campaign_id=default_campaign_id,
+        model_outs=model_outs,
+        configs=configs,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/datasets", methods=["GET", "POST"])
@@ -342,6 +338,42 @@ def delete_campaign():
     del app.db["campaign_index"][source][campaign_name]
 
     return utils.success()
+
+
+@app.route("/duplicate_config", methods=["POST"])
+def duplicate_config():
+    data = request.get_json()
+    filename = data.get("filename")
+    mode_from = data.get("modeFrom")
+    mode_to = data.get("modeTo")
+    campaign_id = data.get("campaignId")
+
+    utils.generate_campaign_index(app)
+
+    if mode_from == mode_to:
+        campaign = app.db["campaign_index"][mode_from][campaign_id]
+        config = campaign.metadata["config"]
+    else:
+        # currently we only support copying the annotation_span_categories between modes
+        campaign = app.db["campaign_index"][mode_from][campaign_id]
+        llm_config = campaign.metadata["config"]
+        config = {"annotation_span_categories": llm_config["annotation_span_categories"]}
+
+    utils.save_config(filename, config, mode=mode_to)
+
+    return utils.success()
+
+
+@app.route("/duplicate_eval", methods=["POST"])
+def duplicate_eval():
+    data = request.get_json()
+    mode = data.get("mode")
+    campaign_id = data.get("campaignId")
+    new_campaign_id = data.get("newCampaignId")
+
+    ret = utils.duplicate_eval(app, campaign_id, new_campaign_id)
+
+    return ret
 
 
 @app.route("/example", methods=["GET", "POST"])
@@ -371,14 +403,14 @@ def export_annotations():
             for file in files:
                 zip_file.write(
                     os.path.join(root, file),
-                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id, "files")),
+                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id)),
                 )
 
     # Set response headers for download
-    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    timestamp = int(time.time())
     response = make_response(zip_buffer.getvalue())
     response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{now}.zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
     return response
 
 
@@ -402,56 +434,47 @@ def login():
 def llm_eval():
     logger.info(f"LLM eval page loaded")
 
-    datasets = app.db["datasets_obj"]
-    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
-
-    for dataset_name, dataset in datasets.items():
-        splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
-
-        for split in splits:
-            output_setups = dataset.outputs[split].keys()
-            model_outs["splits"].append(split)
-
-            for setup_id in output_setups:
-                model_outs["setup_ids"].append(setup_id)
-                model_outs["valid_triplets"].append(
-                    {
-                        "dataset": dataset_name,
-                        "split": split,
-                        "setup_id": setup_id,
-                        "example_count": dataset.get_example_count(split),
-                    }
-                )
-
-    for key in ["datasets", "splits", "setup_ids"]:
-        model_outs[key] = sorted(list(set(model_outs[key])))
-
     utils.generate_campaign_index(app)
 
-    campaign_index = app.db["campaign_index"]["model"]
+    campaign_index = app.db["campaign_index"]["llm_eval"]
     campaigns = defaultdict(dict)
 
-    for campaign_id, campaign in campaign_index.items():
+    llm_configs = utils.load_configs(mode="llm_eval")
+    crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
+
+    for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
         campaigns[campaign_id]["metadata"] = campaign.metadata
         campaigns[campaign_id]["stats"] = campaign.get_stats()
 
-    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
-
-    # get a list of available metrics
-    app.db["metric_index"] = utils.generate_metric_index()
-
-    llm_metrics = app.db["metric_index"]
-
     return render_template(
         "llm_eval.html",
-        model_outs=model_outs,
+        llm_configs=llm_configs,
+        crowdsourcing_configs=crowdsourcing_configs,
         campaigns=campaigns,
-        default_error_categories=app.config["default_error_categories"],
-        default_campaign_id=default_campaign_id,
-        llm_metrics=list(llm_metrics.keys()),
         host_prefix=app.config["host_prefix"],
     )
+
+
+@app.route("/llm_eval/create", methods=["GET", "POST"])
+@login_required
+def llm_eval_create():
+    data = request.get_json()
+
+    campaign_id = data.get("campaignId")
+    campaign_data = data.get("campaignData")
+    config = data.get("config")
+
+    config = utils.parse_llm_config(config)
+    datasets = app.db["datasets_obj"]
+
+    try:
+        campaign = utils.llm_eval_new(campaign_id, config, campaign_data, datasets)
+    except Exception as e:
+        return utils.error(f"Error while creating campaign: {e}")
+
+    app.db["campaign_index"][campaign_id] = campaign
+
+    return utils.success()
 
 
 @app.route("/llm_eval/detail", methods=["GET", "POST"])
@@ -460,7 +483,7 @@ def llm_eval_detail():
     utils.generate_campaign_index(app)
 
     campaign_id = request.args.get("campaign")
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
 
     if campaign.metadata["status"] == "running" and not app.db["announcers"].get(campaign_id):
         campaign.metadata["status"] = "paused"
@@ -485,21 +508,25 @@ def llm_eval_detail():
 @app.route("/llm_eval/new", methods=["GET", "POST"])
 @login_required
 def llm_eval_new():
-    data = request.get_json()
+    model_outs = utils.get_model_outs(app)
 
-    llm_config = data.get("llmConfig")
-    campaign_id = data.get("campaignId")
-    campaign_data = data.get("campaignData")
+    # get a list of available metrics
+    llm_configs = utils.load_configs(mode="llm_eval")
+    metric_types = list(LLMMetricFactory.metric_classes().keys())
 
-    app.db["metric_index"] = utils.generate_metric_index()
+    utils.generate_campaign_index(app)
+    campaign_index = app.db["campaign_index"]["llm_eval"]
 
-    metric = app.db["metric_index"][llm_config]
-    datasets = app.db["datasets_obj"]
+    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm-eval")
 
-    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
-    app.db["campaign_index"][campaign_id] = campaign
-
-    return utils.success()
+    return render_template(
+        "llm_eval_new.html",
+        default_campaign_id=default_campaign_id,
+        model_outs=model_outs,
+        configs=llm_configs,
+        metric_types=metric_types,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/llm_eval/run", methods=["POST"])
@@ -510,26 +537,19 @@ def llm_eval_run():
 
     app.db["announcers"][campaign_id] = announcer = utils.MessageAnnouncer()
 
-    # TODO: so far it seems that the app is actually more responsive without threads :-O
-    # from threading import Thread
-    # thread = Thread(target=utils.run_llm_eval, args=(app, campaign_id))
-    # thread.daemon = True
-    # thread.start()
-
     app.db["threads"][campaign_id] = {
         "running": True,
     }
-    # return utils.run_llm_eval(app, campaign_id)
-    app.db["metric_index"] = utils.generate_metric_index()
-
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    utils.generate_campaign_index(app)
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
 
     threads = app.db["threads"]
     datasets = app.db["datasets_obj"]
 
-    metric_name = campaign.metadata["metric"]
-    metric = app.db["metric_index"][metric_name]
-    return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name)
+    config = campaign.metadata["config"]
+    metric = LLMMetricFactory.from_config(config)
+
+    return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads)
 
 
 @app.route("/llm_eval/progress/<campaign_id>", methods=["GET"])
@@ -554,9 +574,29 @@ def llm_eval_pause():
     campaign_id = data.get("campaignId")
     app.db["threads"][campaign_id]["running"] = False
 
-    campaign = app.db["campaign_index"]["model"][campaign_id]
+    campaign = app.db["campaign_index"]["llm_eval"][campaign_id]
     campaign.metadata["status"] = "paused"
     campaign.update_metadata()
+
+    resp = jsonify(success=True, status=campaign.metadata["status"])
+    return resp
+
+
+@app.route("/save_config", methods=["POST"])
+def save_config():
+    data = request.get_json()
+    filename = data.get("filename")
+    config = data.get("config")
+    mode = data.get("mode")
+
+    if mode == "llm_eval":
+        config = utils.parse_llm_config(config)
+    elif mode == "crowdsourcing":
+        config = utils.parse_crowdsourcing_config(config)
+    else:
+        return jsonify({"error": f"Invalid mode: {mode}"})
+
+    utils.save_config(filename, config, mode=mode)
 
     return utils.success()
 
@@ -572,7 +612,7 @@ def submit_annotations():
 
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
     os.makedirs(save_dir, exist_ok=True)
-    campaign = app.db["campaign_index"]["human"][campaign_id]
+    campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
 
     with app.db["lock"]:
         db = campaign.db

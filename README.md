@@ -98,18 +98,18 @@ Go to `/browse`. Make sure that you can select your dataset in the navigation ba
 For collecting the annotations from an LLM, you will first need to get access to one. The options we recommend are:
 
 - [OpenAI API](https://openai.com/api/): After you create an account, set the `OPENAI_API_KEY` environment variable to your API key. Note that you will need to pay per token for the service.
-- [Ollama](https://ollama.com): An open-source framework for running LLMs locally. After you start the model, create a config file in `factgenie/llm-eval` with the respective API URL (see `factgenie/llm-eval/ollama-llama3.yaml` for an example).
+- [Ollama](https://ollama.com): An open-source framework for running LLMs locally. After you start the model, create a config file in `factgenie/config/llm-eval` with the respective API URL (see `factgenie/llm-eval/config/ollama-llama3.yaml` for an example).
 
 In general, you can integrate factgenie with any API that allows decoding responses as JSON (or any API as long as you can get a JSON by postprocessing the response).
 
-You also need to customize the YAML configuration file in `factgenie/llm-eval` by setting the model prompt optionally along with the system message, model parameters, etc.
+You also need to customize the YAML configuration file in `factgenie/config/llm-eval` by setting the model prompt optionally along with the system message, model parameters, etc.
 Keep in mind the prompt needs to **ask the model to produce JSON outputs in the following format**:
 ```
 {
   "errors": [
     { 
       "text": [TEXT_SPAN],
-      "type": [ERROR_CATEGORY]},
+      "type": [ANNOTATION_SPAN_CATEGORY]},
     ...
   ]
 }

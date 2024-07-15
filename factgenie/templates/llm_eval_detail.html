@@ -28,15 +28,13 @@
         <dd class="col-sm-9" id="metadata-created"> {{ metadata.created }} </dd>
         <dt class="col-sm-3"> Status </dt>
         <dd class="col-sm-9" id="metadata-status"> {{ metadata.status }} </dd>
-        <dt class="col-sm-3"> Metric </dt>
-        <dd class="col-sm-9" id="metadata-metric"> {{ metadata.metric }} </dd>
         <dt class="col-sm-3"> Examples </dt>
         <dd class="col-sm-9" id="metadata-example-cnt"> {{ finished_examples | length }} / {{ overview | length }} </dd>
       </dl>
       <div>
         <a onclick="runLlmEval('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
-          id="run-button" title="Run evaluation" {% if metadata.status=='finished' %} style="display: none;" {% endif
-          %}>
+          id="run-button" title="Run evaluation" {% if metadata.status=='finished' or metadata.status=='running' %}
+          style="display: none;" {% endif %}>
           <i class="fa fa-play"></i> {{ 'Continue' if metadata.status == 'paused' else 'Run' }} evaluation
         </a>
         <a onclick="pauseLlmEval('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
@@ -44,6 +42,14 @@
           %}>
           <i class="fa fa-pause"></i> Pause evaluation
         </a>
+        <a href="{{ host_prefix }}/export_annotations?campaign={{ campaign_id }}" class="btn btn-outline-secondary"
+          data-bs-toggle="tooltip" id="download-button" title="Export annotations" {% if metadata.status=='new' %}
+          style="display: none;" {% endif %}>
+          <i class="fa fa-download"></i> Download annotations
+        </a>
+        <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#config-modal"><i
+            class="fa fa-cog"></i> Show
+          configuration</a>
       </div>
       <div class="progress mt-3" style="display: {{ 'none' if metadata.status != 'running' else block }};"
         id="llm-eval-progress">
@@ -115,22 +121,23 @@
 
         </div>
       </div>
-
-
-
     </div>
   </div>
-  <script>
-    // variable to be used in factgenie.js
-    window.url_prefix = "{{ host_prefix }}";
-    window.campaigns = "{{ campaigns }}";
-    window.llm_eval_examples = "{{ overview | length }}";
-  </script>
-  <script>
-    $(document).ready(function () {
-      if ("{{ metadata.status }}" == "running") {
-        startLLMEvalListener("{{ campaign_id }}");
-      }
-    });
-  </script>
-  <script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+</div>
+
+{% include 'forms/config_modal.html' %}
+
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = "{{ host_prefix }}";
+  window.campaigns = "{{ campaigns }}";
+  window.llm_eval_examples = "{{ overview | length }}";
+</script>
+<script>
+  $(document).ready(function () {
+    if ("{{ metadata.status }}" == "running") {
+      startLLMEvalListener("{{ campaign_id }}");
+    }
+  });
+</script>
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>

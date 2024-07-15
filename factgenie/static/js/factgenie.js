@@ -118,7 +118,7 @@ function loadAnnotations() {
     $("#dataset-spinner").show();
 
     const promises = [];
-    const error_categories = metadata.error_categories;
+    const annotation_span_categories = metadata.config.annotation_span_categories;
 
     // prefetch the examples for annotation: we need them for YPet initialization
     for (const [annotation_idx, example] of Object.entries(annotation_set)) {
@@ -132,7 +132,7 @@ function loadAnnotations() {
         .then(() => {
             YPet.addInitializer(function (options) {
                 /* Configure the # and colors of Annotation types (minimum 1 required) */
-                YPet.AnnotationTypes = new AnnotationTypeList(error_categories);
+                YPet.AnnotationTypes = new AnnotationTypeList(annotation_span_categories);
                 var regions = {};
                 var paragraphs = {};
 
@@ -366,8 +366,9 @@ function getAnnotatedOutput(output, campaign_id) {
 
     if (annotations_campaign.length > 0) {
         const annotations = annotations_campaign[0];
-        const error_categories = annotations.metadata.error_categories;
-        annotated_content = annotateContent(content, annotations, error_categories);
+        const annotation_span_categories = annotations.metadata.config.annotation_span_categories;
+
+        annotated_content = annotateContent(content, annotations, annotation_span_categories);
     } else {
         annotated_content = content;
 
@@ -382,7 +383,7 @@ function getAnnotatedOutput(output, campaign_id) {
     return placeholder;
 }
 
-function annotateContent(content, annotations, error_categories) {
+function annotateContent(content, annotations, annotation_span_categories) {
     let offset = 0; // Track cumulative offset
     const annotationSet = annotations.annotations;
 
@@ -395,17 +396,17 @@ function annotateContent(content, annotations, error_categories) {
     annotationSet.forEach(annotation => {
         const annotationType = annotation.type;
 
-        if (!(annotationType in error_categories)) {
-            console.log("Warning: annotation type not found in error_categories: " + annotationType);
+        if (!(annotationType in annotation_span_categories)) {
+            console.log("Warning: annotation type not found in annotation_span_categories: " + annotationType);
             return;
         }
-        const color = error_categories[annotationType].color;
+        const color = annotation_span_categories[annotationType].color;
         const text = annotation.text;
 
         const start = annotation.start + offset;
         const end = start + text.length;
 
-        const error_name = error_categories[annotationType].name;
+        const error_name = annotation_span_categories[annotationType].name;
         const reason = annotation.reason;
         let tooltip_text;
 
@@ -543,13 +544,13 @@ $("#hideOverlayBtn").click(function () {
     $("#overlay-start").fadeOut();
 });
 
-$(".btn-check-data").click(function () {
+$("#data-select-area input[type='checkbox']").change(function () {
     updateSelectedDatasets();
 });
 
 function updateSelectedDatasets() {
     var selectedData = gatherCampaignData();
-    $("#selectedDatasetsContent").html(selectedData.map(d => `${d.dataset} / ${d.split} / ${d.setup_id}`).join("<br>"));
+    $("#selectedDatasetsContent").html("<ul>" + selectedData.map(d => `<li>${d.dataset} ▸ ${d.split} ▸ ${d.setup_id}</li>`).join("\n") + "</ul>");
 }
 
 function gatherCampaignData() {
@@ -557,7 +558,6 @@ function gatherCampaignData() {
     var campaign_splits = [];
     var campaign_outputs = [];
 
-    // get `data-content` attribute of buttons which have the "checked" property
     $(".btn-check-dataset").each(function () {
         if ($(this).prop("checked")) {
             campaign_datasets.push($(this).attr("data-content"));
@@ -568,13 +568,11 @@ function gatherCampaignData() {
             campaign_splits.push($(this).attr("data-content"));
         }
     });
-    $(".btn-check-output").each(function () {
+    $(".btn-check-out").each(function () {
         if ($(this).prop("checked")) {
             campaign_outputs.push($(this).attr("data-content"));
         }
     });
-
-
     // get all available combinations of datasets, splits, and outputs
     var combinations = [];
     var valid_triplets = model_outs.valid_triplets;
@@ -592,12 +590,35 @@ function gatherCampaignData() {
 
 }
 
+function gatherConfig() {
+    var config = {};
+
+    if (window.mode == "crowdsourcing") {
+        config.examplesPerBatch = $("#examplesPerBatch").val();
+        config.idleTime = $("#idleTime").val();
+        config.completionCode = $("#completionCode").val();
+        config.sortOrder = $("#sortOrder").val();
+        config.annotationSpanCategories = getAnnotationSpanCategories();
+    } else if (window.mode == "llm_eval") {
+        config.metricType = $("#metric-type").val();
+        config.modelName = $("#model-name").val();
+        config.promptTemplate = $("#prompt-template").val();
+        config.systemMessage = $("#system-message").val();
+        config.apiUrl = $("#api-url").val();
+        config.modelArguments = getKeysAndValues($("#model-arguments"));
+        config.extraArguments = getKeysAndValues($("#extra-arguments"));
+        config.annotationSpanCategories = getAnnotationSpanCategories();
+    }
+    return config;
+}
+
 
 function createLLMEval() {
     const campaignId = $('#campaignId').val();
-    const llmConfig = $('#llmConfig').val();
+    // const llmConfig = $('#llmConfig').val();
+
+    const config = gatherConfig();
     var campaignData = gatherCampaignData();
-    const errorCategories = getErrorCategories();
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -606,13 +627,13 @@ function createLLMEval() {
     }
 
     $.post({
-        url: `${url_prefix}/llm_eval/new`,
+        url: `${url_prefix}/llm_eval/create`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
             campaignId: campaignId,
             campaignData: campaignData,
-            llmConfig: llmConfig,
-            errorCategories: errorCategories,
+            // llmConfig: llmConfig,
+            config: config
         }),
         success: function (response) {
             console.log(response);
@@ -620,35 +641,38 @@ function createLLMEval() {
             if (response.success !== true) {
                 alert(response.error);
             } else {
-                // hide modal
-                $('#new-eval-modal').modal('hide');
-                // refresh list of campaigns
-                location.reload();
+                // redirect to the campaign list ("/llm_eval")
+                window.location.href = `${url_prefix}/llm_eval`;
             }
         }
     });
 }
 
-function getErrorCategories() {
-    var errorCategories = [];
-    $("#error-categories").children().each(function () {
-        const name = $(this).find("#errorCategoryName").val();
-        const color = $(this).find("#errorCategoryColor").val();
-        errorCategories.push({ name: name, color: color });
-    }
-    );
-    return errorCategories;
+function getAnnotationSpanCategories() {
+    var annotationSpanCategories = [];
+
+    $("#annotation-span-categories").children().each(function () {
+        const name = $(this).find("input[name='annotationSpanCategoryName']").val();
+        const color = $(this).find("input[name='annotationSpanCategoryColor']").val();
+        annotationSpanCategories.push({ name: name, color: color });
+    });
+    return annotationSpanCategories;
+}
+
+function getKeysAndValues(div) {
+    var args = {};
+    div.children().each(function () {
+        const key = $(this).find("input[name='argName']").val();
+        const value = $(this).find("input[name='argValue']").val();
+        args[key] = value;
+    });
+    return args;
 }
 
 function createHumanCampaign() {
     const campaignId = $('#campaignId').val();
-    const examplesPerBatch = $('#examplesPerBatch').val();
-    const idleTime = $('#idleTime').val();
-    const prolificCode = $('#prolificCode').val() || ""; // Optional field
-    const sortOrder = $('#sortOrder').val();
-
+    const config = gatherConfig();
     var campaignData = gatherCampaignData();
-    const errorCategories = getErrorCategories();
 
     // if no datasets are selected, show an alert
     if (campaignData.length == 0) {
@@ -657,16 +681,12 @@ function createHumanCampaign() {
     }
 
     $.post({
-        url: `${url_prefix}/crowdsourcing/new`,
+        url: `${url_prefix}/crowdsourcing/create`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
             campaignId: campaignId,
-            examplesPerBatch: examplesPerBatch,
-            idleTime: idleTime,
-            prolificCode: prolificCode,
-            campaignData: campaignData,
-            sortOrder: sortOrder,
-            errorCategories: errorCategories,
+            config: config,
+            campaignData: campaignData
         }),
         success: function (response) {
             console.log(response);
@@ -674,10 +694,7 @@ function createHumanCampaign() {
             if (response.success !== true) {
                 alert(response.error);
             } else {
-                // hide modal
-                $('#new-campaign-modal').modal('hide');
-                // refresh list of campaigns
-                location.reload();
+                window.location.href = `${url_prefix}/crowdsourcing`;
             }
         }
     });
@@ -741,10 +758,14 @@ function runLlmEval(campaignId) {
                 console.log(JSON.stringify(response));
             } else {
                 console.log(response);
-                $("#metadata-status").html("finished");
-                $("#run-button").hide();
-                $("#stop-button").hide();
-                $("#llm-eval-progress").hide();
+
+                if (response.status == "finished") {
+                    $("#metadata-status").html("finished");
+                    $("#run-button").hide();
+                    $("#download-button").show();
+                    $("#stop-button").hide();
+                    $("#llm-eval-progress").hide();
+                }
             }
         }
     });
@@ -753,6 +774,7 @@ function runLlmEval(campaignId) {
 function pauseLlmEval(campaignId) {
     $("#run-button").show();
     $("#stop-button").hide();
+    $("#download-button").show();
     $("#llm-eval-progress").hide();
 
     $.post({
@@ -796,20 +818,235 @@ function deleteCampaign(campaignId, source) {
     });
 }
 
-function addErrorCategory() {
-    const errorCategories = $("#error-categories");
-    const newCategory = $(`
-    <div class="d-flex justify-content-between align-items-center mt-1">
-      <input type="text" class="form-control" id="errorCategoryName" name="errorCategoryName">
-      <input type="color" class="form-control" id="errorCategoryColor" name="errorCategoryColor">
-      <button type="button" class="btn btn-danger" onclick="deleteErrorCategory(this)">Delete</button>
-    </div>
-    `);
-    errorCategories.append(newCategory);
+function addAnnotationSpanCategory() {
+    const annotationSpanCategories = $("#annotation-span-categories");
+    const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+    const newCategory = createAnnotationSpanCategoryElem("", randomColor);
+    annotationSpanCategories.append(newCategory);
 }
 
-function deleteErrorCategory(button) {
-    $(button).parent().remove();
+function addModelArgument() {
+    const modelArguments = $("#model-arguments");
+    const newArg = createArgElem("", "");
+    modelArguments.append(newArg);
+}
+
+function addExtraArgument() {
+    const modelArguments = $("#extra-arguments");
+    const newArg = createArgElem("", "");
+    modelArguments.append(newArg);
+}
+
+function deleteRow(button) {
+    $(button).parent().parent().remove();
+}
+
+function createArgElem(key, value) {
+    const newArg = $(`
+        <div class="row mt-1">
+        <div class="col-6">
+        <input type="text" class="form-control"  name="argName" value="${key}" placeholder="Key">
+        </div>
+        <div class="col-5">
+        <input type="text" class="form-control" name="argValue" value="${value}" placeholder="Value">
+        </div>
+        <div class="col-1">
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
+        </div>
+        </div>
+    `);
+    return newArg;
+}
+
+function createAnnotationSpanCategoryElem(name, color) {
+    const newCategory = $(`
+        <div class="row mt-1">
+        <div class="col-6">
+        <input type="text" class="form-control" name="annotationSpanCategoryName" value="${name}" placeholder="Category name">
+        </div>
+        <div class="col-5">
+        <input type="color" class="form-control" name="annotationSpanCategoryColor" value="${color}">
+        </div>
+        <div class="col-1">
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
+        </div>
+        </div>
+    `);
+    return newCategory;
+}
+
+function duplicateConfig(btnElem, filenameElemId, modeTo, campaignId) {
+    const filename = $("#" + filenameElemId).val() + ".yaml";
+    const modeFrom = window.mode;
+
+    // TODO warn overwrite
+    $.post({
+        url: `${url_prefix}/duplicate_config`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            campaignId: campaignId,
+            modeFrom: modeFrom,
+            modeTo: modeTo,
+            filename: filename,
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // change color of the button save-cfg-submit to green for a second with the label "Saved!", then back to normal
+                const origText = $(btnElem).text();
+                $(btnElem).removeClass("btn-primary").addClass("btn-success").text("Saved!");
+                setTimeout(function () {
+                    $('#save-cfg-modal').modal('hide');
+                    $(btnElem).removeClass("btn-success").addClass("btn-primary").text(origText);
+                }, 1500);
+            }
+        }
+    });
+}
+
+function duplicateEval(inputDuplicateId, campaignId) {
+    newCampaignId = $(`#${inputDuplicateId}`).val();
+
+    $.post({
+        url: `${url_prefix}/duplicate_eval`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            campaignId: campaignId,
+            newCampaignId: newCampaignId,
+            mode: window.mode
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // hide the modal and reload the page
+                $('#duplicate-eval-modal').modal('hide');
+                location.reload();
+            }
+        }
+    });
+}
+
+
+function saveConfig(mode) {
+    const filename = $("#config-save-filename").val() + ".yaml";
+    const config = gatherConfig();
+
+    if (filename in window.configs) {
+        if (!confirm(`The configuration with the name ${filename} already exists. Do you want to overwrite it?`)) {
+            return;
+        }
+    }
+    $.post({
+        url: `${url_prefix}/save_config`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            mode: mode,
+            filename: filename,
+            config: config
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // change color of the button save-cfg-submit to green for a second with the label "Saved!", then back to normal
+                $("#save-cfg-submit").removeClass("btn-primary").addClass("btn-success").text("Saved!");
+                setTimeout(function () {
+                    $('#save-cfg-modal').modal('hide');
+                    $("#save-cfg-submit").removeClass("btn-success").addClass("btn-primary").text("Save");
+                }, 1500);
+            }
+        }
+    });
+
+}
+function updateCrowdsourcingConfig() {
+    const crowdsourcingConfig = $('#crowdsourcingConfig').val();
+
+    if (crowdsourcingConfig === "[None]") {
+        $("#examplesPerBatch").val("");
+        $("#idleTime").val("");
+        $("#completionCode").val("");
+        $("#annotation-span-categories").empty();
+        return;
+    }
+    const cfg = window.configs[crowdsourcingConfig];
+
+    const examplesPerBatch = cfg.examples_per_batch;
+    const idleTime = cfg.idle_time;
+    const completionCode = cfg.completion_code;
+    const sortOrder = cfg.sort_order;
+    const annotationSpanCategories = cfg.annotation_span_categories;
+
+    $("#examplesPerBatch").val(examplesPerBatch);
+    $("#idleTime").val(idleTime);
+    $("#completionCode").val(completionCode);
+    $("#sortOrder").val(sortOrder);
+    $("#annotation-span-categories").empty();
+
+    annotationSpanCategories.forEach((annotationSpanCategory) => {
+        const newCategory = createAnnotationSpanCategoryElem(annotationSpanCategory.name, annotationSpanCategory.color);
+        $("#annotation-span-categories").append(newCategory);
+    });
+}
+
+
+function updateLLMMetricConfig() {
+    const llmConfigValue = $('#llmConfig').val();
+
+    if (llmConfigValue === "[None]") {
+        $("#model-name").html("");
+        $("#prompt-template").html("");
+        $("#system-message").html("");
+        $("#api-url").html("");
+        $("#model-arguments").empty();
+        $("#annotation-span-categories").empty();
+        $("#extra-arguments").empty();
+        return;
+    }
+    const cfg = window.configs[llmConfigValue];
+
+    const metric_type = cfg.type;
+    const model_name = cfg.model;
+    const prompt_template = cfg.prompt_template;
+    const system_msg = cfg.system_msg;
+    const api_url = cfg.api_url;
+    const model_args = cfg.model_args;
+    const annotationSpanCategories = cfg.annotation_span_categories;
+    const extra_args = cfg.extra_args;
+
+    // for metric, we need to select the appropriate one from the values in the select box
+    $("#metric-type").val(metric_type);
+    $("#model-name").html(model_name);
+    $("#prompt-template").html(prompt_template);
+    $("#system-message").html(system_msg);
+    $("#api-url").html(api_url);
+    $("#model-arguments").empty();
+    $("#extra-arguments").empty();
+
+    $.each(model_args, function (key, value) {
+        const newArg = createArgElem(key, value);
+        $("#model-arguments").append(newArg);
+    });
+
+    $.each(extra_args, function (key, value) {
+        const newArg = createArgElem(key, value);
+        $("#extra-arguments").append(newArg);
+    });
+
+    $("#annotation-span-categories").empty();
+
+    annotationSpanCategories.forEach((annotationSpanCategory) => {
+        const newCategory = createAnnotationSpanCategoryElem(annotationSpanCategory.name, annotationSpanCategory.color);
+        $("#annotation-span-categories").append(newCategory);
+    });
 }
 
 

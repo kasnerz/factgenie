@@ -13,20 +13,22 @@ import coloredlogs
 import traceback
 import yaml
 import queue
+import shutil
 
 from slugify import slugify
 from flask import jsonify
 from collections import defaultdict
 from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
-from factgenie.evaluate import LLMMetric, LLMMetricFactory
+from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
 ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
-LLM_CONFIG_DIR = os.path.join(DIR_PATH, "llm-eval")
+LLM_CONFIG_DIR = os.path.join(DIR_PATH, "config", "llm-eval")
+CROWDSOURCING_CONFIG_DIR = os.path.join(DIR_PATH, "config", "crowdsourcing")
 
 
 file_handler = logging.FileHandler("error.log")
@@ -82,7 +84,7 @@ def get_dataset(app, dataset_name):
     return app.db["datasets_obj"].get(dataset_name)
 
 
-def generate_metric_index():
+def load_configs(mode):
     """
     Goes through all the files in the LLM_CONFIG_DIR
     instantiate the LLMMetric class
@@ -91,21 +93,22 @@ def generate_metric_index():
     Returns:
         metrics: dictionary of LLMMetric objects with keys of metric names
     """
-    metrics = {}
+    configs = {}
 
-    for file in os.listdir(LLM_CONFIG_DIR):
+    config_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+
+    for file in os.listdir(config_dir):
         if file.endswith(".yaml"):
-            with open(os.path.join(LLM_CONFIG_DIR, file)) as f:
-                config = yaml.safe_load(f)
             try:
-                metric = LLMMetricFactory.get_metric(config)
-                metrics[metric.metric_name] = metric
+                with open(os.path.join(config_dir, file)) as f:
+                    config = yaml.safe_load(f)
+                    configs[file] = config
             except Exception as e:
                 logger.error(f"Error while loading metric {file}")
                 traceback.print_exc()
                 continue
 
-    return metrics
+    return configs
 
 
 def generate_campaign_index(app):
@@ -120,9 +123,9 @@ def generate_campaign_index(app):
         campaign_source = metadata.get("source")
         campaign_id = metadata["id"]
 
-        if campaign_source == "human":
+        if campaign_source == "crowdsourcing":
             campaign = HumanCampaign(campaign_id=campaign_id)
-        elif campaign_source == "model":
+        elif campaign_source == "llm_eval":
             campaign = ModelCampaign(campaign_id=campaign_id)
         else:
             logger.warning(f"Unknown campaign source: {campaign_source}")
@@ -299,9 +302,12 @@ def generate_llm_eval_db(datasets: Dict[str, Dataset], campaign_data):
     return df
 
 
-def generate_campaign_db(app, campaign_data, examples_per_batch, sort_order):
+def generate_campaign_db(app, campaign_data, config):
     # load all outputs
     all_examples = []
+
+    examples_per_batch = config["examples_per_batch"]
+    sort_order = config["sort_order"]
 
     for c in campaign_data:
         dataset = app.db["datasets_obj"][c["dataset"]]
@@ -315,12 +321,12 @@ def generate_campaign_db(app, campaign_data, examples_per_batch, sort_order):
                 }
             )
 
-    if sort_order == "example":
+    if sort_order == "example-level":
         random.seed(42)
         random.shuffle(all_examples)
         # group outputs by example ids, dataset and split
         all_examples = sorted(all_examples, key=lambda x: (x["example_idx"], x["dataset"], x["split"]))
-    elif sort_order == "random":
+    elif sort_order == "dataset-level":
         random.seed(42)
         random.shuffle(all_examples)
     elif sort_order == "default":
@@ -351,12 +357,12 @@ def get_dataset_overview(app):
     return overview
 
 
-def llm_eval_new(campaign_id, metric, campaign_data, datasets):
+def llm_eval_new(campaign_id, config, campaign_data, datasets):
     campaign_id = slugify(campaign_id)
 
     # create a new directory
     if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-        return jsonify({"error": "Campaign already exists"})
+        raise ValueError(f"Campaign {campaign_id} already exists")
 
     os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
 
@@ -374,10 +380,9 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
             {
                 "id": campaign_id,
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "source": "model",
+                "source": "llm_eval",
                 "status": "new",
-                "metric": metric.metric_name,
-                "error_categories": metric.annotation_categories,
+                "config": config,
             },
             f,
             indent=4,
@@ -398,14 +403,45 @@ def generate_default_id(campaign_index, prefix):
     return default_campaign_id
 
 
+def get_model_outs(app):
+    datasets = app.db["datasets_obj"]
+    model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
+
+    for dataset_name, dataset in datasets.items():
+        splits = dataset.get_splits()
+        model_outs["datasets"].append(dataset_name)
+
+        for split in splits:
+            output_setups = dataset.outputs[split].keys()
+            model_outs["splits"].append(split)
+
+            for setup_id in output_setups:
+                model_outs["setup_ids"].append(setup_id)
+                model_outs["valid_triplets"].append(
+                    {
+                        "dataset": dataset_name,
+                        "split": split,
+                        "setup_id": setup_id,
+                        "example_count": dataset.get_example_count(split),
+                    }
+                )
+
+    for key in ["datasets", "splits", "setup_ids"]:
+        model_outs[key] = sorted(list(set(model_outs[key])))
+
+    return model_outs
+
+
 def check_login(app, username, password):
     return username == app.config["login"]["username"] and password == app.config["login"]["password"]
 
 
-def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
+def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
     # save the annotation
+    annotator_id = metric.get_annotator_id()
+
     annotation = {
-        "annotator_id": metric_name,
+        "annotator_id": annotator_id,
         "dataset": dataset_name,
         "setup": {"id": setup_id, "model": setup_id},
         "split": split,
@@ -414,13 +450,89 @@ def save_annotation(save_dir, metric_name, dataset_name, split, setup_id, exampl
     }
 
     # save the annotation
-    with open(os.path.join(save_dir, f"{metric_name}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
+    with open(os.path.join(save_dir, f"{annotator_id}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
         f.write(json.dumps(annotation) + "\n")
     return annotation
 
 
-def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, metric_name):
-    start_time = time.time()
+def duplicate_eval(app, campaign_id, new_campaign_id):
+    # copy the directory except for the annotations
+    old_campaign_dir = os.path.join(ANNOTATIONS_DIR, campaign_id)
+    new_campaign_dir = os.path.join(ANNOTATIONS_DIR, new_campaign_id)
+
+    # if new campaign dir exists, return error
+    if os.path.exists(new_campaign_dir):
+        return error("Campaign already exists")
+
+    shutil.copytree(old_campaign_dir, new_campaign_dir, ignore=shutil.ignore_patterns("files"))
+
+    # copy the db
+    old_db = pd.read_csv(os.path.join(old_campaign_dir, "db.csv"))
+    new_db = old_db.copy()
+    new_db["status"] = "free"
+
+    new_db.to_csv(os.path.join(new_campaign_dir, "db.csv"), index=False)
+
+    # update the metadata
+    metadata_path = os.path.join(new_campaign_dir, "metadata.json")
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+
+    metadata["id"] = new_campaign_id
+    metadata["created"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    metadata["status"] = "new"
+
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
+
+    return success()
+
+
+def save_config(filename, config, mode):
+    # https://github.com/yaml/pyyaml/issues/121#issuecomment-1018117110
+    def yaml_multiline_string_pipe(dumper, data):
+        text_list = [line.rstrip() for line in data.splitlines()]
+        fixed_data = "\n".join(text_list)
+        if len(text_list) > 1:
+            return dumper.represent_scalar("tag:yaml.org,2002:str", fixed_data, style="|")
+        return dumper.represent_scalar("tag:yaml.org,2002:str", fixed_data)
+
+    yaml.add_representer(str, yaml_multiline_string_pipe)
+
+    save_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+
+    with open(os.path.join(save_dir, filename), "w") as f:
+        yaml.dump(config, f, indent=2, allow_unicode=True)
+
+
+def parse_llm_config(config):
+    config = {
+        "type": config.get("metricType"),
+        "model": config.get("modelName"),
+        "prompt_template": config.get("promptTemplate"),
+        "system_msg": config.get("systemMessage"),
+        "api_url": config.get("apiUrl"),
+        "model_args": config.get("modelArguments"),
+        "extra_args": config.get("extraArguments"),
+        "annotation_span_categories": config.get("annotationSpanCategories"),
+    }
+    return config
+
+
+def parse_crowdsourcing_config(config):
+    config = {
+        "examples_per_batch": int(config.get("examplesPerBatch")),
+        "idle_time": int(config.get("idleTime")),
+        "completion_code": config.get("completionCode"),
+        "sort_order": config.get("sortOrder"),
+        "annotation_span_categories": config.get("annotationSpanCategories"),
+    }
+
+    return config
+
+
+def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
+    start_time = int(time.time())
 
     save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
     os.makedirs(save_dir, exist_ok=True)
@@ -455,7 +567,7 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
             return error(annotation_set["error"])
 
         annotation = save_annotation(
-            save_dir, metric_name, dataset_name, split, setup_id, example_idx, annotation_set, start_time
+            save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time
         )
 
         db.loc[i, "status"] = "finished"
@@ -477,4 +589,4 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads, me
         campaign.metadata["status"] = "finished"
         campaign.update_metadata()
 
-    return success()
+    return jsonify(success=True, status=campaign.metadata["status"])

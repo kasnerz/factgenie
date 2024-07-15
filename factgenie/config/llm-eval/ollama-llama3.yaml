@@ -1,9 +1,17 @@
-type: openai
-model: gpt-3.5-turbo-1106
-# model: "gpt-4-1106-preview"
+type: ollama
+model: llama3
+api_url: http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+model_args:
+  max_tokens: 1024
+  num_beams: 1
+  temperature: 0.0
+  top_p: 1.0
+  top_k: 0.0
+  do_sample: false 
+  seed: 42
 system_msg: "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
-# The return format should be ["errors": {...}]
-errors_categories: 
+# Note that we require output format {"errors": [{...}]}
+annotation_span_categories:
   - name: "Incorrect"
     color: "#ffbcbc"
   - name: "Not checkable"

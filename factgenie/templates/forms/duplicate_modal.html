@@ -1,0 +1,127 @@
+<div class="modal fade" id="duplicate-eval-modal-{{
+    campaign.metadata.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="about-modal-label">Duplicate options</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id='duplicate-main-{{
+                    campaign.metadata.id }}' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#tab-duplicate-{{
+                                campaign.metadata.id }}" data-bs-toggle="pill">Duplicate
+                                eval</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-llm-config-{{
+                                campaign.metadata.id }}" data-bs-toggle="pill">Copy as LLM config</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-crowdsourcing-config-{{
+                                campaign.metadata.id }}" data-bs-toggle="pill">Copy as
+                                crowdsourcing config</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tab-content">
+                    <div id="tab-duplicate-{{
+                        campaign.metadata.id }}" role="tabpanel" class="tab-pane active p-3" tabindex="0">
+                        <p>
+                            <small class="text-muted">Create a campaign identical to <code>{{
+                            campaign.metadata.id }}</code> but without any collected annotations.</small>
+                        </p>
+                        <div class="row g-3 mb-3 align-items-center">
+                            <div class="col-auto">
+                                <label for="{{ input_duplicate_id }}">New campaign id</label>
+                            </div>
+                            <div class="col-auto">
+                                {% set input_duplicate_id = 'campaignId-' ~ campaign.metadata.id ~ '-copy' %}
+                                <input type="text" class="form-control" id="{{ input_duplicate_id }}"
+                                    name="{{ input_duplicate_id }}" value="{{ campaign.metadata.id }}-copy" required>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                                    title="Unique identifier of the new campaign"></i>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-3"
+                                onclick="duplicateEval('{{ input_duplicate_id }}', '{{ campaign.metadata.id }}');">Duplicate
+                                eval</button>
+                        </div>
+
+                    </div>
+                    <div id="tab-llm-config-{{
+                        campaign.metadata.id }}" role="tabpanel" class="tab-pane p-3" tabindex="0">
+                        <p>
+                            <small class="text-muted">Export the settings of the campaign <code>{{
+                            campaign.metadata.id }}</code> to a YAML file. The settings can be later used (and
+                                modified)
+                                when starting
+                                a new LLM evaluation
+                                campaign.</small>
+                        </p>
+                        <div class="input-group mb-3">
+                            {% set input_llm_id = 'config-save-filename-' ~ campaign.metadata.id ~ '-llm' %}
+                            <input type="text" class="form-control" id="{{ input_llm_id }}" list="datalistOptionsLlm"
+                                value="{{ campaign.metadata.id }}" placeholder="Click to see existing configurations..."
+                                aria-label="Click to see existing configurations..." aria-describedby="basic-addon2">
+                            <span class="input-group-text" id="basic-addon2">.yaml</span>
+                        </div>
+                        <datalist id="datalistOptionsLlm">
+                            {% for filename in llm_configs.keys() %}
+                            <!-- save the name without suffix to variable -->
+                            {% set config_name = filename.rstrip(".yaml") %}
+                            <option value="{{ config_name }}">{{ filename }}</option>
+                            {% endfor %}
+                        </datalist>
+                        <div class="modal-footer">
+
+                            <button type="submit" class="btn btn-primary mt-3"
+                                onclick="duplicateConfig(this, '{{ input_llm_id }}', 'llm_eval', '{{ campaign.metadata.id }}');">Save
+                                LLM
+                                config</button>
+                        </div>
+                    </div>
+                    <div id="tab-crowdsourcing-config-{{
+                        campaign.metadata.id }}" role="tabpanel" class="tab-pane p-3" tabindex="0">
+                        <p>
+                            <small class="text-muted">Export the settings of the campaign <code>{{
+                            campaign.metadata.id }}</code> to a <b>YAML file for human crowdsourcing</b>. This enables
+                                to
+                                transfer the equivalent settings for both campaigns (note that currently only
+                                <code>annotation_span_categories</code>
+                                will get transfered.</small>).
+                        </p>
+                        <div class="input-group mb-3">
+                            {% set input_crowdsourcing_id = 'config-save-filename-' ~ campaign.metadata.id ~
+                            '-crowdsourcing' %}
+                            <input type="text" class="form-control" id="{{  input_crowdsourcing_id }}"
+                                list="datalistOptionsCrowdsourcing" value="{{ campaign.metadata.id }}"
+                                placeholder="Click to see existing configurations..."
+                                aria-label="Click to see existing configurations..." aria-describedby="basic-addon2">
+                            <span class="input-group-text" id="basic-addon2">.yaml</span>
+                        </div>
+                        <datalist id="datalistOptionsCrowdsourcing">
+                            {% for filename in crowdsourcing_configs.keys() %}
+                            <!-- save the name without suffix to variable -->
+                            {% set config_name = filename.rstrip(".yaml") %}
+                            <option value="{{ config_name }}">{{ filename }}</option>
+                            {% endfor %}
+                        </datalist>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-3"
+                                onclick="duplicateConfig(this, '{{ input_crowdsourcing_id }}', 'crowdsourcing', '{{ campaign.metadata.id }}');">Save
+                                crowdsourcing config</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

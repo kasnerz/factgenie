@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>factgenie</title>
+  <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
+  <link href="{{ host_prefix }}/static/css/font-awesome.css" rel="stylesheet">
+  <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
+  <meta name="viewport" content="width=1024">
+  <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
+</head>
+
+{% include 'navbar.html' %}
+
+
+<div class="container w-50  mt-5">
+  <a href="{{ host_prefix }}/llm_eval" class="btn btn-outline-secondary mb-5">← LLM evals</a>
+  <div class="mt-1">
+
+    <form id="annotation-campaign-form">
+      <h3>New LLM evaluation campaign</h3>
+
+      <ul class="nav nav-tabs nav-justified mt-5">
+        <li class="nav-item">
+          <a class="nav-link active" id="nav-tabs-campaign" aria-current="page" href="#tab-campaign"
+            data-bs-toggle="pill">Campaign</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="nav-tabs-config" href="#tab-config" data-bs-toggle="pill">Configuration</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="nav-tabs-data" href="#tab-data" data-bs-toggle="pill">Data</a>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <div id="tab-campaign" role="tabpanel" class="tab-pane active new-campaign-form" tabindex="0">
+          <div class="row g-3 mb-3 align-items-center">
+            <div class="col-auto">
+              <label for="campaignId">Campaign Id</label>
+            </div>
+            <div class="col-auto">
+              <input type="text" class="form-control" id="campaignId" name="campaignId"
+                value="{{ default_campaign_id }}" required>
+            </div>
+            <div class="col-auto">
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                title="Create a unique campaign identifier"></i>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button type="button" class="btn btn-primary mt-3"
+              onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-config")).show()'>Next</button>
+          </div>
+        </div>
+        <div id="tab-config" role="tabpanel" class="tab-pane new-campaign-form" tabindex="1">
+          <div class="row g-3 mb-3 align-items-center">
+            <div class="col-auto">
+              <span style="margin-left: 5px;">Preset</span>
+            </div>
+            <div class="col-auto">
+              <select class="form-select" id="llmConfig" name="llmConfig" onchange="updateLLMMetricConfig();">
+                <option value="[None]">[None]</option>
+                {% for config_name in configs.keys() %}
+                <option value="{{ config_name }}">{{ config_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-auto">
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="Add your custom preset to
+          factgenie/config/llm-eval"></i>
+            </div>
+          </div>
+
+          <div class="rounded-box mt-4">
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-code"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Metric</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Select one of the available metric types (or add your own class to `factgenie/metrics.py`)."></i>
+              </div>
+              <div class="form-group mt-1">
+                <select class="form-select" id="metric-type" name="metric-type">
+                  {% for metric_type in metric_types %}
+                  <option value="{{ metric_type }}">{{ metric_type }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-cube"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Model</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Name of the model used as the LLM evaluator"></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="model-name" name="model-name" rows="1"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-align-left"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Prompt template</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Prompt for the model. The prompt is preprocessed by the respective class."></i>
+              </div>
+
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="prompt-template" name="prompt-template" rows="8"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-user"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">System message</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Role that the system is playing in the conversation. May not be available for the selected model."></i>
+              </div>
+
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="system-message" name="system-message" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-link"></i>
+                <span style=" margin-left: 10px; margin-right: 10px;">API URL</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API URL. Not required for OpenAI models."></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="api-url" name="api-url" rows="1"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-cogs"></i>
+                <span style="margin-left: 10px; margin-right: 10px;">Model arguments</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API arguments to be passed to the model"></i>
+              </div>
+              <div id="model-arguments">
+              </div>
+              <div class="col-auto mt-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addModelArgument();">+</button>
+              </div>
+            </div>
+
+            {% include 'forms/annotation_span_categories.html' %}
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-list-ul"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Extra arguments</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Any other parameters used by the metric."></i>
+              </div>
+
+              <div id="extra-arguments">
+              </div>
+              <div class="col-auto mt-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addExtraArgument();">+</button>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button type="button" class="btn btn-outline-secondary mt-3"
+              onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-campaign")).show()'>Back</button>
+            <button type="button" class="btn btn-outline-secondary mt-3" data-bs-toggle="modal"
+              data-bs-target="#save-cfg-modal">Save config as...</button>
+            <button type="button" class="btn btn-primary mt-3"
+              onclick=' bootstrap.Tab.getOrCreateInstance($("#nav-tabs-data")).show()'>Next</button>
+          </div>
+        </div>
+
+        <div id="tab-data" class="tab-pane new-campaign-form" role="tabpanel" tabindex="2">
+
+          {% include 'forms/data_selection.html' %}
+
+          <div style="text-align: center;">
+            <button type="button" class="btn btn-outline-secondary mt-3"
+              onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-config")).show()'>Back</button>
+            <button type="button" class="btn btn-primary mt-3" onclick="createLLMEval();">Create campaign</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <div>
+
+    </div>
+  </div>
+
+  <div class="modal fade" id="save-cfg-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="about-modal-label">Save config as...</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id='configarea' class="tab-pane sidepanel-panel w-75" role="tabpanel" tabindex="0">
+            <label for="exampleDataList" class="form-label">Config name</label>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="config-save-filename" list="datalistOptions"
+                placeholder="Click to see existing configurations..."
+                aria-label="Click to see existing configurations..." aria-describedby="basic-addon2">
+              <span class="input-group-text" id="basic-addon2">.yaml</span>
+            </div>
+            <datalist id="datalistOptions">
+              {% for filename in configs.keys() %}
+              <!-- save the name without suffix to variable -->
+              {% set config_name = filename.rstrip(".yaml") %}
+              <option value="{{ config_name }}">{{ filename }}</option>
+              {% endfor %}
+            </datalist>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" id="save-cfg-submit" class="btn btn-primary mt-3" onclick="saveConfig('llm_eval')">Save
+            config</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = "{{ host_prefix }}";
+  window.model_outs = {{ model_outs | tojson | safe }};
+  window.configs = {{ configs | tojson | safe }};
+  window.mode = "llm_eval";
+</script>
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
