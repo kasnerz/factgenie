@@ -25,7 +25,7 @@ def list_datasets():
     "--llm_metric_config", required=True, type=str, help="Path to the metric config file or just the metric name."
 )
 def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_name: str, llm_metric_config: str):
-    """Runs the LLM evaluation from CLI wit no web server."""
+    """Runs the LLM evaluation from CLI with no web server."""
     from pathlib import Path
     import yaml
     from slugify import slugify
@@ -36,25 +36,18 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     campaign_id = slugify(campaign_name)
     campaign_data = [{"dataset": dataset_name, "split": split, "setup_id": llm_output_name}]
 
-    if Path(llm_metric_config).exists():
-        with open(llm_metric_config) as f:
-            config = yaml.safe_load(f)
-            metric_name = LLMMetricFactory.get_metric_name(config)
-    else:
-        # Validates that directly given metric name makes sense. It is possible just to use the name
-        # metric_index loads all existing metric configs: factgenie/llm-evals/*.yaml
-        metric_name = LLMMetricFactory.get_metric_name({"metric_name": llm_metric_config})
-
     DATASETS = dict((name, cls()) for name, cls in DATASET_CLASSES.items())  # instantiate all datasets
-    metrics_index = utils.load_configs()  # Loads all metrics configs factgenie/llm-evals/*.yaml
-    metric = metrics_index[metric_name]
-    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, DATASETS)
+    configs = utils.load_configs("llm_eval")  # Loads all metrics configs factgenie/llm-evals/*.yaml
+    metric_config = configs[llm_metric_config]
+    campaign = utils.llm_eval_new(campaign_id, metric_config, campaign_data, DATASETS)
 
     # mockup objects useful for interactivity
     threads = {campaign_id: {"running": True}}
     announcer = None
 
-    return utils.run_llm_eval(campaign_id, announcer, campaign, DATASETS, metric, threads, metric_name)
+    metric = LLMMetricFactory.from_config(metric_config)
+
+    return utils.run_llm_eval(campaign_id, announcer, campaign, DATASETS, metric, threads)
 
 
 from .main import app

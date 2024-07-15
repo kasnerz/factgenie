@@ -465,14 +465,13 @@ def llm_eval_create():
     config = data.get("config")
 
     config = utils.parse_llm_config(config)
-    try:
-        metric = LLMMetricFactory.from_config(config)
-    except Exception as e:
-        return jsonify({"error": f"Error while creating metric: {e}"})
-
     datasets = app.db["datasets_obj"]
 
-    campaign = utils.llm_eval_new(campaign_id, metric, campaign_data, datasets)
+    try:
+        campaign = utils.llm_eval_new(campaign_id, config, campaign_data, datasets)
+    except Exception as e:
+        return utils.error(f"Error while creating campaign: {e}")
+
     app.db["campaign_index"][campaign_id] = campaign
 
     return utils.success()

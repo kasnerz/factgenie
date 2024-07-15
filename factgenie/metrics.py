@@ -283,7 +283,7 @@ class OllamaMetric(LLMMetric):
                 f"Called {msg}\n\n and received\n\t{response=}\n\t{annotation_str=}\n\t{j=}\nbefore the error:{e}"
             )
             traceback.print_exc()
-            return {"error": str(traceback.format_exc())}
+            return []
 
 
 class LogicNLGMarkdownOllamaMetric(OllamaMetric):

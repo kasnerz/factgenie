@@ -357,12 +357,12 @@ def get_dataset_overview(app):
     return overview
 
 
-def llm_eval_new(campaign_id, metric, campaign_data, datasets):
+def llm_eval_new(campaign_id, config, campaign_data, datasets):
     campaign_id = slugify(campaign_id)
 
     # create a new directory
     if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-        return jsonify({"error": "Campaign already exists"})
+        raise ValueError(f"Campaign {campaign_id} already exists")
 
     os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
 
@@ -382,7 +382,7 @@ def llm_eval_new(campaign_id, metric, campaign_data, datasets):
                 "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "source": "llm_eval",
                 "status": "new",
-                "config": metric.config,
+                "config": config,
             },
             f,
             indent=4,
