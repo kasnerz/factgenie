@@ -40,6 +40,30 @@ factgenie run --host=127.0.0.1 --port 5000
 xdg-open http://127.0.0.1:5000  # for Linux it opens the page for you
 ```
 
+### Using Docker
+
+The `Dockerfile` included in the project will run `factgenie` using Python 3.10 exposing the app on port 80. You can run the server by executing
+
+```
+# Build the factgenie Docker image
+docker build --tag 'factgenie' .
+# Run the image in detached mode with in-container port 80 exposed as localhost:8080
+docker run -p 8080: 80 --detach 'factgenie'
+```
+
+You can then access the server by navigating to `localhost:8080` in your browser.
+
+The included `docker-compose.yml` file can be used to launch the server using `docker compose up` if you so desire. Simply drop `docker-compose.yml` one directory up from the root directory for the repository, navigate to that directory, and run the command. For example, if you haven't moved the file yet and you're in the root of the repo, you can run:
+
+```
+# Copy the folder one level up
+cp docker-compose.yml ../.
+# Navigate one level up
+cd ..
+# Run docker compose in detached mode
+docker compose up -d
+```
+
 ## Step-by-step guide
 Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use case.
 
