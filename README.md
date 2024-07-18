@@ -48,7 +48,7 @@ The `Dockerfile` included in the project will run `factgenie` using Python 3.10 
 # Build the factgenie Docker image
 docker build --tag 'factgenie' .
 # Run the image in detached mode with in-container port 80 exposed as localhost:8080
-docker run -p 8080: 80 --detach 'factgenie'
+docker run -p 8080:80 --detach 'factgenie'
 ```
 
 You can then access the server by navigating to `localhost:8080` in your browser.
