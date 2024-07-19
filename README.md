@@ -6,9 +6,9 @@
 <!-- ![PyPI](https://img.shields.io/pypi/v/factgenie) -->
 <!-- ![PyPI downloads](https://img.shields.io/pypi/dm/factgenie) -->
 
-Visualize and annotate errors in LLM outputs.
+Visualize and annotate LLM outputs.
 
-🚧 **The project is in progress; use at your own risk.** 🚧
+💪 _factgenie is a framework for you, dear researcher. Help us improve it!_ 💪
 
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
@@ -25,10 +25,6 @@ How does **factgenie** help with that?
 3. It provides you with **visualization interface** for inspecting the annotated outputs.
 
 What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).
-
----
-*This project is a framework and template for you, dear researcher. Help us improve it! :wink:*
-----
 
 ## Quickstart
 Make sure you have Python 3 installed (the project is tested with Python 3.10).
