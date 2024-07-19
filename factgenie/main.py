@@ -86,10 +86,10 @@ def login_required(f):
         if app.config["login"]["active"]:
             auth = request.cookies.get("auth")
             if not auth:
-                return redirect(app.config["host_prefix"] + url_for("login"))
+                return redirect(url_for("login"))
             username, password = auth.split(":")
             if not utils.check_login(app, username, password):
-                return redirect(app.config["host_prefix"] + url_for("login"))
+                return redirect(url_for("login"))
 
         return f(*args, **kwargs)
 
