@@ -14,6 +14,8 @@ install_requires = [
     "openai",
     "python-slugify",
     "flask-sse",
+    "gunicorn",
+    "pyyaml"
 ]
 
 setup(
