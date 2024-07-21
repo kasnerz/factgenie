@@ -1,0 +1,8 @@
+services:
+  factgenie:
+    container_name: factgenie
+    image: factgenie
+    restart: on-failure
+    ports:
+      - 8080:80
+    build: ./factgenie
