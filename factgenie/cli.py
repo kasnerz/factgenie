@@ -50,9 +50,6 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     return utils.run_llm_eval(campaign_id, announcer, campaign, DATASETS, metric, threads)
 
 
-from .main import app
-
-
 def create_app(**kwargs):
     from factgenie.loaders import DATASET_CLASSES
     import yaml
