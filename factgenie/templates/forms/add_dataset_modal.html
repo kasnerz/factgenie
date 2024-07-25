@@ -1,0 +1,55 @@
+<div class="modal fade" id="add-dataset-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="about-modal-label">Add dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- <div id='add-dataset-modal-main' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#tab-hf-dataset"
+                                data-bs-toggle="pill">Huggingface dataset</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-custom-dataset" data-bs-toggle="pill">Custom dataset</a>
+                        </li>
+                    </ul>
+                </div> -->
+
+                <!-- <div class="tab-content">
+                    <div id="tab-hf-dataset" role="tabpanel" class="tab-pane active p-3" tabindex="0">
+                        <p>
+                            <small class="text-muted">Add a dataset from Huggingface.</small>
+                        </p>
+                        <div class="row g-3 mb-3 align-items-center">
+                            <div class="col-auto">
+                                <label for="dataset-id">Dataset id</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="text" class="form-control" id="dataset-id" name="dataset-id"
+                                    placeholder="dataset_id" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-3" onclick="addHFDataset();">Add
+                                dataset</button>
+                        </div>
+
+                    </div>
+                    <div id="tab-custom-dataset" role="tabpanel" class="tab-pane p-3" tabindex="0">-->
+                <div class="alert alert-info" role="alert">
+                    To add a custom dataset, register the dataset in <code>loaders/datasets.yaml</code>.
+
+                    You can either select from pre-existing classes or create a loader in <code>loaders</code>
+                    (subclassing the <code>Dataset</code> class).
+                </div>
+
+                <!-- </div> -->
+            </div>
+        </div>
+    </div>
+</div>
+</div>

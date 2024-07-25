@@ -14,6 +14,8 @@ import traceback
 import yaml
 import queue
 import shutil
+import inspect
+import importlib
 
 from slugify import slugify
 from flask import jsonify
@@ -30,6 +32,7 @@ ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
 LLM_CONFIG_DIR = os.path.join(DIR_PATH, "config", "llm-eval")
 CROWDSOURCING_CONFIG_DIR = os.path.join(DIR_PATH, "config", "crowdsourcing")
 
+DATASET_CONFIG_PATH = "factgenie/loaders/datasets.yml"
 
 file_handler = logging.FileHandler("error.log")
 file_handler.setLevel(logging.ERROR)
@@ -376,10 +379,29 @@ def generate_campaign_db(app, campaign_data, config):
     return df
 
 
+def load_dataset_config():
+    with open(DATASET_CONFIG_PATH) as f:
+        config = yaml.safe_load(f)
+
+    return config
+
+
 def get_dataset_overview(app):
+    config = load_dataset_config()
     overview = {}
-    for name, dataset in app.db["datasets_obj"].items():
-        overview[name] = {
+
+    for dataset_name, dataset_config in config["datasets"].items():
+        class_name = dataset_config["class"]
+        params = dataset_config.get("params", {})
+        is_enabled = dataset_config.get("enabled", True)
+
+        if is_enabled:
+            dataset = app.db["datasets_obj"].get(dataset_name)
+
+        overview[dataset_name] = {
+            "class": class_name,
+            "params": params,
+            "enabled": is_enabled,
             "splits": dataset.get_splits(),
             "description": dataset.get_info(),
             "example_count": {split: dataset.get_example_count(split) for split in dataset.get_splits()},
@@ -387,6 +409,47 @@ def get_dataset_overview(app):
         }
 
     return overview
+
+
+def get_dataset_classes():
+    module_name = "factgenie.loaders"
+    module = importlib.import_module(module_name)
+
+    classes = {}
+
+    # for each submodule, find all classes subclassing `Dataset`
+    # then do { "submodule.class": class }
+    for name, obj in inspect.getmembers(module):
+        if inspect.ismodule(obj):
+            submodule = obj
+            for name, obj in inspect.getmembers(submodule):
+                if inspect.isclass(obj) and issubclass(obj, Dataset) and obj != Dataset:
+                    submodule_name = submodule.__name__.lstrip(module_name + ".")
+                    classes[f"{submodule_name}.{obj.__name__}"] = obj
+
+    return classes
+
+
+def instantiate_datasets():
+    config = load_dataset_config()
+    datasets = {}
+    for dataset_name, dataset_config in config["datasets"].items():
+        is_enabled = dataset_config.get("enabled", True)
+
+        if not is_enabled:
+            continue
+
+        submodule, class_name = dataset_config["class"].split(".")
+        params = dataset_config.get("params", {})
+
+        # Dynamically import the class
+        module = importlib.import_module("factgenie.loaders")
+        submodule = getattr(module, submodule)
+        dataset_class = getattr(submodule, class_name)
+
+        datasets[dataset_name] = dataset_class(**params)
+
+    return datasets
 
 
 def llm_eval_new(campaign_id, config, campaign_data, datasets):

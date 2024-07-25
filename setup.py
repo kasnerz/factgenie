@@ -15,7 +15,7 @@ install_requires = [
     "python-slugify",
     "flask-sse",
     "gunicorn",
-    "pyyaml"
+    "pyyaml",
 ]
 
 setup(

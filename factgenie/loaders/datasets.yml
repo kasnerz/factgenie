@@ -1,0 +1,34 @@
+datasets:
+  ice_hockey:
+    class: ice_hockey.IceHockey
+    enabled: True
+  gsmarena:
+    class: gsmarena.GSMArena
+    enabled: True
+  openweather:
+    class: openweather.OpenWeather
+    enabled: True
+  owid:
+    class: owid.OurWorldInData
+    enabled: True
+  wikidata:
+    class: wikidata.Wikidata
+    enabled: True
+  logicnlg:
+    class: logicnlg.LogicnlgTest100Tables
+    enabled: False
+  dummy:
+    class: dummy.Dummy
+    enabled: True
+  st24-ice_hockey:
+    class: practicald2t_st24.ST24IceHockey
+    enabled: False
+  st24-gsmarena:
+    class: practicald2t_st24.ST24GSMArena
+    enabled: False
+  st24-openweather:
+    class: practicald2t_st24.ST24OpenWeather
+    enabled: False
+  st24-owid:
+    class: practicald2t_st24.ST24OurWorldInData
+    enabled: False

@@ -93,6 +93,7 @@
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
+  window.mode = "outputs";
   window.datasets = {{ datasets | tojson | safe }};
   window.model_outputs = {{ model_outputs | tojson | safe }};
 </script>

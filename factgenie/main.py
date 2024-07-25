@@ -597,8 +597,14 @@ def llm_eval_pause():
 @login_required
 def manage_datasets():
     datasets = utils.get_dataset_overview(app)
+    dataset_classes = list(utils.get_dataset_classes().keys())
 
-    return render_template("manage_datasets.html", datasets=datasets, host_prefix=app.config["host_prefix"])
+    return render_template(
+        "manage_datasets.html",
+        datasets=datasets,
+        dataset_classes=dataset_classes,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/model_outputs", methods=["GET", "POST"])

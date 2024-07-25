@@ -5,11 +5,12 @@ from pathlib import Path
 from collections import defaultdict
 import json2table
 from slugify import slugify
+from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
 
-class Dataset:
+class Dataset(ABC):
     def __init__(self, name, base_path="factgenie"):
         self.base_path = base_path
         self.data_path = f"{self.base_path}/data"
@@ -18,6 +19,20 @@ class Dataset:
         self.examples = self.load_data()
         self.outputs = self.load_generated_outputs()
         self.type = "default"
+
+    def render(self, example):
+        # default method, can be overwritten by dataset classes
+        html = json2table.convert(
+            example,
+            build_direction="LEFT_TO_RIGHT",
+            table_attributes={
+                "class": "table table-sm caption-top meta-table table-responsive font-mono rounded-3 table-bordered"
+            },
+        )
+        return html
+
+    def get_info(self):
+        return "TODO: Override this function and fill relevant info for your particular dataset!"
 
     def get_example(self, split, example_idx):
         example = self.examples[split][example_idx]
@@ -75,17 +90,6 @@ class Dataset:
 
     def postprocess_data(self, data):
         return data
-
-    def render(self, example):
-        # default function, can be overwritten by dataset classes
-        html = json2table.convert(
-            example,
-            build_direction="LEFT_TO_RIGHT",
-            table_attributes={
-                "class": "table table-sm caption-top meta-table table-responsive font-mono rounded-3 table-bordered"
-            },
-        )
-        return html
 
     def add_generated_outputs(self, split, setup_id, model_outputs):
         path = Path(f"{self.output_path}/{self.name}/{split}")
@@ -150,6 +154,3 @@ class Dataset:
             outs_all.append(out)
 
         return outs_all
-
-    def get_info(self):
-        return "TODO for you: Override this function and fill relevant info for your particular dataset!"

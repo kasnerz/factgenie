@@ -4,15 +4,20 @@
 # The local imports in individual functions make CLI way faster.
 # Use them as much as possible and minimize imports at the top of the file.
 import click
+
 from flask.cli import FlaskGroup
 
 
 @click.command()
 def list_datasets():
-    """List all available datasets."""
-    from factgenie.loaders import DATASET_CLASSES
+    import yaml
+    from factgenie.utils import DATASET_CONFIG_PATH
 
-    for dataset_name in DATASET_CLASSES.keys():
+    """List all available datasets."""
+    with open(DATASET_CONFIG_PATH) as f:
+        config = yaml.safe_load(f)
+
+    for dataset_name, _ in config["datasets"].items():
         print(dataset_name)
 
 
@@ -30,13 +35,13 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     import yaml
     from slugify import slugify
     from factgenie import utils
-    from factgenie.loaders import DATASET_CLASSES
+
     from factgenie.metrics import LLMMetricFactory
 
     campaign_id = slugify(campaign_name)
     campaign_data = [{"dataset": dataset_name, "split": split, "setup_id": llm_output_name}]
 
-    DATASETS = dict((name, cls()) for name, cls in DATASET_CLASSES.items())  # instantiate all datasets
+    DATASETS = instantiate_datasets()  # instantiate all datasets
     configs = utils.load_configs("llm_eval")  # Loads all metrics configs factgenie/llm-evals/*.yaml
     metric_config = configs[llm_metric_config]
     campaign = utils.llm_eval_new(campaign_id, metric_config, campaign_data, DATASETS)
@@ -51,12 +56,12 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
 
 
 def create_app(**kwargs):
-    from factgenie.loaders import DATASET_CLASSES
     import yaml
     import logging
     import coloredlogs
     import os
-    from .main import app
+    from factgenie.main import app
+    from factgenie import utils
 
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yml")) as f:
         config = yaml.safe_load(f)
@@ -64,10 +69,7 @@ def create_app(**kwargs):
     app.config.update(config)
     app.config["root_dir"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
 
-    app.db["datasets_obj"] = {}
-
-    for dataset_name in DATASET_CLASSES.keys():
-        app.db["datasets_obj"][dataset_name] = DATASET_CLASSES[dataset_name]()
+    app.db["datasets_obj"] = utils.instantiate_datasets()
 
     if config["debug"] is False:
         logging.getLogger("werkzeug").disabled = True

@@ -20,11 +20,12 @@
     Visualize data-to-text generation datasets + annotate LLM outputs.
   </div> -->
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mt-5">← Main page</a>
+  <a type="button" class="btn btn-primary mt-5" data-bs-toggle="modal" data-bs-target="#add-dataset-modal">Add
+    dataset</a>
 
   <div class="mt-5">
     <h3><img src="{{ host_prefix }}/static/img/datasets.png" class="heading-img-inline">
-      <b>Datasets</b> <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
-        title="To add a dataset, create a loader in `loaders` (subclassing the `Dataset` class) and register the dataset in `loaders/__init__.py`."></i>
+      <b>Datasets</b>
     </h3>
 
     <table class="table table-hover mt-3">
@@ -32,6 +33,8 @@
         <tr>
           <th scope="col" width="5%"></th>
           <th scope="col" width="15%">Dataset</th>
+          <th scope="col" width="15%">Class</th>
+          <th scope="col" width="15%">Enabled</th>
           <th scope="col" width="10%">Splits</th>
           <th scope="col" width="10%">Examples</th>
           <th scope="col">Description</th>
@@ -44,6 +47,18 @@
           <td><a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0"
               class="blue-link">{{ name
               }}</a></td>
+          <!-- <td>{{ dataset.class }}</td> -->
+          <!-- selectbox based on dataset_classes where the corresponding class is selected -->
+          <td>
+            <select class="form-select form-select-sm" id="dataset-class-select-{{ name }}"
+              onchange="updateDatasetClass('{{ name }}', this.value)">
+              {% for class_name in dataset_classes %}
+              <option value="{{ class_name }}" {% if dataset.class==class_name %} selected {% endif %}>{{ class_name
+                }}</option>
+              {% endfor %}
+            </select>
+
+          <td>{{ dataset.enabled }}</td>
           <td>
             {% for split in dataset.splits %}
             <div class="sub-row"><a
@@ -63,9 +78,11 @@
   </div>
 </div>
 
+{% include 'forms/add_dataset_modal.html' %}
 
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
+  window.mode = "datasets";
 </script>
-<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+<script src="{{ host_prefix }}/static/js/manage.js"></script>

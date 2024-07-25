@@ -4,10 +4,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from factgenie.loaders.dataset import Dataset
-from tinyhtml import h
-import json
-from pathlib import Path
-from collections import defaultdict
 
 
 class Dummy(Dataset):

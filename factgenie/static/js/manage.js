@@ -119,7 +119,9 @@ function enableTooltips() {
 
 
 $(document).ready(function () {
-    $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
+    if (window.mode == "outputs") {
+        $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
+    }
     // $("#page-input").val(example_idx);
     enableTooltips();
 });
