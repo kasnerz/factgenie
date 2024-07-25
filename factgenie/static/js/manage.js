@@ -105,6 +105,26 @@ function changeSplit() {
     showModelOutputs(dataset, split);
 }
 
+function setDatasetEnabled(name, enabled) {
+    $.post({
+        url: `${url_prefix}/set_dataset_enabled`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            datasetName: name,
+            enabled: enabled
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // reload
+                location.reload();
+            }
+        }
+    });
+}
 
 $("#dataset-select").on("change", changeDataset);
 $("#split-select").on("change", changeSplit);

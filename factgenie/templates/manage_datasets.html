@@ -33,11 +33,11 @@
         <tr>
           <th scope="col" width="5%"></th>
           <th scope="col" width="15%">Dataset</th>
-          <th scope="col" width="15%">Class</th>
-          <th scope="col" width="15%">Enabled</th>
-          <th scope="col" width="10%">Splits</th>
-          <th scope="col" width="10%">Examples</th>
+          <th scope="col" width="18%">Class</th>
+          <th scope="col" width="8%">Splits</th>
+          <th scope="col" width="8%">Examples</th>
           <th scope="col">Description</th>
+          <th scope="col" width="5%">Enabled</th>
         </tr>
       </thead>
       <tbody>
@@ -47,18 +47,7 @@
           <td><a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0"
               class="blue-link">{{ name
               }}</a></td>
-          <!-- <td>{{ dataset.class }}</td> -->
-          <!-- selectbox based on dataset_classes where the corresponding class is selected -->
-          <td>
-            <select class="form-select form-select-sm" id="dataset-class-select-{{ name }}"
-              onchange="updateDatasetClass('{{ name }}', this.value)">
-              {% for class_name in dataset_classes %}
-              <option value="{{ class_name }}" {% if dataset.class==class_name %} selected {% endif %}>{{ class_name
-                }}</option>
-              {% endfor %}
-            </select>
-
-          <td>{{ dataset.enabled }}</td>
+          <td>{{ dataset.class }}</td>
           <td>
             {% for split in dataset.splits %}
             <div class="sub-row"><a
@@ -71,6 +60,12 @@
             {% endfor %}
           </td>
           <td class="underline-link">{{ dataset.description | safe }}</td>
+          <td>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" {% if dataset.enabled %}
+                checked {% endif %} onclick="setDatasetEnabled('{{ name }}', this.checked)">
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

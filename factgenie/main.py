@@ -174,6 +174,7 @@ def browse():
         display_example = None
 
     datasets = utils.get_dataset_overview(app)
+    datasets = {k: v for k, v in datasets.items() if v["enabled"]}
 
     return render_template(
         "browse.html",
@@ -680,7 +681,18 @@ def submit_annotations():
     return jsonify({"status": "success"})
 
 
-# upload model outputs
+@app.route("/set_dataset_enabled", methods=["POST"])
+@login_required
+def set_dataset_enabled():
+    data = request.get_json()
+    dataset_name = data.get("datasetName")
+    enabled = data.get("enabled")
+
+    utils.set_dataset_enabled(app, dataset_name, enabled)
+
+    return utils.success()
+
+
 @app.route("/upload_model_outputs", methods=["POST"])
 @login_required
 def upload_model_outputs():

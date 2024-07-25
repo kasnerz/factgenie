@@ -386,6 +386,24 @@ def load_dataset_config():
     return config
 
 
+def save_dataset_config(config):
+    with open(DATASET_CONFIG_PATH, "w") as f:
+        yaml.dump(config, f, indent=2, allow_unicode=True)
+
+
+def set_dataset_enabled(app, dataset_name, enabled):
+    config = load_dataset_config()
+    config["datasets"][dataset_name]["enabled"] = enabled
+
+    if enabled:
+        dataset = instantiate_dataset(config["datasets"][dataset_name])
+        app.db["datasets_obj"][dataset_name] = dataset
+    else:
+        app.db["datasets_obj"].pop(dataset_name, None)
+
+    save_dataset_config(config)
+
+
 def get_dataset_overview(app):
     config = load_dataset_config()
     overview = {}
@@ -397,14 +415,21 @@ def get_dataset_overview(app):
 
         if is_enabled:
             dataset = app.db["datasets_obj"].get(dataset_name)
+            splits = dataset.get_splits()
+            description = dataset.get_info()
+            example_count = {split: dataset.get_example_count(split) for split in dataset.get_splits()}
+        else:
+            splits = []
+            description = ""
+            example_count = {}
 
         overview[dataset_name] = {
             "class": class_name,
             "params": params,
             "enabled": is_enabled,
-            "splits": dataset.get_splits(),
-            "description": dataset.get_info(),
-            "example_count": {split: dataset.get_example_count(split) for split in dataset.get_splits()},
+            "splits": splits,
+            "description": description,
+            "example_count": example_count,
             "type": dataset.type,
         }
 
@@ -424,10 +449,22 @@ def get_dataset_classes():
             submodule = obj
             for name, obj in inspect.getmembers(submodule):
                 if inspect.isclass(obj) and issubclass(obj, Dataset) and obj != Dataset:
-                    submodule_name = submodule.__name__.lstrip(module_name + ".")
+                    submodule_name = obj.__module__[len(module_name) + 1 :]
                     classes[f"{submodule_name}.{obj.__name__}"] = obj
 
     return classes
+
+
+def instantiate_dataset(dataset_config):
+    submodule, class_name = dataset_config["class"].split(".")
+    params = dataset_config.get("params", {})
+
+    # Dynamically import the class
+    module = importlib.import_module("factgenie.loaders")
+    submodule = getattr(module, submodule)
+    dataset_class = getattr(submodule, class_name)
+
+    return dataset_class(**params)
 
 
 def instantiate_datasets():
@@ -439,15 +476,7 @@ def instantiate_datasets():
         if not is_enabled:
             continue
 
-        submodule, class_name = dataset_config["class"].split(".")
-        params = dataset_config.get("params", {})
-
-        # Dynamically import the class
-        module = importlib.import_module("factgenie.loaders")
-        submodule = getattr(module, submodule)
-        dataset_class = getattr(submodule, class_name)
-
-        datasets[dataset_name] = dataset_class(**params)
+        datasets[dataset_name] = instantiate_dataset(dataset_config)
 
     return datasets
 
