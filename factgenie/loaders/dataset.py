@@ -42,13 +42,13 @@ class Dataset:
         for split in self.get_splits():
             outs = Path.glob(Path(self.output_path) / self.name / split, "*.json")
 
-            outputs[split] = defaultdict(list)
+            outputs[split] = defaultdict()
 
             for out in outs:
                 with open(out) as f:
                     j = json.load(f)
                     setup_id = slugify(j["setup"]["id"])
-                    outputs[split][setup_id].append(j)
+                    outputs[split][setup_id] = j
 
         return outputs
 
@@ -87,6 +87,34 @@ class Dataset:
         )
         return html
 
+    def add_generated_outputs(self, split, setup_id, model_outputs):
+        path = Path(f"{self.output_path}/{self.name}/{split}")
+        path.mkdir(parents=True, exist_ok=True)
+
+        model_outputs = model_outputs.strip()
+        generated = [{"out": out} for out in model_outputs.split("\n")]
+
+        setup_id = slugify(setup_id)
+
+        if setup_id in self.outputs[split]:
+            raise ValueError(f"Output for {setup_id} already exists in {split}")
+
+        if len(generated) != len(self.examples[split]):
+            raise ValueError(
+                f"Output count mismatch for {setup_id} in {split}: {len(generated)} vs {len(self.examples[split])}"
+            )
+
+        j = {
+            "dataset": self.name,
+            "split": split,
+            "setup": {"id": setup_id},
+            "generated": generated,
+        }
+        self.outputs[split][setup_id] = j
+
+        with open(f"{path}/{setup_id}.json", "w") as f:
+            json.dump(j, f, indent=4)
+
     def delete_generated_outputs(self, split, setup):
         path = Path(f"{self.output_path}/{self.name}/{split}/{setup}.json")
 
@@ -95,31 +123,31 @@ class Dataset:
 
         self.outputs[split].pop(setup, None)
 
-    def get_generated_output_for_split(self, split):
+    def get_generated_outputs_for_split(self, split):
         return self.outputs[split]
 
-    def get_generated_output_for_setup(self, split, output_idx, setup_id):
-        for out in self.outputs[split][setup_id]:
-            if out["setup"]["id"] == setup_id:
-                return out["generated"][output_idx]["out"]
+    def get_generated_output_by_idx(self, split, output_idx, setup_id):
+        if setup_id in self.outputs[split]:
+            model_out = self.outputs[split][setup_id]
+
+            if output_idx < len(model_out["generated"]):
+                return model_out["generated"][output_idx]["out"]
 
         logger.warning(f"No output found for {setup_id=}, {output_idx=}, {split=}")
         return None
 
-    def get_generated_outputs(self, split, output_idx):
+    def get_generated_outputs_for_idx(self, split, output_idx):
         outs_all = []
 
-        for outs in self.outputs[split].values():
-            for model_out in outs:
-                out = {}
+        for setup_id, outs in self.outputs[split].items():
+            if output_idx >= len(outs["generated"]):
+                continue
 
-                out["setup"] = model_out["setup"]
-                out["generated"] = None
+            out = {}
+            out["setup"] = {"id": setup_id}
+            out["generated"] = outs["generated"][output_idx]["out"]
 
-                if output_idx < len(model_out["generated"]):
-                    out["generated"] = model_out["generated"][output_idx]["out"]
-
-                outs_all.append(out)
+            outs_all.append(out)
 
         return outs_all
 

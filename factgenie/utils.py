@@ -188,7 +188,7 @@ def get_example_data(app, dataset_name, split, example_idx):
 
     example = dataset.get_example(split=split, example_idx=example_idx)
     html = dataset.render(example=example)
-    generated_outputs = dataset.get_generated_outputs(split=split, output_idx=example_idx)
+    generated_outputs = dataset.get_generated_outputs_for_idx(split=split, output_idx=example_idx)
 
     for i, output in enumerate(generated_outputs):
         setup_id = output["setup"]["id"]
@@ -218,12 +218,12 @@ def get_model_outputs_overview(app, datasets):
 
         for split in splits:
             model_outputs[dataset_name][split] = {}
-            outputs = dataset.get_generated_output_for_split(split)
+            outputs = dataset.get_generated_outputs_for_split(split)
 
             for setup_id, output in outputs.items():
                 output_info = {}
                 output_info["setup_id"] = setup_id
-                output_info["example_count"] = len(outputs[setup_id][0]["generated"])
+                output_info["example_count"] = len(outputs[setup_id]["generated"])
 
                 model_outputs[dataset_name][split][setup_id] = output_info
 
@@ -591,7 +591,7 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
         dataset = datasets[dataset_name]
         example = dataset.get_example(split, example_idx)
 
-        output = dataset.get_generated_output_for_setup(split=split, output_idx=example_idx, setup_id=setup_id)
+        output = dataset.get_generated_output_by_idx(split=split, output_idx=example_idx, setup_id=setup_id)
 
         annotation_set = metric.annotate_example(example, output)
 

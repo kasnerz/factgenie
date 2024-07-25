@@ -16,10 +16,11 @@
 {% include 'navbar.html' %}
 
 <div class="container">
-  <!-- <div class="text-center mt-5" style="font-size: 20px; font-weight: bold;">
-    Visualize data-to-text generation datasets + annotate LLM outputs.
-  </div> -->
-  <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mt-5">← Main page</a>
+  <div>
+    <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mt-5">← Main page</a>
+    <a type="button" class="btn btn-primary mt-5" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload
+      outputs</a>
+  </div>
 
   <div class="mt-5">
     <h3><img src="{{ host_prefix }}/static/img/datasets.png" class="heading-img-inline">
@@ -61,6 +62,30 @@
       </tbody>
     </table>
 
+  </div>
+
+  <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadModalLabel">Upload model outputs</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-left">
+          <div class="mb-3">
+            <label for="setup-id" class="form-label">Setup ID</label>
+            <input type="text" class="form-control" id="setup-id" name="setup-id" placeholder="my-custom-input">
+          </div>
+          <label for="model-output-upload" class="form-label">Outputs</label>
+          <div class="mb-1"><small class="text-muted">Upload a plain text file containing an output per line.</small>
+          </div>
+          <div class="mb-3">
+            <input type="file" class="form-control" id="model-output-upload" name="model-output-upload">
+          </div>
+          <button type="submit" class="btn btn-primary" onclick="uploadModelOutputs()">Upload</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

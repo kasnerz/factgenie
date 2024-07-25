@@ -334,11 +334,12 @@ def delete_campaign():
 
     return utils.success()
 
+
 @app.route("/delete_model_outputs", methods=["POST"])
 @login_required
 def delete_model_outputs():
     data = request.get_json()
-    
+
     # get dataset, split, setup
     dataset_name = data.get("dataset")
     split = data.get("split")
@@ -600,7 +601,6 @@ def manage_datasets():
     return render_template("manage_datasets.html", datasets=datasets, host_prefix=app.config["host_prefix"])
 
 
-
 @app.route("/model_outputs", methods=["GET", "POST"])
 @login_required
 def manage_model_outputs():
@@ -672,3 +672,24 @@ def submit_annotations():
         logger.info(f"Annotations for {campaign_id} (batch {batch_idx}) saved")
 
     return jsonify({"status": "success"})
+
+
+# upload model outputs
+@app.route("/upload_model_outputs", methods=["POST"])
+@login_required
+def upload_model_outputs():
+    logger.info(f"Received model outputs")
+    data = request.get_json()
+    dataset_name = data["dataset"]
+    split = data["split"]
+    setup_id = data["setup_id"]
+    model_outputs = data["outputs"]
+
+    dataset = app.db["datasets_obj"][dataset_name]
+
+    try:
+        dataset.add_generated_outputs(split, setup_id, model_outputs)
+    except Exception as e:
+        return jsonify({"error": f"Error while adding model outputs: {e}"})
+
+    return utils.success()

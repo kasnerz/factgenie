@@ -464,9 +464,9 @@ function createOutputBoxes(generated_outputs) {
 
     for (const output of generated_outputs) {
         const setup_id = output.setup.id;
-        const model = output.setup.model;
+        // const model = output.setup.model;
 
-        var label = $('<label>', { class: "label-name" }).text(model);
+        var label = $('<label>', { class: "label-name" }).text(setup_id);
         var output_box = $('<div>', {
             id: `out-${setup_id}`,
             class: `output-box generated-output-box box-${setup_id}`,

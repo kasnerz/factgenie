@@ -49,6 +49,42 @@ function deleteOutput(dataset, split, setup) {
     });
 }
 
+
+function uploadModelOutputs() {
+    const dataset = $("#dataset-select").val();
+    const split = $("#split-select").val();
+    const setup_id = $("#setup-id").val();
+
+    // read the file from #model-output-upload form
+    const file = $("#model-output-upload")[0].files[0];
+    const reader = new FileReader();
+    reader.readAsText(file);
+
+    // send by post request to /upload_model_outputs
+    reader.onload = function (e) {
+        $.post({
+            url: `${url_prefix}/upload_model_outputs`,
+            contentType: 'application/json', // Specify JSON content type
+            data: JSON.stringify({
+                outputs: e.target.result,
+                dataset: dataset,
+                split: split,
+                setup_id: setup_id,
+            }),
+            success: function (response) {
+                console.log(response);
+
+                if (response.success !== true) {
+                    alert(response.error);
+                } else {
+                    // reload
+                    location.reload();
+                }
+            }
+        });
+    }
+}
+
 function changeDataset() {
     const dataset = $('#dataset-select').val();
 
@@ -84,7 +120,7 @@ function enableTooltips() {
 
 $(document).ready(function () {
     $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
-    $("#page-input").val(example_idx);
+    // $("#page-input").val(example_idx);
     enableTooltips();
 });
 
