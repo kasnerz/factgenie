@@ -41,7 +41,7 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     campaign_id = slugify(campaign_name)
     campaign_data = [{"dataset": dataset_name, "split": split, "setup_id": llm_output_name}]
 
-    DATASETS = instantiate_datasets()  # instantiate all datasets
+    DATASETS = utils.instantiate_datasets()  # instantiate all datasets
     configs = utils.load_configs("llm_eval")  # Loads all metrics configs factgenie/llm-evals/*.yaml
     metric_config = configs[llm_metric_config]
     campaign = utils.llm_eval_new(campaign_id, metric_config, campaign_data, DATASETS)

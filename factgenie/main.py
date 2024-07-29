@@ -390,12 +390,12 @@ def duplicate_eval():
 
 @app.route("/example", methods=["GET", "POST"])
 def render_example():
-    dataset_name = request.args.get("dataset")
+    dataset_id = request.args.get("dataset")
     split = request.args.get("split")
     example_idx = int(request.args.get("example_idx"))
 
     try:
-        example_data = utils.get_example_data(app, dataset_name, split, example_idx)
+        example_data = utils.get_example_data(app, dataset_id, split, example_idx)
     except Exception as e:
         traceback.print_exc()
         logger.error(f"Error while getting example data: {e}")
@@ -423,6 +423,29 @@ def export_annotations():
     response = make_response(zip_buffer.getvalue())
     response.headers["Content-Type"] = "application/zip"
     response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
+    return response
+
+
+@app.route("/export_dataset", methods=["GET", "POST"])
+@login_required
+def export_dataset():
+    zip_buffer = BytesIO()
+    dataset_id = request.args.get("dataset_id")
+
+    dataset = utils.get_dataset(app=app, dataset_id=dataset_id)
+
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        for root, dirs, files in os.walk(dataset.data_path):
+            for file in files:
+                zip_file.write(
+                    os.path.join(root, file),
+                    os.path.relpath(os.path.join(root, file), dataset.data_path),
+                )
+
+    # Set response headers for download
+    response = make_response(zip_buffer.getvalue())
+    response.headers["Content-Type"] = "application/zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={dataset_id}.zip"
     return response
 
 
@@ -664,15 +687,6 @@ def submit_annotations():
             for row in annotation_set:
                 f.write(json.dumps(row) + "\n")
 
-        # db[db["batch_idx"] == batch_idx]["status"] = "finished"
-
-        # we cannot do that anymore:
-        # A value is trying to be set on a copy of a slice from a DataFrame.
-        # Try using .loc[row_indexer,col_indexer] = value instead
-
-        # See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-        #   db[db["batch_idx"] == batch_idx]["status"] = "finished"
-
         db.loc[db["batch_idx"] == batch_idx, "status"] = "finished"
 
         db.to_csv(os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv"), index=False)
@@ -693,17 +707,34 @@ def set_dataset_enabled():
     return utils.success()
 
 
+@app.route("/upload_dataset", methods=["POST"])
+@login_required
+def upload_dataset():
+    data = request.get_json()
+    dataset_name = data.get("dataset")
+    dataset_description = data.get("description")
+    dataset_format = data.get("format")
+    dataset_data = data.get("data")
+
+    try:
+        utils.upload_dataset(app, dataset_name, dataset_description, dataset_format, dataset_data)
+    except Exception as e:
+        return jsonify({"error": f"Error while uploading dataset: {e}"})
+
+    return utils.success()
+
+
 @app.route("/upload_model_outputs", methods=["POST"])
 @login_required
 def upload_model_outputs():
     logger.info(f"Received model outputs")
     data = request.get_json()
-    dataset_name = data["dataset"]
+    dataset_id = data["dataset"]
     split = data["split"]
     setup_id = data["setup_id"]
     model_outputs = data["outputs"]
 
-    dataset = app.db["datasets_obj"][dataset_name]
+    dataset = app.db["datasets_obj"][dataset_id]
 
     try:
         dataset.add_generated_outputs(split, setup_id, model_outputs)

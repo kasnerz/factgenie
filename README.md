@@ -88,9 +88,7 @@ Write a data loader class for your dataset. The class needs to subclass the `Dat
 
 Notably, you need to implement:
 - `load_data()` for loading the input data,
-- `load_generated_outputs()` for loading the model outputs,
 - `render()` for rendering the inputs in HTML,
-- `get_info()` returning information about your dataset.
 
 You can get inspired by the example datasets in [factgenie/loaders/dataset.py](factgenie/loaders/dataset.py).
 

@@ -24,6 +24,7 @@ from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset
+from factgenie.loaders.base import PlainTextDataset, JSONLDataset, CSVDataset, HTMLDataset
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
@@ -83,8 +84,8 @@ def error(j):
     return resp
 
 
-def get_dataset(app, dataset_name):
-    return app.db["datasets_obj"].get(dataset_name)
+def get_dataset(app, dataset_id):
+    return app.db["datasets_obj"].get(dataset_id)
 
 
 def load_configs(mode):
@@ -186,8 +187,8 @@ def get_annotations(app, dataset_name, split, example_idx, setup_id):
     return annotation_index.get(key, [])
 
 
-def get_example_data(app, dataset_name, split, example_idx):
-    dataset = get_dataset(app=app, dataset_name=dataset_name)
+def get_example_data(app, dataset_id, split, example_idx):
+    dataset = get_dataset(app=app, dataset_id=dataset_id)
 
     example = dataset.get_example(split=split, example_idx=example_idx)
     html = dataset.render(example=example)
@@ -195,17 +196,14 @@ def get_example_data(app, dataset_name, split, example_idx):
 
     for i, output in enumerate(generated_outputs):
         setup_id = output["setup"]["id"]
-        annotations = get_annotations(app, dataset_name, split, example_idx, setup_id)
+        annotations = get_annotations(app, dataset_id, split, example_idx, setup_id)
 
         generated_outputs[i]["annotations"] = annotations
-
-    dataset_info = dataset.get_info()
 
     return {
         "html": html,
         "raw_data": example,
         "total_examples": dataset.get_example_count(split),
-        "dataset_info": dataset_info,
         "generated_outputs": generated_outputs,
     }
 
@@ -213,8 +211,8 @@ def get_example_data(app, dataset_name, split, example_idx):
 def get_model_outputs_overview(app, datasets):
     model_outputs = {}
 
-    for dataset_name, dataset_info in datasets.items():
-        dataset = get_dataset(app=app, dataset_name=dataset_name)
+    for dataset_name in datasets.items():
+        dataset = get_dataset(app=app, dataset_id=dataset_name)
         splits = dataset.get_splits()
 
         model_outputs[dataset_name] = {}
@@ -416,7 +414,7 @@ def get_dataset_overview(app):
         if is_enabled:
             dataset = app.db["datasets_obj"].get(dataset_name)
             splits = dataset.get_splits()
-            description = dataset.get_info()
+            description = dataset.get_description()
             example_count = {split: dataset.get_example_count(split) for split in dataset.get_splits()}
         else:
             splits = []
@@ -430,7 +428,7 @@ def get_dataset_overview(app):
             "splits": splits,
             "description": description,
             "example_count": example_count,
-            "type": dataset.type,
+            "type": dataset.get_type(),
         }
 
     return overview
@@ -455,30 +453,36 @@ def get_dataset_classes():
     return classes
 
 
-def instantiate_dataset(dataset_config):
+def instantiate_dataset(dataset_id, dataset_config):
     submodule, class_name = dataset_config["class"].split(".")
-    params = dataset_config.get("params", {})
 
     # Dynamically import the class
     module = importlib.import_module("factgenie.loaders")
     submodule = getattr(module, submodule)
     dataset_class = getattr(submodule, class_name)
 
-    return dataset_class(**params)
+    return dataset_class(dataset_id, **dataset_config)
 
 
 def instantiate_datasets():
     config = load_dataset_config()
     datasets = {}
-    for dataset_name, dataset_config in config["datasets"].items():
+    for dataset_id, dataset_config in config["datasets"].items():
         is_enabled = dataset_config.get("enabled", True)
 
         if not is_enabled:
             continue
 
-        datasets[dataset_name] = instantiate_dataset(dataset_config)
+        datasets[dataset_id] = instantiate_dataset(dataset_id, dataset_config)
 
     return datasets
+
+
+# def upload_text_dataset
+
+
+def upload_dataset(app, dataset_name, dataset_description, dataset_format, dataset_data):
+    breakpoint()
 
 
 def llm_eval_new(campaign_id, config, campaign_data, datasets):

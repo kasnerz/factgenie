@@ -1,34 +1,37 @@
 datasets:
-  dummy:
-    class: dummy.Dummy
-    enabled: true
   gsmarena:
     class: gsmarena.GSMArena
+    description: Mobile phone specifications from GSMArena.com.
+    type: json
+    splits: [dev, test]
     enabled: true
   ice_hockey:
     class: ice_hockey.IceHockey
+    description: Ice hockey game summaries from RapidAPI.com (fluis.lacasse/api/icehockeyapi).
+    type: json
+    splits: [dev, test]
     enabled: true
   logicnlg:
     class: logicnlg.LogicnlgTest100Tables
-    enabled: true
+    description: "LogicNLG dataset. Dataset repository: https://github.com/wenhuchen/LogicNLG."
+    splits: [dev, test]
+    type: table
+    enabled: false
   openweather:
     class: openweather.OpenWeather
+    description: Weather forecasts from OpenWeather.
+    splits: [dev, test]
+    type: json
     enabled: true
   owid:
     class: owid.OurWorldInData
+    description: Health-related time series from Our World in Data.
+    type: table
+    splits: [dev, test]
     enabled: true
-  st24-gsmarena:
-    class: practicald2t_st24.ST24GSMArena
-    enabled: false
-  st24-ice_hockey:
-    class: practicald2t_st24.ST24IceHockey
-    enabled: false
-  st24-openweather:
-    class: practicald2t_st24.ST24OpenWeather
-    enabled: false
-  st24-owid:
-    class: practicald2t_st24.ST24OurWorldInData
-    enabled: false
   wikidata:
     class: wikidata.Wikidata
+    description: Wikidata entities and their properties.
+    splits: [dev, test]
+    type: table
     enabled: true

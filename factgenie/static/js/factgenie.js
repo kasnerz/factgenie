@@ -875,6 +875,7 @@ function createAnnotationSpanCategoryElem(name, color) {
     return newCategory;
 }
 
+
 function duplicateConfig(btnElem, filenameElemId, modeTo, campaignId) {
     const filename = $("#" + filenameElemId).val() + ".yaml";
     const modeFrom = window.mode;

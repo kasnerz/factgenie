@@ -28,7 +28,7 @@
       <b>Datasets</b>
     </h3>
 
-    <table class="table table-hover mt-3">
+    <table class="table mt-3">
       <thead>
         <tr>
           <th scope="col" width="5%"></th>
@@ -37,21 +37,30 @@
           <th scope="col" width="8%">Splits</th>
           <th scope="col" width="8%">Examples</th>
           <th scope="col">Description</th>
-          <th scope="col" width="5%">Enabled</th>
+          <th scope="col" width="5%">Loaded</th>
+          <th scope="col" width="5%">Download</th>
         </tr>
       </thead>
       <tbody>
-        {% for name, dataset in datasets.items() %}
-        <tr>
+        {% for dataset_id, dataset in datasets.items() %}
+        <tr class="{% if not dataset.enabled %}table-active{% endif %}">
           <td><img src="{{ host_prefix }}/static/img/datatypes/{{ dataset.type }}.png" class="intro-img"></td>
-          <td><a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0"
-              class="blue-link">{{ name
-              }}</a></td>
+          <td>
+            {% if dataset.enabled %}
+            <a href="{{ host_prefix }}/browse?dataset={{ dataset_id }}&split={{ dataset.splits[0] }}&example_idx=0"
+              class="blue-link">
+              {{ dataset_id
+              }}</a>
+            {% else %}
+            {{ dataset_id }}
+            {% endif %}
+          </td>
           <td>{{ dataset.class }}</td>
           <td>
             {% for split in dataset.splits %}
             <div class="sub-row"><a
-                href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ split }}&example_idx=0">{{ split }}</a></div>
+                href="{{ host_prefix }}/browse?dataset={{ dataset_id }}&split={{ split }}&example_idx=0">{{ split }}</a>
+            </div>
             {% endfor %}
           </td>
           <td>
@@ -63,8 +72,16 @@
           <td>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" {% if dataset.enabled %}
-                checked {% endif %} onclick="setDatasetEnabled('{{ name }}', this.checked)">
+                checked {% endif %} onclick="setDatasetEnabled('{{ dataset_id }}', this.checked)">
             </div>
+          </td>
+          <td>
+            {% if dataset.enabled %}
+            <a href="{{ host_prefix }}/export_dataset?dataset_id={{ dataset_id }}" class="btn btn-outline-secondary"
+              data-bs-toggle="tooltip" title="Export dataset">
+              <i class="fa fa-download"></i>
+            </a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

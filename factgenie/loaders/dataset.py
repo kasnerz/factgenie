@@ -3,7 +3,6 @@ import logging
 import json
 from pathlib import Path
 from collections import defaultdict
-import json2table
 from slugify import slugify
 from abc import ABC, abstractmethod
 
@@ -11,51 +10,94 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset(ABC):
-    def __init__(self, name, base_path="factgenie"):
-        self.base_path = base_path
-        self.data_path = f"{self.base_path}/data"
-        self.output_path = f"{self.base_path}/outputs"
-        self.name = name
-        self.examples = self.load_data()
-        self.outputs = self.load_generated_outputs()
-        self.type = "default"
+    """
+    Abstract class for datasets.
+    """
 
+    def __init__(self, dataset_id, **kwargs):
+        self.id = dataset_id
+        self.data_path = f"factgenie/data/{self.id}"
+        self.output_path = f"factgenie/outputs/{self.id}"
+
+        self.splits = kwargs.get("splits", ["train", "dev", "test"])
+        self.description = kwargs.get("description", "")
+        self.type = kwargs.get("type", "default")
+
+        # load data
+        self.examples = {}
+
+        for split in self.splits:
+            examples = self.load_examples(split=split, data_path=self.data_path)
+            examples = self.postprocess_data(examples=examples)
+
+            self.examples[split] = examples
+
+        # load outputs
+        self.outputs = self.load_generated_outputs(self.output_path)
+
+    # --------------------------------
+    # TODO: implement in subclasses
+    # --------------------------------
+
+    @abstractmethod
+    def load_examples(self, split, data_path):
+        """
+        Load the data for the dataset.
+
+        Parameters
+        ----------
+        split : str
+            Split to load the data for.
+        data_path : str
+            Path to the data directory.
+
+        Returns
+        -------
+        examples : list
+            List of examples for the given split.
+        """
+        pass
+
+    @abstractmethod
     def render(self, example):
-        # default method, can be overwritten by dataset classes
-        html = json2table.convert(
-            example,
-            build_direction="LEFT_TO_RIGHT",
-            table_attributes={
-                "class": "table table-sm caption-top meta-table table-responsive font-mono rounded-3 table-bordered"
-            },
-        )
-        return html
+        """
+        Render the example in HTML.
 
-    def get_info(self):
-        return "TODO: Override this function and fill relevant info for your particular dataset!"
+        Parameters
+        ----------
+        example : dict
+            Example to render.
 
-    def get_example(self, split, example_idx):
-        example = self.examples[split][example_idx]
+        Returns
+        -------
+        html : str
+            HTML representation of the example.
 
-        return example
+        """
+        pass
 
-    def get_example_count(self, split=None):
-        if split is None:
-            return sum([len(exs) for exs in self.examples.values()])
+    # --------------------------------
+    # end TODO
+    # --------------------------------
 
-        return len(self.examples[split])
+    def load_generated_outputs(self, output_path):
+        """
+        Load the generated outputs for the dataset.
 
-    def has_split(self, split):
-        return split in self.examples.keys()
+        Parameters
+        ----------
+        output_path : str
+            Path to the output directory.
 
-    def get_splits(self):
-        return list(self.examples.keys())
-
-    def load_generated_outputs(self):
+        Returns
+        -------
+        outputs : dict
+            Dictionary with the generated outputs for each split and setup, e.g. {"train": {"setup1": output1, "setup2": output2}, "test": {"setup1": output1, "setup2": output2}}.
+        """
         outputs = defaultdict(dict)
 
         for split in self.get_splits():
-            outs = Path.glob(Path(self.output_path) / self.name / split, "*.json")
+            outs = Path.glob(Path(output_path) / split, "*.json")
 
             outputs[split] = defaultdict()
 
@@ -67,31 +109,30 @@ class Dataset(ABC):
 
         return outputs
 
-    def load_data(self):
-        """By default loads the data from factgenie/data/{name}/{split}.json.
-
-        Do override it if you want to load the data e.g. from HuggingFace
-
-        Notice it also calls postprocess_data internally!
-
+    def postprocess_data(self, examples):
         """
-        splits = Path.glob(Path(self.data_path) / self.name, "*.json")
-        splits = [split.stem for split in splits]
-        examples = {split: [] for split in splits}
+        Postprocess the data after loading.
 
-        for split in splits:
-            with open(f"{self.data_path}/{self.name}/{split}.json") as f:
-                data = json.load(f)
-
-            data = self.postprocess_data(data)
-            examples[split] = data
-
+        Parameters
+        ----------
+        examples : dict
+            Dictionary with a list of examples for each split, e.g. {"train": [ex1, ex2, ...], "test": [ex1, ex2, ...]}.
+        """
         return examples
 
-    def postprocess_data(self, data):
-        return data
-
     def add_generated_outputs(self, split, setup_id, model_outputs):
+        """
+        Add the generated outputs for the given split and setup.
+
+        Parameters
+        ----------
+        split : str
+            Split to add the generated outputs to.
+        setup_id : str
+            Setup ID for the generated outputs.
+        model_outputs : str
+            Model outputs to add.
+        """
         path = Path(f"{self.output_path}/{self.name}/{split}")
         path.mkdir(parents=True, exist_ok=True)
 
@@ -120,6 +161,16 @@ class Dataset(ABC):
             json.dump(j, f, indent=4)
 
     def delete_generated_outputs(self, split, setup):
+        """
+        Delete the generated outputs for the given split and setup.
+
+        Parameters
+        ----------
+        split : str
+            Split to delete the generated outputs from.
+        setup : str
+            Setup to delete the generated outputs for.
+        """
         path = Path(f"{self.output_path}/{self.name}/{split}/{setup}.json")
 
         if path.exists():
@@ -128,9 +179,15 @@ class Dataset(ABC):
         self.outputs[split].pop(setup, None)
 
     def get_generated_outputs_for_split(self, split):
+        """
+        Get the list of generated outputs for the given split.
+        """
         return self.outputs[split]
 
     def get_generated_output_by_idx(self, split, output_idx, setup_id):
+        """
+        Get the generated output for the given split, output index, and setup ID.
+        """
         if setup_id in self.outputs[split]:
             model_out = self.outputs[split][setup_id]
 
@@ -141,6 +198,9 @@ class Dataset(ABC):
         return None
 
     def get_generated_outputs_for_idx(self, split, output_idx):
+        """
+        Get the generated outputs for the given split and output index.
+        """
         outs_all = []
 
         for setup_id, outs in self.outputs[split].items():
@@ -154,3 +214,44 @@ class Dataset(ABC):
             outs_all.append(out)
 
         return outs_all
+
+    def get_example(self, split, example_idx):
+        """
+        Get the example at the given index for the given split.
+        """
+        example = self.examples[split][example_idx]
+
+        return example
+
+    def get_example_count(self, split=None):
+        """
+        Get the number of examples in the dataset.
+        """
+        if split is None:
+            return sum([len(exs) for exs in self.examples.values()])
+
+        return len(self.examples[split])
+
+    def get_splits(self):
+        """
+        Get the list of splits in the dataset.
+        """
+        return self.splits
+
+    def get_description(self):
+        """
+        Get the string with description of the dataset.
+        """
+        return self.description
+
+    def get_type(self):
+        """
+        Get the type of the dataset displayed in the web interface.
+
+        Returns
+        -------
+        type : str
+            Type of the dataset: {"default", "json", "text", "table"}
+        """
+
+        return self.type

@@ -4,25 +4,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 import json
-from factgenie.loaders.dataset import Dataset
+from factgenie.loaders.base import JSONDataset
 import dateutil.parser
 from datetime import datetime
 
 
-class OpenWeather(Dataset):
-    def __init__(self, name=None, **kwargs):
-        name = "openweather" if name is None else name
-        super().__init__(name=name, **kwargs)
-        self.type = "json"
-
-    def get_info(self):
-        return """
-        Weather forecasts from <u><a href="https://openweathermap.org/forecast5">OpenWeather</a></u>.
-        """
-
-    def postprocess_data(self, data):
-        forecasts = data["forecasts"]
-        data = []
+class OpenWeather(JSONDataset):
+    def postprocess_data(self, examples):
+        forecasts = examples["forecasts"]
+        examples = []
 
         # https://openweathermap.org/api/hourly-forecast, using metric system
         units = {
@@ -63,9 +53,9 @@ class OpenWeather(Dataset):
 
                 lst_filtered.append(f)
 
-            data.append({"city": city, "units": units, "list": lst_filtered})
+            examples.append({"city": city, "units": units, "list": lst_filtered})
 
-        return data
+        return examples
 
     def render(self, example):
         html = ""

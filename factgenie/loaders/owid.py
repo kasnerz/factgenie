@@ -10,28 +10,14 @@ import json
 
 
 class OurWorldInData(Dataset):
-    def __init__(self, name=None, **kwargs):
-        name = "owid" if name is None else name
-        super().__init__(name=name, **kwargs)
-        self.type = "csv"
+    def load_examples(self, split, data_path):
+        examples = []
+        split_dir = Path(f"{data_path}/{split}")
+        filenames = sorted(split_dir.iterdir(), key=lambda x: int(x.stem.split("-")[0]))
 
-    def get_info(self):
-        return """
-        Health-related time series from <u><a href="https://ourworldindata.org">Our World in Data</a></u>.
-        """
-
-    def load_data(self):
-        splits = Path.glob(Path(self.data_path) / self.name, "*")
-        splits = [split.stem for split in splits if split.stem != "metadata"]
-        examples = {split: [] for split in splits}
-
-        for split in splits:
-            split_dir = Path(f"{self.data_path}/{self.name}/{split}")
-            filenames = sorted(split_dir.iterdir(), key=lambda x: int(x.stem.split("-")[0]))
-
-            for filename in filenames:
-                with open(filename) as f:
-                    examples[split].append(f.read())
+        for filename in filenames:
+            with open(filename) as f:
+                examples.append(f.read())
 
         return examples
 
