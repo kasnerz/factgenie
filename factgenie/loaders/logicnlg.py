@@ -9,28 +9,13 @@ from factgenie.loaders.dataset import Dataset
 from tinyhtml import h
 
 
-class LogicnlgBase(Dataset):
-    def load_examples(self):
-        """Overriding the default load_data function to load the data from HuggingFace datasets.
-        Still calling the postprocess_data internally!
-        """
-        assert set(self.splits) & set(["train", "dev", "test"]) == set(
-            self.splits
-        ), f"Invalid splits {self.splits} for LogicNLG. Valid splits are ['train', 'dev', 'test']."
-        d = {}
-        for split in self.splits:
-
-            raw_data = load_dataset("kasnerz/logicnlg", split=split if split != "dev" else "validation")
-            d[split] = self.postprocess_data(raw_data, split)
-        return d
-
-    def postprocess_data(self, hf_dataset, split):
+class LogicNLG(Dataset):
+    def load_examples(self, split, data_path):
+        # loading only 100 examples as an example
+        hf_dataset = load_dataset("kasnerz/logicnlg", split=split + "[:100]")
         examples = []
 
         for example in hf_dataset:
-            # List of rows (list).
-            # The first list is the list of column names ie the header.
-            # Hack how to convert almost json like data to list of list
             table = ast.literal_eval(example["table"])
             table_title = example["title"]
             table_id = example["table_id"]
@@ -59,17 +44,3 @@ class LogicnlgBase(Dataset):
         html_el = h("div")(header_el, table_el)
 
         return html_el.render()
-
-
-class LogicnlgTest100Tables(LogicnlgBase):
-    def __init__(self, **kwargs):
-        # The name is used in the data loading and output loading
-        # but also as the dataset is presented to the user
-        super().__init__(**kwargs, splits=["test"], name="logicnlg")
-
-    def postprocess_data(self, hf_dataset, split):
-        # filter the data for the first 100 examples
-        with open(f"{self.data_path}/{self.name}/{split}.json") as f:
-            table_ids = json.load(f)
-        filtered_dataset = hf_dataset.filter(lambda x: x["table_id"] in table_ids)
-        return super().postprocess_data(filtered_dataset, split)

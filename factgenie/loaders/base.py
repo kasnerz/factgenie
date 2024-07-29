@@ -23,7 +23,7 @@ class PlainTextDataset(Dataset):
     def render(self, example):
         html = "<div class='font-mono'>"
         html += "<p>"
-        html += "<br>".join(example)
+        html += example
         html += "</p>"
         html += "</div>"
 

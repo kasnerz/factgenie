@@ -16,6 +16,10 @@ a.blue-link {
     color: #02587f;
 }
 
+.blue-link a {
+    color: #02587f;
+}
+
 pre {
     white-space: pre-wrap;
 

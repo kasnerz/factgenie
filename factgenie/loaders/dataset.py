@@ -8,6 +8,10 @@ from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
+BASE_DIR = "factgenie"
+DATA_DIR = f"{BASE_DIR}/data"
+OUTPUT_DIR = f"{BASE_DIR}/outputs"
+
 
 class Dataset(ABC):
     """
@@ -16,8 +20,8 @@ class Dataset(ABC):
 
     def __init__(self, dataset_id, **kwargs):
         self.id = dataset_id
-        self.data_path = f"factgenie/data/{self.id}"
-        self.output_path = f"factgenie/outputs/{self.id}"
+        self.data_path = f"{DATA_DIR}/{self.id}"
+        self.output_path = f"{OUTPUT_DIR}/{self.id}"
 
         self.splits = kwargs.get("splits", ["train", "dev", "test"])
         self.description = kwargs.get("description", "")
@@ -133,7 +137,7 @@ class Dataset(ABC):
         model_outputs : str
             Model outputs to add.
         """
-        path = Path(f"{self.output_path}/{self.name}/{split}")
+        path = Path(f"{self.output_path}/{self.id}/{split}")
         path.mkdir(parents=True, exist_ok=True)
 
         model_outputs = model_outputs.strip()
@@ -150,7 +154,7 @@ class Dataset(ABC):
             )
 
         j = {
-            "dataset": self.name,
+            "dataset": self.id,
             "split": split,
             "setup": {"id": setup_id},
             "generated": generated,
@@ -171,7 +175,7 @@ class Dataset(ABC):
         setup : str
             Setup to delete the generated outputs for.
         """
-        path = Path(f"{self.output_path}/{self.name}/{split}/{setup}.json")
+        path = Path(f"{self.output_path}/{self.id}/{split}/{setup}.json")
 
         if path.exists():
             path.unlink()

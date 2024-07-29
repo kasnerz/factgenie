@@ -8,7 +8,7 @@ from tinyhtml import h
 
 class Wikidata(JSONDataset):
     def postprocess_data(self, examples):
-        examples = []
+        tables = []
 
         for example in examples:
             entity = example["entity"]
@@ -16,9 +16,9 @@ class Wikidata(JSONDataset):
 
             table = entity + "\n---\n"
             table += "\n".join([f"- {prop}: {subj}" for prop, subj in properties])
-            examples.append(table)
+            tables.append(table)
 
-        return examples
+        return tables
 
     def render(self, example):
         example = example.split("\n")

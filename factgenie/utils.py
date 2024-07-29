@@ -16,15 +16,16 @@ import queue
 import shutil
 import inspect
 import importlib
+import zipfile
 
+from io import BytesIO
 from slugify import slugify
-from flask import jsonify
+from flask import jsonify, make_response
 from collections import defaultdict
 from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.metrics import LLMMetric, LLMMetricFactory
-from factgenie.loaders.dataset import Dataset
-from factgenie.loaders.base import PlainTextDataset, JSONLDataset, CSVDataset, HTMLDataset
+from factgenie.loaders.dataset import Dataset, DATA_DIR
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
@@ -180,9 +181,28 @@ def generate_annotation_index(app):
     return annotations
 
 
-def get_annotations(app, dataset_name, split, example_idx, setup_id):
+def export_annotations(app, campaign_id):
+    zip_buffer = BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        for root, dirs, files in os.walk(os.path.join(ANNOTATIONS_DIR, campaign_id)):
+            for file in files:
+                zip_file.write(
+                    os.path.join(root, file),
+                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id)),
+                )
+
+    # Set response headers for download
+    timestamp = int(time.time())
+    response = make_response(zip_buffer.getvalue())
+    response.headers["Content-Type"] = "application/zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
+    return response
+
+
+def get_annotations(app, dataset_id, split, example_idx, setup_id):
     annotation_index = app.db["annotation_index"]
-    key = (dataset_name, split, example_idx, setup_id)
+    key = (dataset_id, split, example_idx, setup_id)
 
     return annotation_index.get(key, [])
 
@@ -211,14 +231,14 @@ def get_example_data(app, dataset_id, split, example_idx):
 def get_model_outputs_overview(app, datasets):
     model_outputs = {}
 
-    for dataset_name in datasets.items():
-        dataset = get_dataset(app=app, dataset_id=dataset_name)
+    for dataset_id, dataset_config in datasets.items():
+        dataset = get_dataset(app=app, dataset_id=dataset_id)
         splits = dataset.get_splits()
 
-        model_outputs[dataset_name] = {}
+        model_outputs[dataset_id] = {}
 
         for split in splits:
-            model_outputs[dataset_name][split] = {}
+            model_outputs[dataset_id][split] = {}
             outputs = dataset.get_generated_outputs_for_split(split)
 
             for setup_id, output in outputs.items():
@@ -226,7 +246,7 @@ def get_model_outputs_overview(app, datasets):
                 output_info["setup_id"] = setup_id
                 output_info["example_count"] = len(outputs[setup_id]["generated"])
 
-                model_outputs[dataset_name][split][setup_id] = output_info
+                model_outputs[dataset_id][split][setup_id] = output_info
 
     return model_outputs
 
@@ -389,15 +409,15 @@ def save_dataset_config(config):
         yaml.dump(config, f, indent=2, allow_unicode=True)
 
 
-def set_dataset_enabled(app, dataset_name, enabled):
+def set_dataset_enabled(app, dataset_id, enabled):
     config = load_dataset_config()
-    config["datasets"][dataset_name]["enabled"] = enabled
+    config["datasets"][dataset_id]["enabled"] = enabled
 
     if enabled:
-        dataset = instantiate_dataset(config["datasets"][dataset_name])
-        app.db["datasets_obj"][dataset_name] = dataset
+        dataset = instantiate_dataset(dataset_id, config["datasets"][dataset_id])
+        app.db["datasets_obj"][dataset_id] = dataset
     else:
-        app.db["datasets_obj"].pop(dataset_name, None)
+        app.db["datasets_obj"].pop(dataset_id, None)
 
     save_dataset_config(config)
 
@@ -406,22 +426,20 @@ def get_dataset_overview(app):
     config = load_dataset_config()
     overview = {}
 
-    for dataset_name, dataset_config in config["datasets"].items():
+    for dataset_id, dataset_config in config["datasets"].items():
         class_name = dataset_config["class"]
         params = dataset_config.get("params", {})
         is_enabled = dataset_config.get("enabled", True)
+        description = dataset_config.get("description", "")
+        splits = dataset_config.get("splits", [])
 
         if is_enabled:
-            dataset = app.db["datasets_obj"].get(dataset_name)
-            splits = dataset.get_splits()
-            description = dataset.get_description()
+            dataset = app.db["datasets_obj"].get(dataset_id)
             example_count = {split: dataset.get_example_count(split) for split in dataset.get_splits()}
         else:
-            splits = []
-            description = ""
             example_count = {}
 
-        overview[dataset_name] = {
+        overview[dataset_id] = {
             "class": class_name,
             "params": params,
             "enabled": is_enabled,
@@ -453,6 +471,37 @@ def get_dataset_classes():
     return classes
 
 
+def delete_dataset(app, dataset_id):
+    config = load_dataset_config()
+    config["datasets"].pop(dataset_id, None)
+    save_dataset_config(config)
+
+    # remove the data directory
+    shutil.rmtree(f"factgenie/data/{dataset_id}", ignore_errors=True)
+
+    app.db["datasets_obj"].pop(dataset_id, None)
+
+
+def export_dataset(app, dataset_id):
+    zip_buffer = BytesIO()
+    data_path = f"{DATA_DIR}/{dataset_id}"
+
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        for root, dirs, files in os.walk(data_path):
+            for file in files:
+                zip_file.write(
+                    os.path.join(root, file),
+                    os.path.relpath(os.path.join(root, file), data_path),
+                )
+
+    # Set response headers for download
+    response = make_response(zip_buffer.getvalue())
+    response.headers["Content-Type"] = "application/zip"
+    response.headers["Content-Disposition"] = f"attachment; filename={dataset_id}.zip"
+
+    return response
+
+
 def instantiate_dataset(dataset_id, dataset_config):
     submodule, class_name = dataset_config["class"].split(".")
 
@@ -478,11 +527,38 @@ def instantiate_datasets():
     return datasets
 
 
-# def upload_text_dataset
+def upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data):
+    params = {
+        "text": {"suffix": "txt", "class": "base.PlainTextDataset", "type": "default"},
+        "jsonl": {"suffix": "jsonl", "class": "base.JSONLDataset", "type": "json"},
+        "csv": {"suffix": "csv", "class": "base.CSVDataset", "type": "table"},
+        "html": {"suffix": "zip", "class": "base.HTMLDataset", "type": "default"},
+    }
+    dataset_id = slugify(dataset_id)
+    data_dir = f"factgenie/data/{dataset_id}"
+    os.makedirs(data_dir, exist_ok=True)
 
+    if dataset_format in ["text", "jsonl", "csv"]:
+        # save each split in a separate file
+        for split, data in dataset_data.items():
+            with open(f"{data_dir}/{split}.{params[dataset_format]['suffix']}", "w") as f:
+                f.write(data)
 
-def upload_dataset(app, dataset_name, dataset_description, dataset_format, dataset_data):
-    breakpoint()
+    elif dataset_format == "html":
+        # dataset_data is the file object
+        with zipfile.ZipFile(dataset_data, "r") as zip_ref:
+            zip_ref.extractall(f"{data_dir}")
+
+    # add an entry in the dataset config
+    config = load_dataset_config()
+    config["datasets"][dataset_id] = {
+        "class": params[dataset_format]["class"],
+        "description": dataset_description,
+        "type": params[dataset_format]["type"],
+        "splits": list(dataset_data.keys()),
+        "enabled": False,
+    }
+    save_dataset_config(config)
 
 
 def llm_eval_new(campaign_id, config, campaign_data, datasets):
@@ -535,9 +611,9 @@ def get_model_outs(app):
     datasets = app.db["datasets_obj"]
     model_outs = {x: [] for x in ["datasets", "splits", "setup_ids", "valid_triplets"]}
 
-    for dataset_name, dataset in datasets.items():
+    for dataset_id, dataset in datasets.items():
         splits = dataset.get_splits()
-        model_outs["datasets"].append(dataset_name)
+        model_outs["datasets"].append(dataset_id)
 
         for split in splits:
             output_setups = dataset.outputs[split].keys()
@@ -547,7 +623,7 @@ def get_model_outs(app):
                 model_outs["setup_ids"].append(setup_id)
                 model_outs["valid_triplets"].append(
                     {
-                        "dataset": dataset_name,
+                        "dataset": dataset_id,
                         "split": split,
                         "setup_id": setup_id,
                         "example_count": dataset.get_example_count(split),
@@ -564,13 +640,13 @@ def check_login(app, username, password):
     return username == app.config["login"]["username"] and password == app.config["login"]["password"]
 
 
-def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time):
+def save_annotation(save_dir, metric, dataset_id, split, setup_id, example_idx, annotation_set, start_time):
     # save the annotation
     annotator_id = metric.get_annotator_id()
 
     annotation = {
         "annotator_id": annotator_id,
-        "dataset": dataset_name,
+        "dataset": dataset_id,
         "setup": {"id": setup_id, "model": setup_id},
         "split": split,
         "example_idx": example_idx,
@@ -578,7 +654,7 @@ def save_annotation(save_dir, metric, dataset_name, split, setup_id, example_idx
     }
 
     # save the annotation
-    with open(os.path.join(save_dir, f"{annotator_id}-{dataset_name}-{split}-{start_time}.jsonl"), "a") as f:
+    with open(os.path.join(save_dir, f"{annotator_id}-{dataset_id}-{split}-{start_time}.jsonl"), "a") as f:
         f.write(json.dumps(annotation) + "\n")
     return annotation
 
@@ -679,12 +755,12 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
         if row["status"] == "finished":
             continue
 
-        dataset_name = row["dataset"]
+        dataset_id = row["dataset"]
         split = row["split"]
         setup_id = row["setup_id"]
         example_idx = row["example_idx"]
 
-        dataset = datasets[dataset_name]
+        dataset = datasets[dataset_id]
         example = dataset.get_example(split, example_idx)
 
         output = dataset.get_generated_output_by_idx(split=split, output_idx=example_idx, setup_id=setup_id)
@@ -695,7 +771,7 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
             return error(annotation_set["error"])
 
         annotation = save_annotation(
-            save_dir, metric, dataset_name, split, setup_id, example_idx, annotation_set, start_time
+            save_dir, metric, dataset_id, split, setup_id, example_idx, annotation_set, start_time
         )
 
         db.loc[i, "status"] = "finished"

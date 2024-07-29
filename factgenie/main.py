@@ -14,7 +14,6 @@ from flask import Flask, render_template, jsonify, request, Response, make_respo
 from collections import defaultdict
 import urllib.parse
 from slugify import slugify
-from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
 from factgenie.metrics import LLMMetricFactory
@@ -163,12 +162,12 @@ def browse():
 
     utils.generate_annotation_index(app)
 
-    dataset_name = request.args.get("dataset")
+    dataset_id = request.args.get("dataset")
     split = request.args.get("split")
     example_idx = request.args.get("example_idx")
 
-    if dataset_name and split and example_idx:
-        display_example = {"dataset": dataset_name, "split": split, "example_idx": int(example_idx)}
+    if dataset_id and split and example_idx:
+        display_example = {"dataset": dataset_id, "split": split, "example_idx": int(example_idx)}
         logger.info(f"Serving permalink for {display_example}")
     else:
         display_example = None
@@ -336,17 +335,28 @@ def delete_campaign():
     return utils.success()
 
 
+@app.route("/delete_dataset", methods=["POST"])
+@login_required
+def delete_dataset():
+    data = request.get_json()
+    dataset_id = data.get("datasetId")
+
+    utils.delete_dataset(app, dataset_id)
+
+    return utils.success()
+
+
 @app.route("/delete_model_outputs", methods=["POST"])
 @login_required
 def delete_model_outputs():
     data = request.get_json()
 
     # get dataset, split, setup
-    dataset_name = data.get("dataset")
+    dataset_id = data.get("dataset")
     split = data.get("split")
     setup = data.get("setup")
 
-    dataset = app.db["datasets_obj"][dataset_name]
+    dataset = app.db["datasets_obj"][dataset_id]
     dataset.delete_generated_outputs(split, setup)
 
     return utils.success()
@@ -407,46 +417,17 @@ def render_example():
 @app.route("/export_annotations", methods=["GET", "POST"])
 @login_required
 def export_annotations():
-    zip_buffer = BytesIO()
     campaign_id = request.args.get("campaign")
 
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for root, dirs, files in os.walk(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-            for file in files:
-                zip_file.write(
-                    os.path.join(root, file),
-                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id)),
-                )
-
-    # Set response headers for download
-    timestamp = int(time.time())
-    response = make_response(zip_buffer.getvalue())
-    response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
-    return response
+    return utils.export_annotations(app, campaign_id)
 
 
 @app.route("/export_dataset", methods=["GET", "POST"])
 @login_required
 def export_dataset():
-    zip_buffer = BytesIO()
     dataset_id = request.args.get("dataset_id")
 
-    dataset = utils.get_dataset(app=app, dataset_id=dataset_id)
-
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for root, dirs, files in os.walk(dataset.data_path):
-            for file in files:
-                zip_file.write(
-                    os.path.join(root, file),
-                    os.path.relpath(os.path.join(root, file), dataset.data_path),
-                )
-
-    # Set response headers for download
-    response = make_response(zip_buffer.getvalue())
-    response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = f"attachment; filename={dataset_id}.zip"
-    return response
+    return utils.export_dataset(app, dataset_id)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -637,6 +618,7 @@ def manage_model_outputs():
     utils.generate_annotation_index(app)
 
     datasets = utils.get_dataset_overview(app)
+    datasets = {k: v for k, v in datasets.items() if v["enabled"]}
     model_outputs = utils.get_model_outputs_overview(app, datasets)
 
     return render_template(
@@ -699,10 +681,10 @@ def submit_annotations():
 @login_required
 def set_dataset_enabled():
     data = request.get_json()
-    dataset_name = data.get("datasetName")
+    dataset_id = data.get("datasetId")
     enabled = data.get("enabled")
 
-    utils.set_dataset_enabled(app, dataset_name, enabled)
+    utils.set_dataset_enabled(app, dataset_id, enabled)
 
     return utils.success()
 
@@ -711,13 +693,13 @@ def set_dataset_enabled():
 @login_required
 def upload_dataset():
     data = request.get_json()
-    dataset_name = data.get("dataset")
+    dataset_id = data.get("id")
     dataset_description = data.get("description")
     dataset_format = data.get("format")
-    dataset_data = data.get("data")
+    dataset_data = data.get("dataset")
 
     try:
-        utils.upload_dataset(app, dataset_name, dataset_description, dataset_format, dataset_data)
+        utils.upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data)
     except Exception as e:
         return jsonify({"error": f"Error while uploading dataset: {e}"})
 

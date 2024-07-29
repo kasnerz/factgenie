@@ -5,11 +5,11 @@ const modelOutputs = window.model_outputs;
 function createUploadDatasetSplitElem() {
     const newSplit = $(`
         <div class="row mt-1">
-        <div class="col-6">
-        <input type="text" class="form-control" name="split-name" placeholder="Split name">
+        <div class="col-4">
+        <input type="text" class="form-control split-name" name="split-name" placeholder="Split name">
         </div>
-        <div class="col-5">
-        <input class="form-control" type="file" name="split-file" accept=".txt" required>
+        <div class="col-7">
+        <input class="form-control split-file" type="file" name="split-file" required>
         </div>
         <div class="col-1">
         <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
@@ -82,22 +82,11 @@ function uploadDataset() {
     const dataset_id = $("#dataset-id").val();
     const description = $("#dataset-description").val();
     const format = $("#dataset-format").val();
+    const dataset = {};
+    var filesToRead = $("#dataset-files").children().length;
 
-    // for each split in #dataset-files, read split-name and split-file
-    const dataset = {}
-    $("#dataset-files").children().each(function () {
-        const splitName = $(this).find("input[name='split-name']").val();
-        const splitFile = $(this).find("input[name='split-file']")[0].files[0];
-
-        // upload the dataset
-        const reader = new FileReader();
-        reader.readAsText(splitFile);
-        const splitData = reader.result;
-
-        dataset[splitName] = splitData;
-    });
-    // send by post request to /upload_dataset
-    reader.onload = function (e) {
+    // Function to send the POST request
+    function sendRequest() {
         $.post({
             url: `${url_prefix}/upload_dataset`,
             contentType: 'application/json', // Specify JSON content type
@@ -119,6 +108,48 @@ function uploadDataset() {
             }
         });
     }
+    // Read each file
+    $("#dataset-files").children().each(function () {
+        const splitName = $(this).find("input[name='split-name']").val();
+        const splitFile = $(this).find("input[name='split-file']")[0].files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            dataset[splitName] = e.target.result;
+            filesToRead--;
+
+            // If all files are read, send the request
+            if (filesToRead === 0) {
+                sendRequest();
+            }
+        };
+        reader.readAsText(splitFile);
+    });
+}
+
+function deleteDataset(datasetId) {
+    // ask for confirmation
+    if (!confirm(`Are you sure you want to delete the dataset ${datasetId}? All the data will be lost!`)) {
+        return;
+    }
+
+    $.post({
+        url: `${url_prefix}/delete_dataset`,
+        contentType: 'application/json', // Specify JSON content type
+        data: JSON.stringify({
+            datasetId: datasetId,
+        }),
+        success: function (response) {
+            console.log(response);
+
+            if (response.success !== true) {
+                alert(response.error);
+            } else {
+                // reload the page
+                location.reload();
+            }
+        }
+    });
 }
 
 function uploadModelOutputs() {
@@ -177,23 +208,20 @@ function changeSplit() {
 }
 
 
-function updateDatasetFormat() {
-    // change "accept" for the "#dataset-file" input based on the value of "#dataset-format" select: text (.txt), json (.json), csv (.csv), html (.zip)
-    const format = $("#dataset-format").val();
-    let txt = "";
-    let accept = "";
-    if (format === "text") {
-        accept = ".txt";
-    } else if (format === "jsonl") {
-        accept = ".jsonl";
-    } else if (format === "csv") {
-        accept = ".csv";
-    } else if (format === "html") {
-        accept = ".zip";
-    }
-    $("#dataset-file").attr("accept", accept);
-    // $("#dataset-upload-info").text(txt);
-}
+// function updateDatasetFormat() {
+//     const format = $("#dataset-format").val();
+//     let accept = "";
+//     if (format === "text") {
+//         accept = ".txt";
+//     } else if (format === "jsonl") {
+//         accept = ".jsonl";
+//     } else if (format === "csv") {
+//         accept = ".csv";
+//     } else if (format === "html") {
+//         accept = ".zip";
+//     }
+//     $(".split-file").attr("accept", accept);
+// }
 
 
 function setDatasetEnabled(name, enabled) {
@@ -201,7 +229,7 @@ function setDatasetEnabled(name, enabled) {
         url: `${url_prefix}/set_dataset_enabled`,
         contentType: 'application/json', // Specify JSON content type
         data: JSON.stringify({
-            datasetName: name,
+            datasetId: name,
             enabled: enabled
         }),
         success: function (response) {

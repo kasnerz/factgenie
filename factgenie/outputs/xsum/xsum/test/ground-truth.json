@@ -1,0 +1,309 @@
+{
+    "dataset": "xsum",
+    "split": "test",
+    "setup": {
+        "id": "ground-truth"
+    },
+    "generated": [
+        {
+            "out": "On the first day in his new job, Choe Peng Sum was given a fairly simple brief: \"Just go make us a lot of money.\""
+        },
+        {
+            "out": "The Women's Euro 2017 qualifier between Northern Ireland and the Czech Republic in Lurgan on Friday was postponed after a serious accident on the M1."
+        },
+        {
+            "out": "Theresa May is coming under pressure to say whether she knew about a reported misfire of the UK's nuclear weapons system before a crucial Commons vote."
+        },
+        {
+            "out": "US tennis star Venus Williams has been involved in a car accident that led to the death of a 78-year-old man."
+        },
+        {
+            "out": "Ghana has been told by an international tribunal not to begin any new offshore drilling for oil in disputed waters with the Ivory Coast."
+        },
+        {
+            "out": "A car park in east Belfast has been closed to the public by young men building bonfires."
+        },
+        {
+            "out": "The BBC has denied claims award-winning series Planet Earth II faked a nail-biting scene showing a baby iguana being chased by racer snakes."
+        },
+        {
+            "out": "Two Hillsborough campaigners have been appointed CBE in the New Year Honours."
+        },
+        {
+            "out": "A gas extraction method which triggered two earth tremors near Blackpool last year should not cause earthquakes or contaminate water but rules governing it will need tightening, experts say."
+        },
+        {
+            "out": "Young UK rapper Nadia Rose has taken fifth place on the BBC's Sound of 2017 list, which showcases emerging artists for the coming 12 months."
+        },
+        {
+            "out": "Sir Tom Jones is to return as one of the judges on talent show The Voice UK when it moves to ITV next year."
+        },
+        {
+            "out": "Tottenham are close to a deal to play home games at Wembley in the 2017-18 season, says Football Association chairman Greg Dyke."
+        },
+        {
+            "out": "Great Britain failed to qualify for the men's Under-21 World Handball Championship after losing all three qualifying games at Kent's Medway Park."
+        },
+        {
+            "out": "Jeremy Corbyn has promised Labour will work with business leaders if they \"live up to their side of the deal\"."
+        },
+        {
+            "out": "China has deployed surface-to-air missiles on a disputed island in the South China Sea, Taiwan says."
+        },
+        {
+            "out": "Head teachers have warned that intimidation is still continuing after the investigations into the so-called Trojan Horse scandal."
+        },
+        {
+            "out": "The Five Sisters in Livingston are an imposing reminder of West Lothian's industrial past - huge mounds of discards from the old shale mines that once dominated the economy - and community life - here."
+        },
+        {
+            "out": "Italian Serie A side Atalanta have re-signed midfielder Marten De Roon from Middlesbrough for an undisclosed fee, 14 months after selling him to Boro."
+        },
+        {
+            "out": "Goal hero Rabin Omar made headlines when his club from the fourth tier of Scottish football dumped a Premiership side out of the Scottish Cup."
+        },
+        {
+            "out": "Exeter City player-coach Danny Butterfield says his playing career is coming to an end."
+        },
+        {
+            "out": "The Lawn Tennis Association (LTA) is leading a \u00a3250m investment to improve grassroots facilities."
+        },
+        {
+            "out": "A US freelance photographer who has been held in Syria for almost four years has been released, the State Department said."
+        },
+        {
+            "out": "The collapsed retailer BHS is to re-launch as an online shop, selling some of the most popular items previously available on its website."
+        },
+        {
+            "out": "Plans to cut free parking on roads around the Royal Berkshire Hospital have been opposed by a petition of more than 2,300 signatures."
+        },
+        {
+            "out": "A woman who set a \"honey trap\" for a professional gambler who was kicked to death for his winnings has been jailed for 16 years."
+        },
+        {
+            "out": "Election night has turned out to be a night of contrasting fortunes for the Conservative and Unionist Party."
+        },
+        {
+            "out": "Several people have been injured in a three-car collision on the A9 near Dingwall in the Highlands."
+        },
+        {
+            "out": "The Public Prosecution Service has said it will not oppose an appeal by one of the so-called Colombia Three against a weapons conviction."
+        },
+        {
+            "out": "A security alert in the centre of Larne, County Antrim, has ended and been declared a hoax."
+        },
+        {
+            "out": "Australia will no longer appoint knights and dames under its honours system, PM Malcolm Turnbull has said."
+        },
+        {
+            "out": "Holders Sevilla came from behind to earn a draw against Shakhtar Donetsk in the first leg of their Europa League semi-final in Lviv."
+        },
+        {
+            "out": "The crisis in the steel industry could signal potential problems across other core Welsh industries, Plaid Cymru has warned."
+        },
+        {
+            "out": "A pro-refugee campaigner racially abused counter demonstrators at a rally to welcome Syrian refugees to Scotland, a court has heard."
+        },
+        {
+            "out": "A new picture of the Queen to appear on coins has been unveiled."
+        },
+        {
+            "out": "Game rangers are searching for a lion which escaped from a wildlife park in South Africa's Western Cape province."
+        },
+        {
+            "out": "The little children trailing round behind us rush forward in their excitement, herding me into their makeshift schoolroom."
+        },
+        {
+            "out": "The Duchess of Cornwall has used some of the currency accepted by businesses in south London - known as Brixton Pounds - on a visit to a local market with the Prince of Wales."
+        },
+        {
+            "out": "Nearly 20 million people in China could be exposed to water contaminated with arsenic, a study suggests."
+        },
+        {
+            "out": "England stretched their perfect record under Eddie Jones to 10 matches as they demolished a weary South Africa at a rain-soaked Twickenham."
+        },
+        {
+            "out": "Reigning champions Saracens will host Leicester, with Exeter at home to Harlequins in an all-Premiership semi-final line-up in the Anglo-Welsh Cup."
+        },
+        {
+            "out": "A rare spat among Singapore's first family has left citizens agog and fuelled debate on how the city-state's founding father Lee Kuan Yew should be remembered."
+        },
+        {
+            "out": "The victim of a pensioner jailed for 13 years for horrific sex attacks has told of the abuse that ruined her life."
+        },
+        {
+            "out": "Star Wars and Harry Potter star Warwick Davis, who played an ewok in Return of the Jedi, has taken to Twitter to help recover his stolen caravan."
+        },
+        {
+            "out": "Indian police have dropped sedition charges against 15 Muslim men arrested for allegedly shouting \"anti-India and pro-Pakistan\" slogans during the Champions Trophy cricket final."
+        },
+        {
+            "out": "The French government is to take steps to break up a far-right group allegedly linked to the death of a left-wing activist."
+        },
+        {
+            "out": "Gloucester reached their second European Challenge Cup final in three seasons as they held on to win an absorbing semi-final at La Rochelle."
+        },
+        {
+            "out": "Three youths have been arrested over the stabbing of four teenagers in Clydebank."
+        },
+        {
+            "out": "The body of a 30-year-old man has been found at a flat in Falkirk."
+        },
+        {
+            "out": "The remains of dozens of people who were buried more than 200 years ago are being slowly exposed on an island in Kent."
+        },
+        {
+            "out": "League Two club Cheltenham Town have signed Hibernian striker Brian Graham on a free transfer."
+        },
+        {
+            "out": "When introducing Microsoft\u2019s newest Xbox console in 2016, Phil Spencer didn\u2019t mince his words."
+        },
+        {
+            "out": "Adam Voges and Dawid Malan both hit tons as Middlesex dominated Hampshire on day one at Merchant Taylors' School."
+        },
+        {
+            "out": "A four-month consultation which could help decide the location of the UK's first spaceport ends on Monday with one site in Gwynedd being considered."
+        },
+        {
+            "out": "Police have appealed for motorists to check their dashcams as they continue their search for the mother of a newborn girl found in a bus shelter."
+        },
+        {
+            "out": "World War One (WW1) soldiers spent less than half their time on the front line, according to researchers."
+        },
+        {
+            "out": "It was ten years ago that Ruth and her husband Nigel packed up their life in London and bought the Blue Palm cafe in Marbella."
+        },
+        {
+            "out": "Russian's intervention in Syria is \"hugely significant\" says the UK's former senior military adviser in the Middle East Lt Gen Sir Simon Mayall."
+        },
+        {
+            "out": "Mercedes' Lewis Hamilton says he expects a close season-long battle with Ferrari in which the advantage fluctuates between the two teams."
+        },
+        {
+            "out": "The family of a soldier found dead at Deepcut Barracks has urged a coroner to let her body be exhumed so a \"full inquiry\" can be held into her death."
+        },
+        {
+            "out": "A former special constable who groomed and engaged in sexual activity with a child has been jailed for five years."
+        },
+        {
+            "out": "President Donald Trump has questioned the neutrality of Robert Mueller, who is investigating Russian interference in last year's US election."
+        },
+        {
+            "out": "A council report has shown the total estimated costs of a flood protection scheme for Hawick could top \u00a341m."
+        },
+        {
+            "out": "Two of Britain's biggest YouTube stars tell Newsbeat they're worried about new guidance for adverts in their videos."
+        },
+        {
+            "out": "A scuba diver facing extradition to Malta has spoken of his elation after charges against him over the deaths of his girlfriend and friend were dropped."
+        },
+        {
+            "out": "An unmanned supply rocket bound for the International Space Station has exploded shortly after its launch from the US state of Virginia."
+        },
+        {
+            "out": "Sri Lanka is to investigate the role of the media in the death of a Buddhist monk on Saturday, the day after he set fire to himself."
+        },
+        {
+            "out": "The two candidates competing to be the next managing director of the International Monetary Fund (IMF) could not be more different in their appearance."
+        },
+        {
+            "out": "A West Yorkshire teenager is believed to have become Britain's youngest ever suicide bomber after reportedly blowing himself up in Iraq."
+        },
+        {
+            "out": "Artists hired by the makers of the US show Homeland to write graffiti on one of its sets in Berlin say they wrote messages criticising the show's alleged stereotypes of Arabs and Muslims."
+        },
+        {
+            "out": "A businessman who plied teenage girls with vodka before sexually abusing them has been sentenced to 13 years."
+        },
+        {
+            "out": "The funeral of Coronation Street creator and writer Tony Warren has taken place at Manchester Cathedral."
+        },
+        {
+            "out": "Cardiff City manager Neil Warnock has outlined his cut-price transfer plan, saying he does not think it would take big money to launch a promotion bid in 2017-18."
+        },
+        {
+            "out": "Plans have been announced for the \"oldest carnival in Europe\" to celebrate its 50th anniversary."
+        },
+        {
+            "out": "With just 20 days to go until Americans go to the polls, millennials suggest they'd rather die than vote for the two main parties, while Canadians try to keep their neighbours' spirits up."
+        },
+        {
+            "out": "It's a sobering thought for all us carriers of the Y chromosome, but prostate cancer kills almost as many men every year as breast cancer does women."
+        },
+        {
+            "out": "TalkTalk customers are being targeted by an industrial-scale fraud network in India, according to whistleblowers who say they were among hundreds of staff hired to scam customers of the British telecoms giant."
+        },
+        {
+            "out": "Modern Family star Sofia Vergara has retained her title as the highest paid actress on US television, according to the latest Forbes magazine rich list."
+        },
+        {
+            "out": "Tata Steel has announced its preferred bidder for the \u00a3100m sale of its Speciality Steels division based in South Yorkshire."
+        },
+        {
+            "out": "Gloucester fly-half James Hook will rejoin Ospreys at the end of the season, six years after he left the Welsh region."
+        },
+        {
+            "out": "The day 12-year-old Faizan Fayaz Dar died, he woke up in the morning in his hilltop home in Budgam in Indian-administered Kashmir, had a cup of salted tea, recited the Koran and pottered around in the kitchen where his mother prepared breakfast for the family."
+        },
+        {
+            "out": "Derry ran out of steam in extra time in the qualifier against Mayo as last year's beaten All-Ireland finalists survived a nervy Castlebar test."
+        },
+        {
+            "out": "Last ditch talks to reach a deal on the junior doctors contract in England are being extended into next week."
+        },
+        {
+            "out": "An Air Canada flight with 140 people on board came within 30m (98ft) of other aircraft at San Francisco's airport as it prepared to land, a report says."
+        },
+        {
+            "out": "Southend United will give striker Nile Ranger a chance to relaunch his career when he is released from prison."
+        },
+        {
+            "out": "Five-time world champion Ronnie O'Sullivan says he no longer has any interest in being snooker's \"top man\" but has not retired."
+        },
+        {
+            "out": "Public transport in London is the world's most expensive, a report says."
+        },
+        {
+            "out": "A father of one from Ellesmere Port, James Hennessy travelled by coach with friends, including fellow victim James Philip Delaney."
+        },
+        {
+            "out": "Whitehaven have appointed former St Helens prop Carl Forster as player-coach at the age of 24, the youngest in the professional game."
+        },
+        {
+            "out": "What is believed to be the first email scam using Gaelic has been targeted at residents of the Western Isles."
+        },
+        {
+            "out": "League One leaders Scunthorpe United will travel to Oxford United in the last 16 of the EFL Trophy."
+        },
+        {
+            "out": "A Northern Ireland supporter has died at the Stade de Lyon as he watched the team beat Ukraine at the Euro 2016 tournament in France."
+        },
+        {
+            "out": "New voices are coming to Radio 1 as the station continues its search for the next generation of on-air talent."
+        },
+        {
+            "out": "A ban on \"legal highs\" in the Republic of Ireland has been extraordinarily effective in wiping out the industry, police have said."
+        },
+        {
+            "out": "Injury-hit Wolves have suffered a new blow with the loss of Michal Zyro for potentially more than a year with multiple knee ligament damage."
+        },
+        {
+            "out": "A Hampshire pier and ferry service facing an uncertain future is a \"national treasure\" which should be saved, television historian Dan Snow has said."
+        },
+        {
+            "out": "England play the first of three one-day internationals against Bangladesh on Friday, following a build-up dominated by security concerns."
+        },
+        {
+            "out": "We were given a glimpse of the Apple Watch last year when Tim Cook made it his \"one more thing\" at an iPhone launch event."
+        },
+        {
+            "out": "At the May Day rally, the politician accused the government of \"helping the richest 1%, to reassure credit ratings agencies and international finance\"."
+        },
+        {
+            "out": "Post offices and shops are expected to be very busy on Tuesday, as people going back to work after the holidays try to return unwanted presents."
+        },
+        {
+            "out": "The Financial Reporting Council (FRC), which regulates how firms govern themselves, is too \"timid\" and needs more powers, says former City minister Lord Myners."
+        }
+    ]
+}

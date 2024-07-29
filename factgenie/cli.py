@@ -17,19 +17,19 @@ def list_datasets():
     with open(DATASET_CONFIG_PATH) as f:
         config = yaml.safe_load(f)
 
-    for dataset_name, _ in config["datasets"].items():
-        print(dataset_name)
+    for dataset_id, _ in config["datasets"].items():
+        print(dataset_id)
 
 
 @click.command()
 @click.option("--campaign_name", required=True, type=str)
-@click.option("--dataset_name", required=True, type=str)
+@click.option("--dataset_id", required=True, type=str)
 @click.option("--split", required=True, type=str)
 @click.option("--llm_output_name", required=True, type=str)
 @click.option(
     "--llm_metric_config", required=True, type=str, help="Path to the metric config file or just the metric name."
 )
-def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_name: str, llm_metric_config: str):
+def run_llm_eval(campaign_name: str, dataset_id: str, split: str, llm_output_name: str, llm_metric_config: str):
     """Runs the LLM evaluation from CLI with no web server."""
     from pathlib import Path
     import yaml
@@ -39,7 +39,7 @@ def run_llm_eval(campaign_name: str, dataset_name: str, split: str, llm_output_n
     from factgenie.metrics import LLMMetricFactory
 
     campaign_id = slugify(campaign_name)
-    campaign_data = [{"dataset": dataset_name, "split": split, "setup_id": llm_output_name}]
+    campaign_data = [{"dataset": dataset_id, "split": split, "setup_id": llm_output_name}]
 
     DATASETS = utils.instantiate_datasets()  # instantiate all datasets
     configs = utils.load_configs("llm_eval")  # Loads all metrics configs factgenie/llm-evals/*.yaml
