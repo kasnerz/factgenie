@@ -214,6 +214,11 @@ def get_example_data(app, dataset_id, split, example_idx):
 
     example = dataset.get_example(split=split, example_idx=example_idx)
     html = dataset.render(example=example)
+
+    # temporary solution for external files
+    # prefix all the "/files" calls with "app.config["host_prefix"]"
+    html = html.replace('src="/files', f'src="{app.config["host_prefix"]}/files')
+
     generated_outputs = dataset.get_generated_outputs_for_idx(split=split, output_idx=example_idx)
 
     for i, output in enumerate(generated_outputs):
@@ -435,6 +440,7 @@ def get_dataset_overview(app):
         is_enabled = dataset_config.get("enabled", True)
         description = dataset_config.get("description", "")
         splits = dataset_config.get("splits", [])
+        dataset_type = dataset_config.get("type", "default")
 
         if is_enabled:
             dataset = app.db["datasets_obj"].get(dataset_id)
@@ -449,7 +455,7 @@ def get_dataset_overview(app):
             "splits": splits,
             "description": description,
             "example_count": example_count,
-            "type": dataset.get_type(),
+            "type": dataset_type,
         }
 
     return overview
@@ -549,8 +555,10 @@ def upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data
 
     elif dataset_format == "html":
         # dataset_data is the file object
-        with zipfile.ZipFile(dataset_data, "r") as zip_ref:
-            zip_ref.extractall(f"{data_dir}")
+        for split, data in dataset_data.items():
+            binary_file = BytesIO(bytes(data))
+            with zipfile.ZipFile(binary_file, "r") as zip_ref:
+                zip_ref.extractall(f"{data_dir}/{split}")
 
     # add an entry in the dataset config
     config = load_dataset_config()

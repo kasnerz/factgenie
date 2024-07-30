@@ -265,6 +265,7 @@ function showRawData(data) {
         // remove the first and last double quotes
         rawDataStr = rawDataStr.slice(1, -1);
     }
+    rawDataStr = rawDataStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     $("#rawarea").html(`<pre>${rawDataStr}</pre>`);
 }
 

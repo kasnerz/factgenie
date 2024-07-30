@@ -4,18 +4,18 @@ from setuptools import find_packages, setup
 
 project_root = Path(__file__).parent
 install_requires = [
-    "Flask>=2.2.2",
-    "datasets>=2.9.0",
-    "requests",
-    "lxml",
-    "tinyhtml",
     "coloredlogs",
-    "json2table",
-    "openai",
-    "python-slugify",
+    "datasets>=2.9.0",
     "flask-sse",
+    "Flask>=2.2.2",
     "gunicorn",
+    "json2table",
+    "lxml",
+    "natsort" "openai",
+    "python-slugify",
     "pyyaml",
+    "requests",
+    "tinyhtml",
 ]
 
 setup(

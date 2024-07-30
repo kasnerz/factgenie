@@ -10,7 +10,17 @@ import traceback
 import shutil
 import datetime
 import zipfile
-from flask import Flask, render_template, jsonify, request, Response, make_response, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    jsonify,
+    request,
+    Response,
+    make_response,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from collections import defaultdict
 import urllib.parse
 from slugify import slugify
@@ -404,12 +414,12 @@ def render_example():
     split = request.args.get("split")
     example_idx = int(request.args.get("example_idx"))
 
-    try:
-        example_data = utils.get_example_data(app, dataset_id, split, example_idx)
-    except Exception as e:
-        traceback.print_exc()
-        logger.error(f"Error while getting example data: {e}")
-        example_data = {}
+    # try:
+    example_data = utils.get_example_data(app, dataset_id, split, example_idx)
+    # except Exception as e:
+    #     traceback.print_exc()
+    #     logger.error(f"Error while getting example data: {e}")
+    # example_data = {}
 
     return jsonify(example_data)
 
@@ -428,6 +438,12 @@ def export_dataset():
     dataset_id = request.args.get("dataset_id")
 
     return utils.export_dataset(app, dataset_id)
+
+
+@app.route("/files/<path:filename>", methods=["GET"])
+def download_file(filename):
+    # serving external files for datasets
+    return send_from_directory("data", filename)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -697,6 +713,7 @@ def upload_dataset():
     dataset_description = data.get("description")
     dataset_format = data.get("format")
     dataset_data = data.get("dataset")
+    # Process each file in the dataset
 
     try:
         utils.upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data)
