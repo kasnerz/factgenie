@@ -133,6 +133,7 @@ function uploadDataset() {
             }
         });
     }
+
     // Read each file
     $("#dataset-files").children().each(function () {
         const splitName = $(this).find("input[name='split-name']").val();
@@ -140,7 +141,12 @@ function uploadDataset() {
         const reader = new FileReader();
 
         reader.onload = function (e) {
-            dataset[splitName] = e.target.result;
+            // Check if the file is a ZIP file
+            if (splitFile.type === "application/zip") {
+                dataset[splitName] = Array.from(new Uint8Array(e.target.result));
+            } else {
+                dataset[splitName] = e.target.result;
+            }
             filesToRead--;
 
             // If all files are read, send the request
@@ -148,7 +154,13 @@ function uploadDataset() {
                 sendRequest();
             }
         };
-        reader.readAsText(splitFile);
+
+        // Read as ArrayBuffer for binary files (e.g., ZIP)
+        if (splitFile.type === "application/zip") {
+            reader.readAsArrayBuffer(splitFile);
+        } else {
+            reader.readAsText(splitFile);
+        }
     });
 }
 

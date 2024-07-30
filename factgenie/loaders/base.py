@@ -5,6 +5,8 @@ logger = logging.getLogger(__name__)
 
 from factgenie.loaders.dataset import Dataset
 from pathlib import Path
+from natsort import natsorted
+import re
 import json
 import json2table
 
@@ -110,11 +112,20 @@ class HTMLDataset(Dataset):
         # load the HTML files in the directory, sorted by filename numerically
         examples = []
         split_dir = Path(f"{data_path}/{split}")
-        filenames = sorted(split_dir.iterdir(), key=lambda x: int(x.stem))
+        filenames = natsorted(split_dir.iterdir())
 
         for filename in filenames:
-            with open(filename) as f:
-                examples.append(f.read())
+            if filename.suffix == ".html":
+                with open(filename) as f:
+                    content = f.read()
+
+                    # we need to redirect all the calling for the assets to the correct path
+                    # the assets are served by the "/files" endpoint
+                    path = f"/files/{self.id}/{split}"
+
+                    # replace the paths in the HTML content
+                    content = re.sub(r'src="', f'src="{path}/', content)
+                    examples.append(content)
 
         return examples
 
