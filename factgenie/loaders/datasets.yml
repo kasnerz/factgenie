@@ -55,10 +55,11 @@ datasets:
     - validation
     - test
     type: table
-  xsum-100:
-    class: base.JSONLDataset
-    description: ''
+  xsum:
+    class: base.PlainTextDataset
+    description: 'Sample of 100 examples from the <a href="https://github.com/EdinburghNLP/XSum">XSum</a>
+      dataset.'
     enabled: true
     splits:
-    - test-100
-    type: json
+    - test
+    type: default

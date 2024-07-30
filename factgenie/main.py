@@ -615,7 +615,7 @@ def manage_datasets():
 @app.route("/model_outputs", methods=["GET", "POST"])
 @login_required
 def manage_model_outputs():
-    utils.generate_annotation_index(app)
+    # utils.generate_annotation_index(app)
 
     datasets = utils.get_dataset_overview(app)
     datasets = {k: v for k, v in datasets.items() if v["enabled"]}

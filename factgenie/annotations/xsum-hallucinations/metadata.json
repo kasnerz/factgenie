@@ -1,0 +1,17 @@
+{
+    "id": "xsum-hallucinations",
+    "source": "hidden",
+    "description": "Annotations from https://github.com/google-research-datasets/xsum_hallucination_annotations",
+    "config": {
+        "annotation_span_categories": [
+            {
+                "name": "Extrinsic",
+                "color": "#ffbcbc"
+            },
+            {
+                "name": "Intrinsic",
+                "color": "#e9d2ff"
+            }
+        ]
+    }
+}

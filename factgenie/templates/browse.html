@@ -27,7 +27,7 @@
           <span style="margin-left: 5px; margin-right: 10px; font-weight: bold;">factgenie</span>
         </a>
         <ul class="navblock pagination">
-          <li class="nav-item">
+          <li class="nav-item" style="margin-right: 5px;">
             <select id="dataset-select" class="form-select form-select-sm"
               style="display: inline-block; margin-right: 10px; max-width: 250px;">
               {% for name, dataset in datasets.items() %}
@@ -203,7 +203,6 @@
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
-  window.default_dataset = "{{ default_dataset }}";
   window.display_example = {{ display_example | tojson | safe }};
   window.datasets = {{ datasets | tojson | safe }};
   window.mode = "browse";

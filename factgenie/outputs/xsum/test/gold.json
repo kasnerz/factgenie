@@ -1,8 +1,8 @@
 {
-    "dataset": "xsum-100",
-    "split": "test-100",
+    "dataset": "xsum",
+    "split": "test",
     "setup": {
-        "id": "ground-truth"
+        "id": "Gold"
     },
     "generated": [
         {

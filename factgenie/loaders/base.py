@@ -21,9 +21,9 @@ class PlainTextDataset(Dataset):
         return examples
 
     def render(self, example):
-        html = "<div class='font-mono'>"
+        html = "<div>"
         html += "<p>"
-        html += example
+        html += example.replace("\\n", "<br>")
         html += "</p>"
         html += "</div>"
 

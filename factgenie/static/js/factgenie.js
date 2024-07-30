@@ -1072,7 +1072,9 @@ $(document).ready(function () {
         }
         else {
             // select the first dataset from the selectbox
-            $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
+            $("#dataset-select").val(
+                $("#dataset-select option:first").val()
+            ).trigger("change");
             $("#page-input").val(example_idx);
         }
     }

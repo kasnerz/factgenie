@@ -132,6 +132,8 @@ def generate_campaign_index(app):
             campaign = HumanCampaign(campaign_id=campaign_id)
         elif campaign_source == "llm_eval":
             campaign = ModelCampaign(campaign_id=campaign_id)
+        elif campaign_source == "hidden":
+            continue
         else:
             logger.warning(f"Unknown campaign source: {campaign_source}")
             continue
@@ -165,10 +167,10 @@ def generate_annotation_index(app):
                         annotation["metadata"] = metadata
 
                         key = (
-                            annotation["dataset"],
-                            annotation["split"],
+                            slugify(annotation["dataset"]),
+                            slugify(annotation["split"]),
                             annotation["example_idx"],
-                            annotation["setup"]["id"],
+                            slugify(annotation["setup"]["id"]),
                         )
                         annotations[key].append(annotation)
         except:
