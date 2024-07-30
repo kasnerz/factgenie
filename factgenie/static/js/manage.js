@@ -30,6 +30,20 @@ function addDatasetSplit() {
 }
 
 $("#dataset-select-overview").on("change", showModelOutputs);
+$("#dataset-select").on("change", updateSplits);
+
+
+function updateSplits() {
+    const dataset = $('#dataset-select').val();
+
+    // set available splits in #split-select
+    $('#split-select').empty();
+    for (const split of datasets[dataset].splits) {
+        $('#split-select').append(`<option value="${split}">${split}</option>`);
+    }
+}
+
+
 
 function showModelOutputs() {
     // add a row to #model-out-table for each model output
@@ -194,7 +208,7 @@ function uploadModelOutputs() {
                     alert(response.error);
                 } else {
                     // reload
-                    // location.reload();
+                    location.reload();
                     // set the selectbox to the corresponding dataset and split
                     $("#dataset-select").val(dataset).trigger("change");
                     $("#split-select").val(split).trigger("change");
@@ -203,39 +217,6 @@ function uploadModelOutputs() {
         });
     }
 }
-
-
-
-//   // set available splits in #split-select
-//   $('#split-select').empty();
-//   for (const split of datasets[dataset].splits) {
-//       $('#split-select').append(`<option value="${split}">${split}</option>`);
-//   }
-//   const split = $('#split-select').val();
-
-
-// function changeSplit() {
-//     const dataset = $('#dataset-select').val();
-//     const split = $('#split-select').val();
-
-//     showModelOutputs(dataset, split);
-// }
-
-
-// function updateDatasetFormat() {
-//     const format = $("#dataset-format").val();
-//     let accept = "";
-//     if (format === "text") {
-//         accept = ".txt";
-//     } else if (format === "jsonl") {
-//         accept = ".jsonl";
-//     } else if (format === "csv") {
-//         accept = ".csv";
-//     } else if (format === "html") {
-//         accept = ".zip";
-//     }
-//     $(".split-file").attr("accept", accept);
-// }
 
 
 function setDatasetEnabled(name, enabled) {
@@ -272,6 +253,7 @@ function enableTooltips() {
 $(document).ready(function () {
     if (window.mode == "outputs") {
         $("#dataset-select-overview").val(Object.keys(datasets)[0]).trigger("change");
+        updateSplits();
     }
     // $("#page-input").val(example_idx);
     enableTooltips();

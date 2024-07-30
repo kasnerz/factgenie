@@ -357,7 +357,7 @@ def delete_model_outputs():
     setup = data.get("setup")
 
     dataset = app.db["datasets_obj"][dataset_id]
-    utils.delete_generated_outputs(dataset, split, setup)
+    utils.delete_model_outputs(dataset, split, setup)
 
     return utils.success()
 
