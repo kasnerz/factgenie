@@ -124,64 +124,6 @@ class Dataset(ABC):
         """
         return examples
 
-    def add_generated_outputs(self, split, setup_id, model_outputs):
-        """
-        Add the generated outputs for the given split and setup.
-
-        Parameters
-        ----------
-        split : str
-            Split to add the generated outputs to.
-        setup_id : str
-            Setup ID for the generated outputs.
-        model_outputs : str
-            Model outputs to add.
-        """
-        path = Path(f"{self.output_path}/{self.id}/{split}")
-        path.mkdir(parents=True, exist_ok=True)
-
-        model_outputs = model_outputs.strip()
-        generated = [{"out": out} for out in model_outputs.split("\n")]
-
-        setup_id = slugify(setup_id)
-
-        if setup_id in self.outputs[split]:
-            raise ValueError(f"Output for {setup_id} already exists in {split}")
-
-        if len(generated) != len(self.examples[split]):
-            raise ValueError(
-                f"Output count mismatch for {setup_id} in {split}: {len(generated)} vs {len(self.examples[split])}"
-            )
-
-        j = {
-            "dataset": self.id,
-            "split": split,
-            "setup": {"id": setup_id},
-            "generated": generated,
-        }
-        self.outputs[split][setup_id] = j
-
-        with open(f"{path}/{setup_id}.json", "w") as f:
-            json.dump(j, f, indent=4)
-
-    def delete_generated_outputs(self, split, setup):
-        """
-        Delete the generated outputs for the given split and setup.
-
-        Parameters
-        ----------
-        split : str
-            Split to delete the generated outputs from.
-        setup : str
-            Setup to delete the generated outputs for.
-        """
-        path = Path(f"{self.output_path}/{self.id}/{split}/{setup}.json")
-
-        if path.exists():
-            path.unlink()
-
-        self.outputs[split].pop(setup, None)
-
     def get_generated_outputs_for_split(self, split):
         """
         Get the list of generated outputs for the given split.

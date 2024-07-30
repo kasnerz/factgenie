@@ -29,18 +29,29 @@ function addDatasetSplit() {
     datasetSplits.append(newSplit);
 }
 
-function showModelOutputs(dataset, split) {
+$("#dataset-select-overview").on("change", showModelOutputs);
+
+function showModelOutputs() {
     // add a row to #model-out-table for each model output
-    const outputs = modelOutputs[dataset][split];
+
+    const dataset = $('#dataset-select-overview').val();
+    const outputs = modelOutputs[dataset];
     const table = $('#model-out-table tbody');
     table.empty();
 
     for (const setup in outputs) {
         const examples = outputs[setup].example_count;
+        const split = outputs[setup].split;
         const row = `<tr>
-            <td><a class="blue-link" href="${url_prefix}/browse?dataset=${dataset}&split=${split}&example_idx=0">${setup}</a></td>
+            <td>${dataset}</td>
+            <td>${split}</td>
+            <td>${setup}</td>
             <td>${examples}</td>
             <td>
+                <a href="${url_prefix}/browse?dataset=${dataset}&split=${split}&example_idx=0" class="btn btn-outline-secondary"
+                    data-bs-toggle="tooltip" title="Show the outputs">
+                    <i class="fa fa-eye"></i>
+                </a>
                 <a onclick="deleteOutput('${dataset}', '${split}', '${setup}')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the output">
                 <i class="fa fa-trash"></i>
@@ -157,6 +168,11 @@ function uploadModelOutputs() {
     const split = $("#split-select").val();
     const setup_id = $("#setup-id").val();
 
+    if (setup_id === "") {
+        alert("Please enter the setup id");
+        return;
+    }
+
     // read the file from #model-output-upload form
     const file = $("#model-output-upload")[0].files[0];
     const reader = new FileReader();
@@ -174,38 +190,36 @@ function uploadModelOutputs() {
                 setup_id: setup_id,
             }),
             success: function (response) {
-                console.log(response);
-
                 if (response.success !== true) {
                     alert(response.error);
                 } else {
                     // reload
-                    location.reload();
+                    // location.reload();
+                    // set the selectbox to the corresponding dataset and split
+                    $("#dataset-select").val(dataset).trigger("change");
+                    $("#split-select").val(split).trigger("change");
                 }
             }
         });
     }
 }
 
-function changeDataset() {
-    const dataset = $('#dataset-select').val();
 
-    // set available splits in #split-select
-    $('#split-select').empty();
-    for (const split of datasets[dataset].splits) {
-        $('#split-select').append(`<option value="${split}">${split}</option>`);
-    }
-    const split = $('#split-select').val();
 
-    showModelOutputs(dataset, split);
-}
+//   // set available splits in #split-select
+//   $('#split-select').empty();
+//   for (const split of datasets[dataset].splits) {
+//       $('#split-select').append(`<option value="${split}">${split}</option>`);
+//   }
+//   const split = $('#split-select').val();
 
-function changeSplit() {
-    const dataset = $('#dataset-select').val();
-    const split = $('#split-select').val();
 
-    showModelOutputs(dataset, split);
-}
+// function changeSplit() {
+//     const dataset = $('#dataset-select').val();
+//     const split = $('#split-select').val();
+
+//     showModelOutputs(dataset, split);
+// }
 
 
 // function updateDatasetFormat() {
@@ -245,8 +259,6 @@ function setDatasetEnabled(name, enabled) {
     });
 }
 
-$("#dataset-select").on("change", changeDataset);
-$("#split-select").on("change", changeSplit);
 
 function enableTooltips() {
     // enable tooltips
@@ -259,7 +271,7 @@ function enableTooltips() {
 
 $(document).ready(function () {
     if (window.mode == "outputs") {
-        $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
+        $("#dataset-select-overview").val(Object.keys(datasets)[0]).trigger("change");
     }
     // $("#page-input").val(example_idx);
     enableTooltips();

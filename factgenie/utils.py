@@ -238,15 +238,16 @@ def get_model_outputs_overview(app, datasets):
         model_outputs[dataset_id] = {}
 
         for split in splits:
-            model_outputs[dataset_id][split] = {}
+            # model_outputs[dataset_id][split] = {}
             outputs = dataset.get_generated_outputs_for_split(split)
 
             for setup_id, output in outputs.items():
                 output_info = {}
+                output_info["split"] = split
                 output_info["setup_id"] = setup_id
                 output_info["example_count"] = len(outputs[setup_id]["generated"])
 
-                model_outputs[dataset_id][split][setup_id] = output_info
+                model_outputs[dataset_id][setup_id] = output_info
 
     return model_outputs
 
@@ -559,6 +560,44 @@ def upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data
         "enabled": False,
     }
     save_dataset_config(config)
+
+
+def upload_model_outputs(dataset, split, setup_id, model_outputs):
+    path = Path(f"{dataset.output_path}/{split}")
+    path.mkdir(parents=True, exist_ok=True)
+
+    model_outputs = model_outputs.strip()
+    generated = [{"out": out} for out in model_outputs.split("\n")]
+
+    setup_id = slugify(setup_id)
+
+    if setup_id in dataset.outputs[split]:
+        raise ValueError(f"Output for {setup_id} already exists in {split}")
+
+    if len(generated) != len(dataset.examples[split]):
+        raise ValueError(
+            f"Output count mismatch for {setup_id} in {split}: {len(generated)} vs {len(dataset.examples[split])}"
+        )
+
+    j = {
+        "dataset": dataset.id,
+        "split": split,
+        "setup": {"id": setup_id},
+        "generated": generated,
+    }
+    dataset.outputs[split][setup_id] = j
+
+    with open(f"{path}/{setup_id}.json", "w") as f:
+        json.dump(j, f, indent=4)
+
+
+def delete_model_outputs(dataset, split, setup_id):
+    path = Path(f"{dataset.output_path}/{split}/{setup_id}.json")
+
+    if path.exists():
+        path.unlink()
+
+    dataset.outputs[split].pop(setup_id, None)
 
 
 def llm_eval_new(campaign_id, config, campaign_data, datasets):

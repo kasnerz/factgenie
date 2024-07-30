@@ -357,7 +357,7 @@ def delete_model_outputs():
     setup = data.get("setup")
 
     dataset = app.db["datasets_obj"][dataset_id]
-    dataset.delete_generated_outputs(split, setup)
+    utils.delete_generated_outputs(dataset, split, setup)
 
     return utils.success()
 
@@ -719,7 +719,7 @@ def upload_model_outputs():
     dataset = app.db["datasets_obj"][dataset_id]
 
     try:
-        dataset.add_generated_outputs(split, setup_id, model_outputs)
+        utils.upload_model_outputs(dataset, split, setup_id, model_outputs)
     except Exception as e:
         return jsonify({"error": f"Error while adding model outputs: {e}"})
 

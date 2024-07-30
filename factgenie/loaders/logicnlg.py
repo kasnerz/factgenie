@@ -7,11 +7,14 @@ from datasets import load_dataset
 logger = logging.getLogger(__name__)
 from factgenie.loaders.dataset import Dataset
 from tinyhtml import h
+from collections import defaultdict
+from pathlib import Path
+from slugify import slugify
 
 
 class LogicNLG(Dataset):
     def load_examples(self, split, data_path):
-        # loading only 100 examples as an example
+        # loading only 100 examples for the sample
         hf_dataset = load_dataset("kasnerz/logicnlg", split=split + "[:100]")
         examples = []
 
@@ -44,3 +47,28 @@ class LogicNLG(Dataset):
         html_el = h("div")(header_el, table_el)
 
         return html_el.render()
+
+    def load_generated_outputs(self, output_path):
+        outputs = defaultdict(dict)
+
+        for split in self.get_splits():
+            outs = Path.glob(Path(output_path) / split, "*.json")
+            outputs[split] = defaultdict(dict)
+
+            for out in outs:
+                with open(out) as f:
+                    j = json.load(f)
+                setup_id = slugify(j["setup"]["id"])
+                outputs[split][setup_id]["generated"] = []
+
+                all_claims = []
+                current_table_id = j["generated"][0]["table_id"]
+                for table_out in j["generated"]:
+                    if table_out["table_id"] != current_table_id:
+                        current_table_id = table_out["table_id"]
+                        outputs[split][setup_id]["generated"].append({"out": "\\n\\n".join(all_claims)})
+                        all_claims = []
+
+                    all_claims.append(table_out["out"])
+
+        return outputs
