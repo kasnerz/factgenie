@@ -414,12 +414,12 @@ def render_example():
     split = request.args.get("split")
     example_idx = int(request.args.get("example_idx"))
 
-    # try:
-    example_data = utils.get_example_data(app, dataset_id, split, example_idx)
-    # except Exception as e:
-    #     traceback.print_exc()
-    #     logger.error(f"Error while getting example data: {e}")
-    # example_data = {}
+    try:
+        example_data = utils.get_example_data(app, dataset_id, split, example_idx)
+    except Exception as e:
+        traceback.print_exc()
+        logger.error(f"Error while getting example data: {e}")
+        logger.error(f"{dataset_id=}, {split=}, {example_idx=}")
 
     return jsonify(example_data)
 

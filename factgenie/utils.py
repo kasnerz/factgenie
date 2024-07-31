@@ -121,24 +121,27 @@ def generate_campaign_index(app):
 
     # find all subdirs in CROWDSOURCING_DIR
     for campaign_dir in Path(ANNOTATIONS_DIR).iterdir():
-        if not campaign_dir.is_dir():
-            continue
+        try:
+            if not campaign_dir.is_dir():
+                continue
 
-        metadata = json.load(open(os.path.join(campaign_dir, "metadata.json")))
-        campaign_source = metadata.get("source")
-        campaign_id = metadata["id"]
+            metadata = json.load(open(os.path.join(campaign_dir, "metadata.json")))
+            campaign_source = metadata.get("source")
+            campaign_id = metadata["id"]
 
-        if campaign_source == "crowdsourcing":
-            campaign = HumanCampaign(campaign_id=campaign_id)
-        elif campaign_source == "llm_eval":
-            campaign = ModelCampaign(campaign_id=campaign_id)
-        elif campaign_source == "hidden":
-            continue
-        else:
-            logger.warning(f"Unknown campaign source: {campaign_source}")
-            continue
+            if campaign_source == "crowdsourcing":
+                campaign = HumanCampaign(campaign_id=campaign_id)
+            elif campaign_source == "llm_eval":
+                campaign = ModelCampaign(campaign_id=campaign_id)
+            elif campaign_source == "hidden":
+                continue
+            else:
+                logger.warning(f"Unknown campaign source: {campaign_source}")
+                continue
 
-        campaigns[campaign_source][campaign_id] = campaign
+            campaigns[campaign_source][campaign_id] = campaign
+        except:
+            logger.error(f"Error while loading campaign {campaign_dir}")
 
     app.db["campaign_index"] = campaigns
 
@@ -610,12 +613,15 @@ def delete_model_outputs(dataset, split, setup_id):
     dataset.outputs[split].pop(setup_id, None)
 
 
-def llm_eval_new(campaign_id, config, campaign_data, datasets):
+def llm_eval_new(campaign_id, config, campaign_data, datasets, overwrite=False):
     campaign_id = slugify(campaign_id)
 
     # create a new directory
     if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-        raise ValueError(f"Campaign {campaign_id} already exists")
+        if not overwrite:
+            raise ValueError(f"Campaign {campaign_id} already exists")
+        else:
+            shutil.rmtree(os.path.join(ANNOTATIONS_DIR, campaign_id))
 
     os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
 
