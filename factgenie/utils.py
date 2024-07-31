@@ -207,7 +207,7 @@ def export_annotations(app, campaign_id):
 
 def get_annotations(app, dataset_id, split, example_idx, setup_id):
     annotation_index = app.db["annotation_index"]
-    key = (dataset_id, split, example_idx, setup_id)
+    key = (slugify(dataset_id), slugify(split), example_idx, slugify(setup_id))
 
     return annotation_index.get(key, [])
 

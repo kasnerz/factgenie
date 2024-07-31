@@ -1,4 +1,20 @@
 datasets:
+  easy-vqa:
+    class: base.HTMLDataset
+    description: ''
+    enabled: true
+    splits:
+    - test
+    type: default
+  logicnlg:
+    class: logicnlg.LogicNLG
+    description: Sample of 100 examples from the  <a href="https://github.com/wenhuchen/LogicNLG">LogicNLG</a>
+      dataset.
+    enabled: true
+    splits:
+    - validation
+    - test
+    type: table
   quintd1-gsmarena:
     class: gsmarena.GSMArena
     description: <p>The <code>gsmarena</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
@@ -44,22 +60,6 @@ datasets:
     enabled: true
     splits:
     - dev
-    - test
-    type: table
-  easy-vqa:
-    class: base.HTMLDataset
-    description: ''
-    enabled: true
-    splits:
-    - test
-    type: default
-  logicnlg:
-    class: logicnlg.LogicNLG
-    description: Sample of 100 examples from the  <a href="https://github.com/wenhuchen/LogicNLG">LogicNLG</a>
-      dataset.
-    enabled: true
-    splits:
-    - validation
     - test
     type: table
   xsum:
