@@ -11,45 +11,51 @@ Visualize and annotate LLM outputs 🌈
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
 ## 📢  News
-- **31/07/2024** - We released a set of tutorials for using factgenie on our [Github wiki](../../wiki/) page. Come and have a look!
-- **25/07/2024** - We published an [arXiv pre-print](https://arxiv.org/abs/2407.17863) about factgenie. The paper is also accepted to INLG 2024 System Demonstrations track.
+- **31/07/2024** - We updated and expanded the README into a set of tutorials. The tutorials are available on our [Github wiki](../../wiki/)!
+- **31/07/2024** - We substantially improved the data management. You can now manage the datasets both through the configuration file and the web interface.
+- **25/07/2024** - We published an [arXiv pre-print](https://arxiv.org/abs/2407.17863) about factgenie. The paper is accepted to the INLG 2024 System Demonstrations track.
 
 ## 👉️ How can factgenie help you?
 Outputs from large language models (LLMs) may contain errors: semantic, factual, and lexical. 
 
-With **factgenie**, you can have the error spans annotated:
-- From humans through a crowdsourcing service.
+With factgenie, you can have the error spans annotated:
 - From LLMs through an API.
+- From humans through a crowdsourcing service.
 
-How does **factgenie** help with that?
-1. It helps you **create a user-friendly website** for collecting annotations from human crowdworkers.
-2. It helps you with **LLM API calls** for collecting equivalent annotations from LLM-based evaluators.
-3. It provides you with **visualization interface** for inspecting the annotated outputs.
+Factgenie can provide you:
+1. **A user-friendly website** for collecting annotations from human crowdworkers.
+2. **API calls** for collecting equivalent annotations from LLM-based evaluators.
+3. **A visualization interface** for visualizing the data and inspecting the annotated outputs.
 
-What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).
+---
+*What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).*
 
 ## 🏃 Quickstart
 Make sure you have Python 3 installed (the project is tested with Python 3.10).
 
-The following commands install the package and start the web server:
+After cloning the repository, the following commands install the package and start the web server:
 ```
 pip install -e .
 factgenie run --host=127.0.0.1 --port 5000
 ```
 
-## 💡 Tutorials
+## 💡 Usage guide
 
-Each project is unique. That is why this **framework is partially DIY**: we assume that it will be customized for a particular use case.
 
 See the following **wiki pages** that that will guide you through various use-cases of factgenie:
 
-| Topic                                              | Description                            |
-| -------------------------------------------------- | -------------------------------------- |
-| [Setup](../../wiki/01-Setup)                       | How to install factgenie.              |
-| [Data Management](../../wiki/02-Data-Management)   | How to add datasets and model outputs. |
-| [Example Datasets](../../wiki/03-Example-Datasets) | Datasets included in factgenie.        |
+| Topic                                                                  | Description                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------- |
+| 🔧 [Setup](../../wiki/01-Setup)                                         | How to install factgenie.                         |
+| 🗂️ [Data Management](../../wiki/02-Data-Management)                     | How to manage datasets and model outputs.         |
+| 🤖 [LLM Annotations](../../wiki/03-LLM-Annotations)                     | How to annotate outputs using LLMs.               |
+| 👥 [Crowdsourcing Annotations](../../wiki/04-Crowdsourcing-Annotations) | How to annotate outputs using human crowdworkers. |
+| 🧑‍💻 [Developer Notes](../../wiki/05-Developer-Notes)                     | How to contribute to the framework.               |
 
-## 🔗 Cite us
+ 
+We provide multiple examples for you to get inspired when preparing your own experiments. In simple cases, you can even get without writing Python code completely!
+
+## 💬 Cite us
 You can find our paper on [arXiv](https://arxiv.org/abs/2407.17863).
 
 The paper is also accepted for INLG 2024 System Demonstrations.
