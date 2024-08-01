@@ -221,11 +221,11 @@ function markAnnotationAsComplete() {
     const checkbox_off_topic = $("#checkbox-off-topic").is(":checked");
 
 
-    // if the collection is empty but the `checkbox-correct` is not checked, display an alert
-    if (collection.length == 0 && !(checkbox_correct || checkbox_missing)) {
-        alert("Are you *really* sure that the example does not contain any errors? If so, please check the last box to mark the example as complete.");
-        return;
-    }
+    // // if the collection is empty but the `checkbox-correct` is not checked, display an alert
+    // if (collection.length == 0 && !(checkbox_correct || checkbox_missing)) {
+    //     alert("Are you *really* sure that the example does not contain any errors? If so, please check the last box to mark the example as complete.");
+    //     return;
+    // }
 
     annotation_set[example_idx]["annotations"] = collection;
     annotation_set[example_idx]["flags"] = {
