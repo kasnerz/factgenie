@@ -17,6 +17,7 @@ import shutil
 import inspect
 import importlib
 import zipfile
+import markdown
 
 from io import BytesIO
 from slugify import slugify
@@ -780,6 +781,9 @@ def parse_llm_config(config):
 
 def parse_crowdsourcing_config(config):
     config = {
+        "annotator_instructions": config.get("annotatorInstructions"),
+        "annotator_prompt": config.get("annotatorPrompt"),
+        "final_message": config.get("finalMessage"),
         "examples_per_batch": int(config.get("examplesPerBatch")),
         "idle_time": int(config.get("idleTime")),
         "completion_code": config.get("completionCode"),
@@ -788,6 +792,29 @@ def parse_crowdsourcing_config(config):
     }
 
     return config
+
+
+def create_crowdsourcing_page(campaign_id, config):
+    template_path = os.path.join(TEMPLATES_DIR, "campaigns", "annotate_default.html")
+    html_path = os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html")
+
+    os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
+    shutil.copy(template_path, html_path)
+
+    # load the annotate.html file and replace placeholders
+    with open(html_path, "r") as f:
+        content = f.read()
+
+    instructions_html = markdown.markdown(config["annotator_instructions"])
+    annotator_prompt = config["annotator_prompt"]
+    final_message_html = markdown.markdown(config["final_message"])
+
+    content = content.replace("{ FACTGENIE_PLACEHOLDER: instructions }", instructions_html)
+    content = content.replace("{ FACTGENIE_PLACEHOLDER: annotator_prompt }", annotator_prompt)
+    content = content.replace("{ FACTGENIE_PLACEHOLDER: final_message }", final_message_html)
+
+    with open(html_path, "w") as f:
+        f.write(content)
 
 
 def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):

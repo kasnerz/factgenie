@@ -290,13 +290,8 @@ def crowdsourcing_create():
             indent=4,
         )
 
-    # copy templates/campaigns/annotate_default.html into templates/campaigns/{campaign_id} as "annotate.html"
-    os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
-
-    shutil.copy(
-        os.path.join(TEMPLATES_DIR, "campaigns", "annotate_default.html"),
-        os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html"),
-    )
+    # prepare the crowdsourcing HTML page
+    utils.create_crowdsourcing_page(campaign_id, config)
 
     # create the campaign object
     campaign = HumanCampaign(campaign_id=campaign_id)

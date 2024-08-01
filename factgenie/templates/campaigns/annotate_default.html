@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Default Annotation Page</title>
+  <title>Annotations</title>
   <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
   <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
@@ -80,31 +80,7 @@
                 </h2>
                 <div id="instructions-acc-body" class="accordion-collapse collapse">
                   <div class="accordion-body instructions-accordion-body">
-                    <b>TODO: Place your instructions here.</b>
-
-                    <hr>
-
-                    <p>
-                      There are {{ metadata.annotation_span_categories | length }} types of errors that you can mark in
-                      the
-                      generated text:</p>
-                    <ol>
-                      {% for annotation_span_category in metadata.annotation_span_categories %}
-                      <li><span style="background-color: {{ annotation_span_category.color }}"><b>{{
-                            annotation_span_category.name
-                            }}</b></span></li>
-                      {% endfor %}
-                    </ol>
-                    <p>
-                      You can annotate the errors by dragging your mouse over the text, highlighting the error span.
-                      Once you think you have marked all the errors present in the text, click the <b> ✅ Mark example as
-                        complete</b>
-                      button (you can still update the annotation later). You will be able to submit the annotations
-                      once they
-                      are all are
-                      marked
-                      as complete.
-                    </p>
+                    { FACTGENIE_PLACEHOLDER: instructions }
                   </div>
                 </div>
               </div>
@@ -112,7 +88,7 @@
 
             <div id='output-content'>
               <div id='outputarea'>
-                <div id='text-type-info'>Please mark all the factually incorrect words in the text:
+                <div id='text-type-info'>{ FACTGENIE_PLACEHOLDER: annotator_prompt }
                 </div>
               </div>
 
@@ -138,15 +114,7 @@
   <div id="overlay-start" class="overlay">
     <div id="overlay-start-content" class="overlay-content">
       <h1>Welcome!</h1>
-      <p><b>This is a template which should be customized for your task.</b></p>
-      <p>This overlay will appear when the annotator first opens the page. It can be used to provide instructions or
-        information about the task.</p>
-      <p>Opening the preview does not reserve a particular batch, although you can still save the annotations
-        (they will be saved with a Prolific id <code>test</code> and the batch will be marked as finished).</p>
-      <p>You can customize this page by editing the template file in
-        <code>factgenie/templates/campaigns/{{ metadata.id }}/annotate.html</code>.
-      </p>
-
+      { FACTGENIE_PLACEHOLDER: instructions }
       <button id="hideOverlayBtn" class="btn btn-primary">View the annotation page</button>
     </div>
   </div>
@@ -155,10 +123,7 @@
     <div id="overlay-end-content" class="overlay-content">
       <h1>Thank you!</h1>
 
-      <p>Your annotations have been submitted.</p>
-      <p>Your Prolific completion code is <b>{{ compl_code }}</b>.</p>
-      <a href="https://app.prolific.co/submissions/complete?cc={{ compl_code }}" class="btn btn-primary">Return to
-        Prolific</a>
+      { FACTGENIE_PLACEHOLDER: final_message }
     </div>
   </div>
 

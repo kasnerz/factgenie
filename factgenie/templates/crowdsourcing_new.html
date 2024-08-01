@@ -11,6 +11,9 @@
   <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
   <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
   <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+  <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 </head>
 
 {% include 'navbar.html' %}
@@ -77,6 +80,28 @@
           </div>
 
           <div class="rounded-box mt-4">
+            <!-- textarea for annotator instructions -->
+            <div class="form-group">
+              <label for="annotatorInstructions">Annotator instructions</label>
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                title="Instructions shown to the annotators. Use Markdown syntax."></i>
+              <textarea class="form-control" id="annotatorInstructions" name="annotatorInstructions"
+                required></textarea>
+            </div>
+            <!-- textarea for annotator prompt -->
+            <div class="form-group">
+              <label for="annotatorPrompt">Annotator prompt</label>
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                title="The message shown right before the annotated text"></i>
+              <textarea class="form-control" id="annotatorPrompt" name="annotatorPrompt" rows="1" required></textarea>
+            </div>
+            <!-- textarea for final message -->
+            <div class="form-group  mt-2">
+              <label for="finalMessage">Final message</label>
+              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                title="The message shown after the annotator has submitted the annotations"></i>
+              <textarea class="form-control" id="finalMessage" name="finalMessage" required></textarea>
+            </div>
             <div class="form-group">
               <label for="examplesPerBatch">Examples per batch</label>
               <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
@@ -100,7 +125,7 @@
               <input type="number" class="form-control" id="idleTime" name="idleTime" min="0">
             </div>
             <div class="form-group mt-2">
-              <label for="completionCode">Prolific Completion Code</label>
+              <label for="completionCode">Completion Code</label>
               <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="The code that will be shown to the annotator after submitting the
                 annotations"></i>
               <input type="text" class="form-control" id="completionCode" name="completionCode">
@@ -181,5 +206,14 @@
   window.model_outs = {{ model_outs | tojson | safe }};
   window.configs = {{ configs | tojson | safe }};
   window.mode = "crowdsourcing";
+
+  var annotatorInstructionsMDE = new SimpleMDE({
+    element: $("#annotatorInstructions")[0], spellChecker: false,
+    // autosave: { enabled: true, unique_id: "annotatorInstructionsText" } 
+  });
+  var finalMessageMDE = new SimpleMDE({
+    element: $("#finalMessage")[0], spellChecker: false,
+    // autosave: { enabled: true, unique_id: "finalMessageText" } 
+  });
 </script>
 <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

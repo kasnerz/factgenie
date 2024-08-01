@@ -595,6 +595,9 @@ function gatherConfig() {
     var config = {};
 
     if (window.mode == "crowdsourcing") {
+        config.annotatorInstructions = annotatorInstructionsMDE.value();
+        config.annotatorPrompt = $("#annotatorPrompt").val();
+        config.finalMessage = finalMessageMDE.value();
         config.examplesPerBatch = $("#examplesPerBatch").val();
         config.idleTime = $("#idleTime").val();
         config.completionCode = $("#completionCode").val();
@@ -973,6 +976,9 @@ function updateCrowdsourcingConfig() {
     const crowdsourcingConfig = $('#crowdsourcingConfig').val();
 
     if (crowdsourcingConfig === "[None]") {
+        annotatorInstructionsMDE.value("");
+        $("#annotatorPrompt").val("");
+        finalMessageMDE.value("");
         $("#examplesPerBatch").val("");
         $("#idleTime").val("");
         $("#completionCode").val("");
@@ -981,12 +987,18 @@ function updateCrowdsourcingConfig() {
     }
     const cfg = window.configs[crowdsourcingConfig];
 
+    const annotatorInstructions = cfg.annotator_instructions;
+    const annotatorPrompt = cfg.annotator_prompt;
+    const finalMessage = cfg.final_message;
     const examplesPerBatch = cfg.examples_per_batch;
     const idleTime = cfg.idle_time;
     const completionCode = cfg.completion_code;
     const sortOrder = cfg.sort_order;
     const annotationSpanCategories = cfg.annotation_span_categories;
 
+    annotatorInstructionsMDE.value(annotatorInstructions);
+    $("#annotatorPrompt").val(annotatorPrompt);
+    finalMessageMDE.value(finalMessage);
     $("#examplesPerBatch").val(examplesPerBatch);
     $("#idleTime").val(idleTime);
     $("#completionCode").val(completionCode);
