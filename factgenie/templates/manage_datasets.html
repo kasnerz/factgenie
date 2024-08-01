@@ -20,34 +20,48 @@
     Visualize data-to-text generation datasets + annotate LLM outputs.
   </div> -->
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mt-5">← Main page</a>
+  <a type="button" class="btn btn-primary mt-5" data-bs-toggle="modal" data-bs-target="#add-dataset-modal">Add
+    dataset</a>
 
   <div class="mt-5">
     <h3><img src="{{ host_prefix }}/static/img/datasets.png" class="heading-img-inline">
-      <b>Datasets</b> <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
-        title="To add a dataset, create a loader in `loaders` (subclassing the `Dataset` class) and register the dataset in `loaders/__init__.py`."></i>
+      <b>Datasets</b>
     </h3>
 
     <table class="table table-hover mt-3">
       <thead>
         <tr>
           <th scope="col" width="5%"></th>
-          <th scope="col" width="15%">Dataset</th>
-          <th scope="col" width="10%">Splits</th>
-          <th scope="col" width="10%">Examples</th>
-          <th scope="col">Description</th>
+          <th scope="col" width="12%">Dataset</th>
+          <th scope="col" width="22%">Class</th>
+          <!-- <th scope="col">Description</th> -->
+          <th scope="col" width="8%">Splits</th>
+          <th scope="col" width="8%">Examples</th>
+          <th scope="col" width="5%">Loaded</th>
+          <th scope="col" width="10%">Actions</th>
         </tr>
       </thead>
       <tbody>
-        {% for name, dataset in datasets.items() %}
+        {% for dataset_id, dataset in datasets.items() %}
         <tr>
           <td><img src="{{ host_prefix }}/static/img/datatypes/{{ dataset.type }}.png" class="intro-img"></td>
-          <td><a href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ dataset.splits[0] }}&example_idx=0"
-              class="blue-link">{{ name
-              }}</a></td>
+          <td>
+            {% if dataset.enabled %}
+            <a href="{{ host_prefix }}/browse?dataset={{ dataset_id }}&split={{ dataset.splits[0] }}&example_idx=0"
+              class="blue-link">
+              {{ dataset_id
+              }}</a>
+            {% else %}
+            <span class="text-muted"><i>{{ dataset_id }}</i></span>
+            {% endif %}
+          </td>
+          <td>{{ dataset.class }}</td>
+          <!-- <td class="underline-link">{{ dataset.description | safe }}</td> -->
           <td>
             {% for split in dataset.splits %}
             <div class="sub-row"><a
-                href="{{ host_prefix }}/browse?dataset={{ name }}&split={{ split }}&example_idx=0">{{ split }}</a></div>
+                href="{{ host_prefix }}/browse?dataset={{ dataset_id }}&split={{ split }}&example_idx=0">{{ split }}</a>
+            </div>
             {% endfor %}
           </td>
           <td>
@@ -55,17 +69,39 @@
             {{ dataset.example_count[split] }}<br>
             {% endfor %}
           </td>
-          <td class="underline-link">{{ dataset.description | safe }}</td>
+          <td>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" {% if dataset.enabled %}
+                checked {% endif %} onclick="setDatasetEnabled('{{ dataset_id }}', this.checked)">
+            </div>
+          </td>
+          <td>
+            <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+              data-bs-target="#dataset-info-modal-{{ dataset_id }}">
+              <i class="fa fa-info-circle"></i>
+            </a>
+            <a href="{{ host_prefix }}/export_dataset?dataset_id={{ dataset_id }}" class="btn btn-outline-secondary"
+              data-bs-toggle="tooltip" title="Download the dataset">
+              <i class="fa fa-download"></i>
+            </a>
+            <a onclick="deleteDataset('{{ dataset_id }}')" class="btn btn-outline-danger" data-bs-toggle="tooltip"
+              title="Delete the dataset">
+              <i class="fa fa-trash"></i>
+            </a>
+          </td>
         </tr>
+        {% include 'forms/dataset_info_modal.html' %}
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
+{% include 'forms/add_dataset_modal.html' %}
 
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
+  window.mode = "datasets";
 </script>
-<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+<script src="{{ host_prefix }}/static/js/manage.js"></script>

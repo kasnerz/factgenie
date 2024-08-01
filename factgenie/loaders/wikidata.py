@@ -2,32 +2,23 @@
 import logging
 
 logger = logging.getLogger(__name__)
-from factgenie.loaders.dataset import Dataset
+from factgenie.loaders.base import JSONDataset
 from tinyhtml import h
 
 
-class Wikidata(Dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs, name="wikidata")
-        self.type = "table"
+class Wikidata(JSONDataset):
+    def postprocess_data(self, examples):
+        tables = []
 
-    def get_info(self):
-        return """
-        Wikidata entities and their properties from the <u><a href="https://graphs.telecom-paris.fr/Home_page.html#wikidatasets-section">WikiDataSets</a></u> package.
-        """
-
-    def postprocess_data(self, data):
-        examples = []
-
-        for example in data:
+        for example in examples:
             entity = example["entity"]
             properties = example["properties"]
 
             table = entity + "\n---\n"
             table += "\n".join([f"- {prop}: {subj}" for prop, subj in properties])
-            examples.append(table)
+            tables.append(table)
 
-        return examples
+        return tables
 
     def render(self, example):
         example = example.split("\n")

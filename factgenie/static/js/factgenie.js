@@ -265,6 +265,7 @@ function showRawData(data) {
         // remove the first and last double quotes
         rawDataStr = rawDataStr.slice(1, -1);
     }
+    rawDataStr = rawDataStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     $("#rawarea").html(`<pre>${rawDataStr}</pre>`);
 }
 
@@ -875,6 +876,7 @@ function createAnnotationSpanCategoryElem(name, color) {
     return newCategory;
 }
 
+
 function duplicateConfig(btnElem, filenameElemId, modeTo, campaignId) {
     const filename = $("#" + filenameElemId).val() + ".yaml";
     const modeFrom = window.mode;
@@ -1071,7 +1073,9 @@ $(document).ready(function () {
         }
         else {
             // select the first dataset from the selectbox
-            $("#dataset-select").val(Object.keys(datasets)[0]).trigger("change");
+            $("#dataset-select").val(
+                $("#dataset-select option:first").val()
+            ).trigger("change");
             $("#page-input").val(example_idx);
         }
     }

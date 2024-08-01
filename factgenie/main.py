@@ -10,11 +10,20 @@ import traceback
 import shutil
 import datetime
 import zipfile
-from flask import Flask, render_template, jsonify, request, Response, make_response, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    jsonify,
+    request,
+    Response,
+    make_response,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from collections import defaultdict
 import urllib.parse
 from slugify import slugify
-from io import BytesIO
 
 from factgenie.campaigns import Campaign, ModelCampaign, HumanCampaign
 from factgenie.metrics import LLMMetricFactory
@@ -163,17 +172,18 @@ def browse():
 
     utils.generate_annotation_index(app)
 
-    dataset_name = request.args.get("dataset")
+    dataset_id = request.args.get("dataset")
     split = request.args.get("split")
     example_idx = request.args.get("example_idx")
 
-    if dataset_name and split and example_idx:
-        display_example = {"dataset": dataset_name, "split": split, "example_idx": int(example_idx)}
+    if dataset_id and split and example_idx:
+        display_example = {"dataset": dataset_id, "split": split, "example_idx": int(example_idx)}
         logger.info(f"Serving permalink for {display_example}")
     else:
         display_example = None
 
     datasets = utils.get_dataset_overview(app)
+    datasets = {k: v for k, v in datasets.items() if v["enabled"]}
 
     return render_template(
         "browse.html",
@@ -335,18 +345,29 @@ def delete_campaign():
     return utils.success()
 
 
+@app.route("/delete_dataset", methods=["POST"])
+@login_required
+def delete_dataset():
+    data = request.get_json()
+    dataset_id = data.get("datasetId")
+
+    utils.delete_dataset(app, dataset_id)
+
+    return utils.success()
+
+
 @app.route("/delete_model_outputs", methods=["POST"])
 @login_required
 def delete_model_outputs():
     data = request.get_json()
 
     # get dataset, split, setup
-    dataset_name = data.get("dataset")
+    dataset_id = data.get("dataset")
     split = data.get("split")
     setup = data.get("setup")
 
-    dataset = app.db["datasets_obj"][dataset_name]
-    dataset.delete_generated_outputs(split, setup)
+    dataset = app.db["datasets_obj"][dataset_id]
+    utils.delete_model_outputs(dataset, split, setup)
 
     return utils.success()
 
@@ -389,16 +410,16 @@ def duplicate_eval():
 
 @app.route("/example", methods=["GET", "POST"])
 def render_example():
-    dataset_name = request.args.get("dataset")
+    dataset_id = request.args.get("dataset")
     split = request.args.get("split")
     example_idx = int(request.args.get("example_idx"))
 
     try:
-        example_data = utils.get_example_data(app, dataset_name, split, example_idx)
+        example_data = utils.get_example_data(app, dataset_id, split, example_idx)
     except Exception as e:
         traceback.print_exc()
         logger.error(f"Error while getting example data: {e}")
-        example_data = {}
+        logger.error(f"{dataset_id=}, {split=}, {example_idx=}")
 
     return jsonify(example_data)
 
@@ -406,23 +427,23 @@ def render_example():
 @app.route("/export_annotations", methods=["GET", "POST"])
 @login_required
 def export_annotations():
-    zip_buffer = BytesIO()
     campaign_id = request.args.get("campaign")
 
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for root, dirs, files in os.walk(os.path.join(ANNOTATIONS_DIR, campaign_id)):
-            for file in files:
-                zip_file.write(
-                    os.path.join(root, file),
-                    os.path.relpath(os.path.join(root, file), os.path.join(ANNOTATIONS_DIR, campaign_id)),
-                )
+    return utils.export_annotations(app, campaign_id)
 
-    # Set response headers for download
-    timestamp = int(time.time())
-    response = make_response(zip_buffer.getvalue())
-    response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = f"attachment; filename={campaign_id}_{timestamp}.zip"
-    return response
+
+@app.route("/export_dataset", methods=["GET", "POST"])
+@login_required
+def export_dataset():
+    dataset_id = request.args.get("dataset_id")
+
+    return utils.export_dataset(app, dataset_id)
+
+
+@app.route("/files/<path:filename>", methods=["GET"])
+def download_file(filename):
+    # serving external files for datasets
+    return send_from_directory("data", filename)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -597,16 +618,23 @@ def llm_eval_pause():
 @login_required
 def manage_datasets():
     datasets = utils.get_dataset_overview(app)
+    dataset_classes = list(utils.get_dataset_classes().keys())
 
-    return render_template("manage_datasets.html", datasets=datasets, host_prefix=app.config["host_prefix"])
+    return render_template(
+        "manage_datasets.html",
+        datasets=datasets,
+        dataset_classes=dataset_classes,
+        host_prefix=app.config["host_prefix"],
+    )
 
 
 @app.route("/model_outputs", methods=["GET", "POST"])
 @login_required
 def manage_model_outputs():
-    utils.generate_annotation_index(app)
+    # utils.generate_annotation_index(app)
 
     datasets = utils.get_dataset_overview(app)
+    datasets = {k: v for k, v in datasets.items() if v["enabled"]}
     model_outputs = utils.get_model_outputs_overview(app, datasets)
 
     return render_template(
@@ -657,15 +685,6 @@ def submit_annotations():
             for row in annotation_set:
                 f.write(json.dumps(row) + "\n")
 
-        # db[db["batch_idx"] == batch_idx]["status"] = "finished"
-
-        # we cannot do that anymore:
-        # A value is trying to be set on a copy of a slice from a DataFrame.
-        # Try using .loc[row_indexer,col_indexer] = value instead
-
-        # See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-        #   db[db["batch_idx"] == batch_idx]["status"] = "finished"
-
         db.loc[db["batch_idx"] == batch_idx, "status"] = "finished"
 
         db.to_csv(os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv"), index=False)
@@ -674,21 +693,50 @@ def submit_annotations():
     return jsonify({"status": "success"})
 
 
-# upload model outputs
+@app.route("/set_dataset_enabled", methods=["POST"])
+@login_required
+def set_dataset_enabled():
+    data = request.get_json()
+    dataset_id = data.get("datasetId")
+    enabled = data.get("enabled")
+
+    utils.set_dataset_enabled(app, dataset_id, enabled)
+
+    return utils.success()
+
+
+@app.route("/upload_dataset", methods=["POST"])
+@login_required
+def upload_dataset():
+    data = request.get_json()
+    dataset_id = data.get("id")
+    dataset_description = data.get("description")
+    dataset_format = data.get("format")
+    dataset_data = data.get("dataset")
+    # Process each file in the dataset
+
+    try:
+        utils.upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data)
+    except Exception as e:
+        return jsonify({"error": f"Error while uploading dataset: {e}"})
+
+    return utils.success()
+
+
 @app.route("/upload_model_outputs", methods=["POST"])
 @login_required
 def upload_model_outputs():
     logger.info(f"Received model outputs")
     data = request.get_json()
-    dataset_name = data["dataset"]
+    dataset_id = data["dataset"]
     split = data["split"]
     setup_id = data["setup_id"]
     model_outputs = data["outputs"]
 
-    dataset = app.db["datasets_obj"][dataset_name]
+    dataset = app.db["datasets_obj"][dataset_id]
 
     try:
-        dataset.add_generated_outputs(split, setup_id, model_outputs)
+        utils.upload_model_outputs(dataset, split, setup_id, model_outputs)
     except Exception as e:
         return jsonify({"error": f"Error while adding model outputs: {e}"})
 

@@ -32,19 +32,11 @@
         <span style="margin-left: 5px;">Dataset</span>
       </div>
       <div class="col-auto">
-        <select id="dataset-select" class="form-select form-select-sm"
+        <select id="dataset-select-overview" class="form-select form-select-sm"
           style="display: inline-block; margin-right: 10px; max-width: 250px;">
           {% for name, dataset in datasets.items() %}
           <option value="{{ name }}">{{ name }}</option>
           {% endfor %}
-        </select>
-      </div>
-      <div class="col-auto">
-        <span style="margin-left: 5px;">Split</span>
-      </div>
-      <div class="col-auto">
-        <select id="split-select" class="form-select form-select-sm"
-          style="display: inline-block; margin-right: 10px; max-width: 200px;">
         </select>
       </div>
     </div>
@@ -52,13 +44,14 @@
     <table class="table table-hover" id="model-out-table">
       <thead>
         <tr>
+          <th scope="col">Dataset</th>
+          <th scope="col">Split</th>
           <th scope="col">Source</th>
           <th scope="col">Examples</th>
           <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
-
       </tbody>
     </table>
 
@@ -72,6 +65,27 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body text-left">
+          <div class="row mb-3 mt-3 align-items-center">
+            <div class="col-auto">
+              <span>Dataset</span>
+            </div>
+            <div class="col-auto">
+              <select id="dataset-select" class="form-select form-select-sm"
+                style="display: inline-block; margin-right: 10px; max-width: 250px;">
+                {% for name, dataset in datasets.items() %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-auto">
+              <span>Split</span>
+            </div>
+            <div class="col-auto">
+              <select id="split-select" class="form-select form-select-sm"
+                style="display: inline-block; margin-right: 10px; max-width: 200px;">
+              </select>
+            </div>
+          </div>
           <div class="mb-3">
             <label for="setup-id" class="form-label">Setup ID</label>
             <input type="text" class="form-control" id="setup-id" name="setup-id" placeholder="my-custom-input">
@@ -93,6 +107,7 @@
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
+  window.mode = "outputs";
   window.datasets = {{ datasets | tojson | safe }};
   window.model_outputs = {{ model_outputs | tojson | safe }};
 </script>

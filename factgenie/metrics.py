@@ -32,7 +32,6 @@ class LLMMetricFactory:
         return {
             "openai": OpenAIMetric,
             "ollama": OllamaMetric,
-            "ollama-logicnlg-markdown": LogicNLGMarkdownOllamaMetric,
         }
 
     @staticmethod
@@ -45,54 +44,6 @@ class LLMMetricFactory:
 
         return classes[metric_type](config)
 
-    # @staticmethod
-    # def get_metric_name(config):
-    #     """Generate a metric name based on config values and validates that a metric name fits existing LLMMetric classes and starts with 'llm-' ie common format"""
-    #     metric_type = config["type"]
-    #     model = config["model"]
-    #     metric_name = config.get("metric_name", None)
-    #     if metric_name is None:
-    #         assert (
-    #             metric_type in LLMMetricFactory.metric_classes()
-    #         ), f"{metric_type=} is not in {LLMMetricFactory.metric_classes()}"
-    #         metric_name = f"llm-{metric_type}-{model}"
-    #     assert metric_name.startswith("llm-"), f"Metric name {metric_name=} should start with 'llm-'"
-
-    #     found = False
-    #     for metric_class in LLMMetricFactory.metric_classes():
-    #         if metric_name.startswith(f"llm-{metric_class}"):
-    #             found = True
-    #             return metric_name
-    #     if not found:
-    #         raise ValueError(
-    #             f"Metric name {metric_name=} does not start with any of the known metric classes {LLMMetricFactory.metric_classes()}"
-    #         )
-
-    # @staticmethod
-    # def get_metric(config):
-    #     metric_type = config["type"]  # TODO (oplatek) rename to metric_type to be explicit in the config
-    #     model = config["model"]
-
-    #     metric_name = LLMMetricFactory.get_metric_name(config)
-
-    #     logger.info(f"Creating metric:{metric_name}")
-
-    # # TODO (oplatek) change the string in metric_type to exactly match the metric names so the configs and code in this module is consistent;-) -> prefix them with llm- !
-    # if metric_type == "openai":
-    #     return OpenAIMetric(config)
-    # elif metric_type == "ollama":
-    #     # we implemented specific input postprocessing for Llama 3
-    #     if model.startswith("llama3"):
-    #         return Llama3Metric(config)
-    #     else:
-    #         return OllamaMetric(config)
-    # elif metric_type == "ollama-logicnlg-markdown":
-    #     return LogicNLGMarkdownOllamaMetric(config)
-    # else:
-    #     raise NotImplementedError(
-    #         f"The metric type {metric_type} is not implemented. All yaml files in factgenie/llm-eval should use existing metrics!"
-    #     )
-
 
 class LLMMetric:
     def __init__(self, config):
@@ -101,7 +52,7 @@ class LLMMetric:
 
         if "extra_args" in config:
             # the key in the model output that contains the annotations
-            self.annotation_key = config["extra_args"].get("annotation_key", "errors")
+            self.annotation_key = config["extra_args"].get("annotation_key", "annotations")
 
     def get_required_fields(self):
         return {
@@ -206,8 +157,8 @@ class OpenAIMetric(LLMMetric):
         return {
             "system_msg": str,
             "model_args": dict,
-            "api_url": str,  # TODO can be removed, but we receive it from the UI
-            "extra_args": dict,  # TODO can be removed, but we receive it from the UI
+            "api_url": str,  # TODO we receive it from the UI, but can be removed
+            "extra_args": dict,  # TODO we receive it from the UI, but can be removed
         }
 
     def parse_model_args(self):
@@ -286,38 +237,38 @@ class OllamaMetric(LLMMetric):
             return []
 
 
-class LogicNLGMarkdownOllamaMetric(OllamaMetric):
-    def __init__(self, config):
-        super().__init__(config)
-        self._table_str_f = self.config["extra_args"].get("table_str_f", "to_string")
+# class LogicNLGMarkdownOllamaMetric(OllamaMetric):
+#     def __init__(self, config):
+#         super().__init__(config)
+#         self._table_str_f = self.config["extra_args"].get("table_str_f", "to_string")
 
-    def get_required_fields(self):
-        return {
-            "type": str,
-            "annotation_span_categories": list,
-            "prompt_template": str,
-            "model": str,
-            "model_args": dict,
-            "extra_args": dict,
-        }
+#     def get_required_fields(self):
+#         return {
+#             "type": str,
+#             "annotation_span_categories": list,
+#             "prompt_template": str,
+#             "model": str,
+#             "model_args": dict,
+#             "extra_args": dict,
+#         }
 
-    def preprocess_data_for_prompt(self, example):
-        import pandas as pd  # requires tabulate
+#     def preprocess_data_for_prompt(self, example):
+#         import pandas as pd  # requires tabulate
 
-        rowlist = example[0]
-        table_title = example[1]
-        table = pd.DataFrame(rowlist[1:], columns=rowlist[0])
+#         rowlist = example[0]
+#         table_title = example[1]
+#         table = pd.DataFrame(rowlist[1:], columns=rowlist[0])
 
-        if self._table_str_f == "to_markdown":
-            table_str = table.to_markdown()
-        elif self._table_str_f == "to_string":
-            table_str = table.to_string()
-        elif self._table_str_f == "to_json":
-            # List of rows
-            table_str = table.to_json(orient="records")
-        else:
-            raise ValueError(f"Unknown table string function {self._table_str_f}")
+#         if self._table_str_f == "to_markdown":
+#             table_str = table.to_markdown()
+#         elif self._table_str_f == "to_string":
+#             table_str = table.to_string()
+#         elif self._table_str_f == "to_json":
+#             # List of rows
+#             table_str = table.to_json(orient="records")
+#         else:
+#             raise ValueError(f"Unknown table string function {self._table_str_f}")
 
-        data2prompt = f"Table title: {table_title}\n{table_str}"
+#         data2prompt = f"Table title: {table_title}\n{table_str}"
 
-        return data2prompt
+#         return data2prompt

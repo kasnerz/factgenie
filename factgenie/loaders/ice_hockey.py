@@ -5,23 +5,13 @@ logger = logging.getLogger(__name__)
 
 from datetime import datetime
 from tinyhtml import h
-from factgenie.loaders.dataset import Dataset
+from factgenie.loaders.base import JSONDataset
 import json
 from pathlib import Path
 
 
-class IceHockey(Dataset):
-    def __init__(self, name=None, **kwargs):
-        name = "ice_hockey" if name is None else name
-        super().__init__(name=name, **kwargs)
-        self.type = "json"
-
-    def get_info(self):
-        return """
-        Ice hockey game summaries from <u><a href="https://rapidapi.com/fluis.lacasse/api/icehockeyapi">RapidAPI</a></u>.
-        """
-
-    def postprocess_data(self, data):
+class IceHockey(JSONDataset):
+    def postprocess_data(self, examples):
         # recursively remove any references to images: `logo` and `flag` keys
         def recursive_remove_key(data, key_to_remove):
             if isinstance(data, dict):
@@ -38,7 +28,7 @@ class IceHockey(Dataset):
 
             return data
 
-        for game in data:
+        for game in examples:
             start_timestamp = game["startTimestamp"]
 
             for key in [
@@ -84,7 +74,7 @@ class IceHockey(Dataset):
             # convert timestamp to date
             game["startDatetime"] = datetime.fromtimestamp(start_timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
-        return data
+        return examples
 
     def render(self, example):
         # metadata table

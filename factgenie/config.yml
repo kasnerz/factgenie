@@ -1,5 +1,5 @@
 ---
-debug: true
+debug: false
 host_prefix: ""
 logging_level: INFO
 login:

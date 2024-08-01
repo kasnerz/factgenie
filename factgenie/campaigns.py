@@ -10,7 +10,7 @@ import random
 import ast
 import time
 import coloredlogs
-from factgenie.loaders import DATASET_CLASSES
+
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

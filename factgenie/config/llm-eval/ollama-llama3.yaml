@@ -1,6 +1,6 @@
 type: ollama
 model: llama3
-api_url: http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate
+api_url: http://tdll-3gpu3.ufal.hide.ms.mff.cuni.cz:11434/api/generate
 model_args:
   max_tokens: 1024
   num_beams: 1
@@ -10,7 +10,6 @@ model_args:
   do_sample: false 
   seed: 42
 system_msg: "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
-# Note that we require output format {"errors": [{...}]}
 annotation_span_categories:
   - name: "Incorrect"
     color: "#ffbcbc"
@@ -29,7 +28,7 @@ prompt_template: |
   ```
   {text}
   ```
-  Output the errors as a JSON list "errors" in which each object contains fields  "reason", "text", and "type". The value of "text" is the text of the error. The value of "reason" is the reason for the error. The value of "type" is one of {{0, 1, 2, 3}} based on the following list:
+  Output the errors as a JSON list "annotations" in which each object contains fields  "reason", "text", and "type". The value of "text" is the text of the error. The value of "reason" is the reason for the error. The value of "type" is one of {{0, 1, 2, 3}} based on the following list:
   - 0: Incorrect fact: The fact in the text contradicts the data.
   - 1: Not checkable: The fact in the text cannot be checked in the data.
   - 2: Misleading: The fact in the text is misleading in the given context.
@@ -40,13 +39,16 @@ prompt_template: |
   *Example:*
   data:
   ```
-  [ [ "Aditi Bhagwat", "occupation", "television actor" ], [ "Aditi Bhagwat", "date of birth", "18 January 1981" ] ]     
+  Nokia 3310
+  -----
+  - **color**: black, blue, grey
+  - **display**: 320x240px
   ```
-  text:
+  text (product description):
   ```
-  Aditi Bhagwat, born on January 18, 1991, used to be a popular Indian television actor. The data comes from a knowledge graph.
+  Nokia 3310 is produced in Finland and features a 320x320 display. It is available in black color. The data seem to provide only partial information about the phone.
   ```
   output:
-  ```{{ "errors": [{{"reason": "The data mentions that the actor was born on 1981", "text": "1991", "type": 0}}, {{"reason": "Misleadingly suggests that the actor is not alive", "text": "used to be", type: 2}}, {{"reason": "Popularity is not mentioned in the data", "text": "popular", type: 1}}, {{"reason", "Nationality is not mentioned in the data", "text": "Indian", type: 1}}, {{"reason": "The note is superfluous", "text": "The data comes from a knowledge graph.", type: 3}}] }}
+  ```{{ "annotations": [{{"reason": "The country where the phone is produced is not mentioned in the data.", "text": "produced in Finland", "type": 1}}, {{"reason": "The data mentions that the display has resolution 320x240px.", "text": "320x320", type: 0}}, {{"reason": "Misleadingly suggests that the phone is not available in other colors.", "text": "available in black color", type: 2}}, {{"reason", "Nationality is not mentioned in the data", "text": "Indian", type: 1}}, {{"reason": "The note is irrelevant for the phone description.", "text": "The data seem to provide only partial information about the phone.", type: 3}}] }}
   ```
-  Note that some details may not be mentioned in the text: do not count omissions as errors. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.), do not count these as errors. If there are no errors in the text, "errors" will be an empty list.
+  Note that some details may not be mentioned in the text: do not count omissions as errors. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.), do not count these as errors. If there are no errors in the text, "annotations" will be an empty list.

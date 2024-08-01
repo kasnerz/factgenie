@@ -4,26 +4,17 @@
 <head>
   <title>factgenie</title>
   <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" /> -->
-  <!-- <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" /> -->
   <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
   <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
   <meta name="viewport" content="width=1024">
   <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
   <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
   <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.full.min.js"></script>
-  <script src="{{ host_prefix }}/static/js/jsonview.js"></script>
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="https://code.highcharts.com/modules/windbarb.js"></script>
-  <script src="https://code.highcharts.com/modules/pattern-fill.js"></script>
-  <script src="https://code.highcharts.com/modules/data.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.full.min.js"></script> -->
   <link href="{{ host_prefix }}/static/css/font-awesome.css" rel="stylesheet">
-  <script src="{{ host_prefix }}/static/js/split.min.js"></script>
-  <script src="{{ host_prefix }}/static/js/meteogram.js"></script>
+  <script src="{{ host_prefix }}/static/js/jsonview.js"></script>
+
+  {% include 'include/custom.html' %}
 </head>
 
 
@@ -36,7 +27,7 @@
           <span style="margin-left: 5px; margin-right: 10px; font-weight: bold;">factgenie</span>
         </a>
         <ul class="navblock pagination">
-          <li class="nav-item">
+          <li class="nav-item" style="margin-right: 5px;">
             <select id="dataset-select" class="form-select form-select-sm"
               style="display: inline-block; margin-right: 10px; max-width: 250px;">
               {% for name, dataset in datasets.items() %}
@@ -133,12 +124,6 @@
                 <li class="list-inline-item"><small class="text-muted">Annotations</small></li>
                 <li class="list-inline-item"><select class="form-select form-select-sm" id="annotations-select">
                   </select></li>
-                <!-- <li class="list-inline-item">
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="displayAnnotations" checked>
-                    <label class="form-check-label" for="displayAnnotations">Display annotations</label>
-                  </div>
-                </li> -->
               </ul>
             </div>
           </div>
@@ -189,36 +174,12 @@
     </div>
   </div>
 
-
-  <div class="modal fade" id="about-modal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="about-modal-label">About factgenie</h5> <img
-            src="{{ host_prefix }}/static/img/genie.png" width="20px" style="margin-left: 5px">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id='aboutarea' class="tab-pane sidepanel-panel" role="tabpanel" tabindex="0">
-            <div id="about-info" class="area-content">
-              <p>TODO</p>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </body>
 
 
 <script>
   // variable to be used in factgenie.js
   window.url_prefix = "{{ host_prefix }}";
-  window.default_dataset = "{{ default_dataset }}";
   window.display_example = {{ display_example | tojson | safe }};
   window.datasets = {{ datasets | tojson | safe }};
   window.mode = "browse";

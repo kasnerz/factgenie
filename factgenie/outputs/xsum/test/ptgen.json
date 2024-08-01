@@ -1,0 +1,309 @@
+{
+    "dataset": "xsum",
+    "split": "test",
+    "setup": {
+        "id": "ptgen"
+    },
+    "generated": [
+        {
+            "out": "the value of goods and services in wales has fallen to its lowest level since records began , plaid cymru has said ."
+        },
+        {
+            "out": "a caravan stolen from a harry potter lock has been stolen from a site in cambridgeshire , police have said ."
+        },
+        {
+            "out": "``i 'm a drain on the state ,'' says nigel farage , who has n't seen the uk leaving the eu ."
+        },
+        {
+            "out": "tata steel has said it is planning talks with liberty house group in the wake of the sale of tata steel ."
+        },
+        {
+            "out": "how much do you remember about the christmas news , you might think about your questions about the christmas weather ?"
+        },
+        {
+            "out": "imax , the world's biggest parent company , has filed for listing on its shares in listing in listing in listing in china ."
+        },
+        {
+            "out": "the iphone t in the park have been making headlines ' time at this time of year , but steve jobs has been a success ."
+        },
+        {
+            "out": "the author of the crime novel novels has been awarded the freedom of the book awards for the year award ."
+        },
+        {
+            "out": "a new hospital in somerset has been replaced by the primary care trust which it says is a ``poor old tired building'' ."
+        },
+        {
+            "out": "national league side torquay united have signed striker myles anderson on a two-year contract after he was released by the national league club ."
+        },
+        {
+            "out": "leicester sealed a 1-0 victory in the first premier league game of the season as they beat west ham to move up to fourth place in the premier league ."
+        },
+        {
+            "out": "nigeria's political leaders have won the presidential election for the first time since the end of the year ."
+        },
+        {
+            "out": "writer and broadcaster adrian gill has died at the age of 96 , his family has said . said he was ``stoical'' ."
+        },
+        {
+            "out": "ukip leader nigel farage has said she is ``no way to run in the general election campaign'' ."
+        },
+        {
+            "out": "rory mcilroy's french open final with a three-under-par stoppage of 71 to take a one-shot lead into the final round of the dubai championships ."
+        },
+        {
+            "out": "a man has been killed in a crash on the m4 in berkshire , south wales police has said ."
+        },
+        {
+            "out": "a hospital ward in wrexham has been rated ``inadequate'' by inspectors after inspectors found patients at risk of harm ."
+        },
+        {
+            "out": "great britain's badminton england team has been forced to withdraw from the rio olympics after failing to qualify for the rio olympics ."
+        },
+        {
+            "out": "the family of a woman who died after a measles outbreak have said she is no close to his death ."
+        },
+        {
+            "out": "the world's biggest economy in the world , norway , afghanistan and norway have been taking part in a global survey of global economic data ."
+        },
+        {
+            "out": "bbc radio presenter chris jones has revealed that he is born at the time of sunday night for the first time ."
+        },
+        {
+            "out": "the family of a man who died after being hit by a car in kinross have said they are ``devastated'' by her death ."
+        },
+        {
+            "out": "music conductor christopher hogwood has died at the age of 88 , his family has said . said he has died at the age of 72 ."
+        },
+        {
+            "out": "alex salmond has been called for a ``full briefing'' against the snp's foreign office in the wake of the syria crisis ."
+        },
+        {
+            "out": "melania trump has said he is ``excited'' about the decision to leave the white house in the white house ."
+        },
+        {
+            "out": "wales coach warren gatland has ``a lot of frustration'' in the world cup , says head coach warren gatland ."
+        },
+        {
+            "out": "thousands of apprenticeships in england are being rated as ``cruel'' and ``cruel'' , a report has found ."
+        },
+        {
+            "out": "a conservative mp has been accused of a ``huge honour'' of the football loan of northampton town football club ."
+        },
+        {
+            "out": "the world's first rocket campaign has been launched in florida , the first 10 satellites to date for the first time ."
+        },
+        {
+            "out": "hull fc earned their first win of the season in the premier league with a narrow victory over southampton in the first leg of their league play-off semi-final ."
+        },
+        {
+            "out": "the fbi has ordered the fbi to investigate the killing of a man accused of killing his wife and his wife ."
+        },
+        {
+            "out": "singapore and indonesia have accuses of the names of the names of 14 party suppliers , including palm oil from third party suppliers ."
+        },
+        {
+            "out": "the wife of a british banker accused of plotting to topple the uk has been jailed for two-and-a-half years ."
+        },
+        {
+            "out": "britain's laura latham won a bronze medal at the track cycling world championships in the czech republic in rio ."
+        },
+        {
+            "out": "the world's biggest food video may not be able to buy a domestic food freezer , according to a video released by the bbc ."
+        },
+        {
+            "out": "pakistan has banned the sale of the prophet muhammad in a row over the removal of the prophet muhammad ."
+        },
+        {
+            "out": "the death of a journalist in london has been described as the ``street of shame'' as a journalist ."
+        },
+        {
+            "out": "prince william has said she is ``incredibly important'' to be the queen's 90th birthday , as he celebrates her 90th birthday ."
+        },
+        {
+            "out": "a man who was kidnapped in mexico city centre has been arrested in connection with the kidnapping and murder of a olympiakos fan ."
+        },
+        {
+            "out": "children who eat healthily is too fussy to eat healthily , a survey has found that children have been cooked and cooked ."
+        },
+        {
+            "out": "newport gwent dragons will not be given a contract before the end of the season , says the rugby football league (foxall) ."
+        },
+        {
+            "out": "the uk government has been ``unacceptable'' and ``unacceptable'' and ``unacceptable'' , the first minister has said ."
+        },
+        {
+            "out": "fiji has been chosen as the country's first democratically elected indian prime minister , who has died at the age of 27 ."
+        },
+        {
+            "out": "theresa may has said he is ``angry and angry'' that the grenfell tower fire was ``the wealthiest part of the country'' ."
+        },
+        {
+            "out": "real madrid have signed striker fabio morata from juventus for an undisclosed fee , thought to be worth about # 25m ."
+        },
+        {
+            "out": "torquay united have signed defender angus macdonald from non-league side torquay united on a three-year deal for an undisclosed fee ."
+        },
+        {
+            "out": "nico rosberg beat mercedes team-mate lewis hamilton in the first practice session for the first formula 1 race of the season ."
+        },
+        {
+            "out": "blood tests have been made in clinics to clinics with alzheimer's disease , a study suggests in the journal nature of research suggests ."
+        },
+        {
+            "out": "the pro-european conservatives in the uk have been reacting to the outcome of the uk's general election campaign ."
+        },
+        {
+            "out": "chelsea manager mauricio pochettino says chelsea will be ``very difficult'' to fight for a place in the premier league next season ."
+        },
+        {
+            "out": "mae ' r cymru wedi cadarnhau eu cyhuddo o roi dyn oed yng [UNK] yng [UNK] wedi cael ei [UNK] ."
+        },
+        {
+            "out": "the centenary of the christmas truce between the isle of man has been unveiled at a private derby in wiltshire ."
+        },
+        {
+            "out": "liverpool's premier league title challenge is in the premier league , with liverpool looking for their title credentials ."
+        },
+        {
+            "out": "matt taylor's century helped gloucestershire to a four-wicket win over gloucestershire in the first day of the county championship ."
+        },
+        {
+            "out": "a fire at a waste processing plant in greater manchester has been suspended after a fire broke out at the site ."
+        },
+        {
+            "out": "flights between the channel islands and the netherlands have been cancelled due to bad weather conditions in the netherlands ."
+        },
+        {
+            "out": "(close) : the ftse 100 ended the day higher as investors waited for the rest of the european union ."
+        },
+        {
+            "out": "a theatre in kent is to undergo a # 1m project to build a new theatre in the capital's grounds of alexandra palace ."
+        },
+        {
+            "out": "league two side rochdale have re-signed tranmere rovers midfielder jack dale on loan until the end of the season ."
+        },
+        {
+            "out": "st mirren have signed st mirren midfielder jack clarkson on loan until the end of the season , with the option of a further 12 months ."
+        },
+        {
+            "out": "russian rapper [UNK] sukhbaatar has been attacked by a russian court after he was shot dead by a russian court ."
+        },
+        {
+            "out": "great british sailors hannah nixon and sophie nixon were out for the world championships by reaching the semi-final of the women's world championships ."
+        },
+        {
+            "out": "aberdeen manager lee thompson says derek ``deserve enormous credit for the club'' after his side reached the last eight of the scottish premiership ."
+        },
+        {
+            "out": "novak djokovic lost to japan's gustavo [UNK] in the second round of the rogers cup in montreal . died ."
+        },
+        {
+            "out": "alfreton town have signed defender joel mooney from fellow league one side oldham athletic on a two-year deal . end ."
+        },
+        {
+            "out": "southampton city council has been told to pay hundreds of millions of pounds a day of applying for a licence because of a lack of funding ."
+        },
+        {
+            "out": "``i have fond memories of playing football , but it was n't going on the march'' , but he's going on the brink of becoming a goalkeeper ."
+        },
+        {
+            "out": "a woman has been jailed for 12 months for a total of 16 years for money from a court in dumfries and galloway ."
+        },
+        {
+            "out": "manchester city manager jose mourinho has been charged by the football association for failing to reach the fa cup ."
+        },
+        {
+            "out": "ben parkinson's disease is ``absolutely bouncing and buoyed'' and ``bouncing'' and ``bouncing and buoyed'' by the brain , according to a charity ."
+        },
+        {
+            "out": "a new study has suggested the world's food security is ``growing up'' in the future of the world's environment ."
+        },
+        {
+            "out": "plans for a new coal-fired power station in west yorkshire have been approved by the government and the secretary of state ."
+        },
+        {
+            "out": "a police officer has been charged with the manslaughter of a man who was injured in the hillsborough disaster ."
+        },
+        {
+            "out": "the death of a russian whistleblower who died in russia last month was ``involved in the murder'' , an inquiry has heard ."
+        },
+        {
+            "out": "sailings between caledonian macbrayne and caledonian macbrayne have been cancelled due to the evacuation of the royal navy , caledonian macbrayne has said ."
+        },
+        {
+            "out": "mclaren have rejected accusations from formula 1 boss bernie bottas's decision to drive him to the 2009 of the world's world champion ."
+        },
+        {
+            "out": "a man who admitted causing the death of a homeless man by dangerous driving has been given a 12-month suspended prison sentence ."
+        },
+        {
+            "out": "a police blogger has been arrested in connection with online harassment , the metropolitan police has told the bbc ."
+        },
+        {
+            "out": "pupils at a school in the capital have been sent home to their parents after they wear hoop earrings ."
+        },
+        {
+            "out": "a man armed with a knife has been arrested in connection with the death of a man in stockholm ."
+        },
+        {
+            "out": "a memorial service has been held to mark the 100th anniversary of the war memorial of the city's war memorial ."
+        },
+        {
+            "out": "children in the uk are being urged to avoid bullying in the past year , according to new figures ."
+        },
+        {
+            "out": "the world anti-doping agency (wada) says it is concerned about the future of the world anti-doping agency (wada) ."
+        },
+        {
+            "out": "a police officer has been shot in the head of the capital of the month of kenya's parliament , police say ."
+        },
+        {
+            "out": "the chief executive of the republic of ireland council has said he will not stand in the job of the local authority ."
+        },
+        {
+            "out": "west ham's # [UNK] m euros (\u00c2 # [UNK] m) stake in west ham united's # [UNK] m euros (\u00c2 # [UNK] m) investment have been approved by the club ."
+        },
+        {
+            "out": "students at a us college have been told they will not be able to sit their entrance exams due to a cheating scandal ."
+        },
+        {
+            "out": "it is the word of the uk's membership of the eu's membership of the eu , but it is not exactly where it is going to be the next parliament ."
+        },
+        {
+            "out": "world number one mark kyrgios said he was ``very tired'' at his time as he made history in the first round of the shanghai masters ."
+        },
+        {
+            "out": "a secondary school in northern ireland has launched a new programme to improve the stresses of a secondary school in northern ireland ."
+        },
+        {
+            "out": "hibernian have signed former hibernian and hibernian midfielder alan stubbs and hibernian defender alan stubbs until the end of the season ."
+        },
+        {
+            "out": "a police officer has been charged with murder in the us city of the us city of dallas , where he was killed ."
+        },
+        {
+            "out": "swansea city manager neil curtis has urged his players to ``get back up up'' if they are to leave the premier league ."
+        },
+        {
+            "out": "sale sharks captain chris charnley says he is confident his side can avoid relegation from next season's super league game ."
+        },
+        {
+            "out": "powys council has voted to introduce a new team from the uk government to help fund the estate agents ."
+        },
+        {
+            "out": "a woman has been arrested after a fire broke out in a restaurant in greater manchester city centre , police have said ."
+        },
+        {
+            "out": "care homes in wales are ``chemically coshed coshed'' drugs , the health minister has told the bbc ."
+        },
+        {
+            "out": "two teenagers have been arrested in connection with the disappearance of a man in istanbul on monday evening , police have said ."
+        },
+        {
+            "out": "the world para athletics championships are taking place in london on friday , 3 august , for the first time ."
+        },
+        {
+            "out": "the owners of a cat that crashed into a house in the scottish borders have said they are ``upset'' by the scottish government ."
+        }
+    ]
+}
