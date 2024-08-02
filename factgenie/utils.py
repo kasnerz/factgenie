@@ -298,13 +298,13 @@ def select_batch_idx(db, seed):
     return batch_idx
 
 
-def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
+def get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id):
     # simple locking over the CSV file to prevent double writes
     with app.db["lock"]:
-        logging.info(f"Acquiring lock for {prolific_pid}")
+        logging.info(f"Acquiring lock for {annotator_id}")
         start = int(time.time())
 
-        seed = random.seed(str(start) + prolific_pid + session_id + study_id)
+        seed = random.seed(str(start) + annotator_id + session_id + study_id)
 
         try:
             batch_idx = select_batch_idx(db, seed)
@@ -312,13 +312,13 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
             # no available batches
             return []
 
-        if prolific_pid != "test":
+        if annotator_id != "test":
             db = free_idle_examples(db)
 
             # update the CSV
             db.loc[batch_idx, "status"] = "assigned"
             db.loc[batch_idx, "start"] = start
-            db.loc[batch_idx, "annotator_id"] = prolific_pid
+            db.loc[batch_idx, "annotator_id"] = annotator_id
 
             campaign.update_db(db)
 
@@ -329,14 +329,14 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
                 {
                     "campaign_id": campaign.campaign_id,
                     "batch_idx": batch_idx,
-                    "annotator_id": prolific_pid,
+                    "annotator_id": annotator_id,
                     "session_id": session_id,
                     "study_id": study_id,
                     "start_timestamp": start,
                 }
             )
 
-        logging.info(f"Releasing lock for {prolific_pid}")
+        logging.info(f"Releasing lock for {annotator_id}")
 
     return annotator_batch
 
@@ -783,10 +783,10 @@ def parse_crowdsourcing_config(config):
     config = {
         "annotator_instructions": config.get("annotatorInstructions"),
         "annotator_prompt": config.get("annotatorPrompt"),
+        "display_overlay": config.get("displayOverlay"),
         "final_message": config.get("finalMessage"),
         "examples_per_batch": int(config.get("examplesPerBatch")),
         "idle_time": int(config.get("idleTime")),
-        "completion_code": config.get("completionCode"),
         "sort_order": config.get("sortOrder"),
         "annotation_span_categories": config.get("annotationSpanCategories"),
     }
@@ -808,10 +808,14 @@ def create_crowdsourcing_page(campaign_id, config):
     instructions_html = markdown.markdown(config["annotator_instructions"])
     annotator_prompt = config["annotator_prompt"]
     final_message_html = markdown.markdown(config["final_message"])
+    display_overlay = config.get("display_overlay", True)
 
     content = content.replace("{ FACTGENIE_PLACEHOLDER: instructions }", instructions_html)
     content = content.replace("{ FACTGENIE_PLACEHOLDER: annotator_prompt }", annotator_prompt)
     content = content.replace("{ FACTGENIE_PLACEHOLDER: final_message }", final_message_html)
+    content = content.replace(
+        "{ FACTGENIE_PLACEHOLDER: display_overlay }", 'style="display: none"' if not display_overlay else ""
+    )
 
     with open(html_path, "w") as f:
         f.write(content)

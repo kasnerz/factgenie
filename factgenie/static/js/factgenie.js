@@ -598,9 +598,9 @@ function gatherConfig() {
         config.annotatorInstructions = annotatorInstructionsMDE.value();
         config.annotatorPrompt = $("#annotatorPrompt").val();
         config.finalMessage = finalMessageMDE.value();
+        config.displayOverlay = $("#displayOverlay").is(":checked");
         config.examplesPerBatch = $("#examplesPerBatch").val();
         config.idleTime = $("#idleTime").val();
-        config.completionCode = $("#completionCode").val();
         config.sortOrder = $("#sortOrder").val();
         config.annotationSpanCategories = getAnnotationSpanCategories();
     } else if (window.mode == "llm_eval") {
@@ -981,7 +981,6 @@ function updateCrowdsourcingConfig() {
         finalMessageMDE.value("");
         $("#examplesPerBatch").val("");
         $("#idleTime").val("");
-        $("#completionCode").val("");
         $("#annotation-span-categories").empty();
         return;
     }
@@ -992,7 +991,6 @@ function updateCrowdsourcingConfig() {
     const finalMessage = cfg.final_message;
     const examplesPerBatch = cfg.examples_per_batch;
     const idleTime = cfg.idle_time;
-    const completionCode = cfg.completion_code;
     const sortOrder = cfg.sort_order;
     const annotationSpanCategories = cfg.annotation_span_categories;
 
@@ -1001,7 +999,6 @@ function updateCrowdsourcingConfig() {
     finalMessageMDE.value(finalMessage);
     $("#examplesPerBatch").val(examplesPerBatch);
     $("#idleTime").val(idleTime);
-    $("#completionCode").val(completionCode);
     $("#sortOrder").val(sortOrder);
     $("#annotation-span-categories").empty();
 

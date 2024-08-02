@@ -111,7 +111,7 @@
   </div>
   </div>
 
-  <div id="overlay-start" class="overlay">
+  <div id="overlay-start" class="overlay" { FACTGENIE_PLACEHOLDER: display_overlay }>
     <div id="overlay-start-content" class="overlay-content">
       <h1>Welcome!</h1>
       { FACTGENIE_PLACEHOLDER: instructions }
@@ -120,7 +120,7 @@
   </div>
 
   <div id="overlay-end" class="overlay" style="display: none">
-    <div id="overlay-end-content" class="overlay-content">
+    <div id="overlay-end-content" class="overlay-content blue-link">
       <h1>Thank you!</h1>
 
       { FACTGENIE_PLACEHOLDER: final_message }
@@ -137,7 +137,6 @@
   window.annotation_set = {{ annotation_set | tojson | safe }};
   window.mode = "annotate";
   window.annotator_id = "{{ annotator_id }}";
-  window.compl_code = "{{ compl_code }}";
   window.metadata = {{ metadata | tojson | safe }};
 </script>
 

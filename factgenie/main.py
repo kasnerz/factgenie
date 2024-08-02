@@ -138,14 +138,13 @@ def annotate():
     utils.generate_campaign_index(app)
     campaign_id = request.args.get("campaign")
     campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
-    compl_code = campaign.metadata["config"]["completion_code"]
-    prolific_pid = request.args.get("PROLIFIC_PID", "test")
+    annotator_id = request.args.get("PROLIFIC_PID", "test")
     session_id = request.args.get("SESSION_ID", "test")
     study_id = request.args.get("STUDY_ID", "test")
 
     db = campaign.db
     metadata = campaign.metadata
-    annotation_set = utils.get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id)
+    annotation_set = utils.get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id)
 
     if not annotation_set:
         # no more available examples
@@ -159,8 +158,7 @@ def annotate():
         f"campaigns/{campaign.campaign_id}/annotate.html",
         host_prefix=app.config["host_prefix"],
         annotation_set=annotation_set,
-        annotator_id=prolific_pid,
-        compl_code=compl_code,
+        annotator_id=annotator_id,
         metadata=metadata,
     )
 

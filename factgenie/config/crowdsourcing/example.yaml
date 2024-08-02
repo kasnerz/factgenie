@@ -8,13 +8,9 @@ annotation_span_categories:
   - name: "Other"
     color: "#bbbbbb"
 examples_per_batch: 10
-# options:
-# - `dataset-level`: shuffles all outputs in the dataset
-# - `example-level`: shuffles outputs for each example keeping the order of examples
 sort_order: dataset-level
-# time after which an unfinished example can be re-assigned to a new annotator (minutes)
 idle_time: 120
-completion_code: "ABCDE"
+display_overlay: true
 annotator_instructions: |
   In this task, you will annotate outputs of an automatic text generation system. For each example, you will see **data** on the left side and the corresponding generated **text** on the right side. Your task is to **annotate errors** in the text with respect to the data.
 
@@ -34,6 +30,6 @@ annotator_prompt: "Please annotate all the errors in the text:"
 final_message: |
   Your annotations have been submitted.
 
-  Your Prolific completion code is **{{ compl_code }}**.
+  Your Prolific completion code is **CK388WFU**.
 
-  [Return to Prolific](https://app.prolific.co/submissions/complete?cc={{ compl_code }})
+  **[Return to Prolific](https://app.prolific.co/submissions/complete?cc=CK388WFU)**

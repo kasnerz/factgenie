@@ -44,7 +44,6 @@
             <th scope="col">Id</th>
             <th scope="col">Created</th>
             <th scope="col">Status</th>
-            <th scope="col">Prolific Code</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
@@ -60,7 +59,6 @@
               <span class="badge bg-secondary">{{ status }}: {{ count }}</span>
               {% endfor %}
             </td>
-            <td>{{ campaign.metadata.completion_code }}</td>
             <td>
               <a href="{{ host_prefix }}/annotate?campaign={{ campaign.metadata.id }}" class="btn btn-outline-secondary"
                 data-bs-toggle="tooltip" title="Preview the crowdsourcing page">
