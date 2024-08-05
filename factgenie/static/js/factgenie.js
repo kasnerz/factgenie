@@ -180,7 +180,6 @@ function loadAnnotations() {
 }
 
 function submitAnnotations(campaign_id) {
-    // console.log(annotation_set);
     $.post({
         url: `${url_prefix}/submit_annotations`,
         contentType: 'application/json', // Specify JSON content type
@@ -211,8 +210,6 @@ function collectFlags() {
 function saveCurrentOnly() {
     var collection = YPet[`p${example_idx}`].currentView.collection.parentDocument.get('annotations').toJSON();
     annotation_set[example_idx]["annotations"] = collection;
-    console.log(example_idx);
-    // annotation_set[example_idx]["flags"] = collectFlags();
 }
 
 
@@ -261,10 +258,7 @@ function showAnnotation() {
     const data = examples_cached[example_idx];
     const flags = annotation_set[example_idx].flags;
 
-    console.log("showing annotation", example_idx, data);
-    debugger;
     if (flags !== undefined) {
-        console.log("setting flags", flags);
         // flags are an array
         $(".flag-checkbox").each(function (i) {
             $(this).find("input[type='checkbox']").prop("checked", flags[i]);
@@ -841,7 +835,7 @@ function addExtraArgument() {
 
 function addFlag() {
     const flags = $("#flags");
-    const newFlag = createFlagElem("", "unchecked");
+    const newFlag = createFlagElem("");
     flags.append(newFlag);
 }
 
@@ -850,7 +844,7 @@ function deleteRow(button) {
     $(button).parent().parent().remove();
 }
 
-function createFlagElem(key, value) {
+function createFlagElem(key) {
     // text area and selectbox for the flag ("checked" or "unchecked" based on the value)
     const newFlag = $(`
         <div class="row mt-1">
@@ -1003,6 +997,7 @@ function updateCrowdsourcingConfig() {
         $("#examplesPerBatch").val("");
         $("#idleTime").val("");
         $("#annotation-span-categories").empty();
+        $("#flags").empty();
         return;
     }
     const cfg = window.configs[crowdsourcingConfig];
@@ -1014,6 +1009,7 @@ function updateCrowdsourcingConfig() {
     const idleTime = cfg.idle_time;
     const sortOrder = cfg.sort_order;
     const annotationSpanCategories = cfg.annotation_span_categories;
+    const flags = cfg.flags;
 
     annotatorInstructionsMDE.value(annotatorInstructions);
     $("#annotatorPrompt").val(annotatorPrompt);
@@ -1026,6 +1022,12 @@ function updateCrowdsourcingConfig() {
     annotationSpanCategories.forEach((annotationSpanCategory) => {
         const newCategory = createAnnotationSpanCategoryElem(annotationSpanCategory.name, annotationSpanCategory.color);
         $("#annotation-span-categories").append(newCategory);
+    });
+    $("#flags").empty();
+
+    flags.forEach((flag) => {
+        const newFlag = createFlagElem(flag);
+        $("#flags").append(newFlag);
     });
 }
 

@@ -796,6 +796,9 @@ def parse_crowdsourcing_config(config):
 
 
 def generate_checkboxes(flags):
+    if not flags:
+        return ""
+    
     checkboxes = "<p>Please also <b>check if you agree with any of the following statements</b>, then mark the example as complete:</p>"
     for i, flag in enumerate(flags):
         checkboxes += f"""
