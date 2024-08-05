@@ -789,9 +789,25 @@ def parse_crowdsourcing_config(config):
         "idle_time": int(config.get("idleTime")),
         "sort_order": config.get("sortOrder"),
         "annotation_span_categories": config.get("annotationSpanCategories"),
+        "flags": config.get("flags"),
     }
 
     return config
+
+
+def generate_checkboxes(flags):
+    checkboxes = "<p>Please also <b>check if you agree with any of the following statements</b>, then mark the example as complete:</p>"
+    for i, flag in enumerate(flags):
+        checkboxes += f"""
+            <div class="form-check flag-checkbox">
+                <input class="form-check-input" type="checkbox" value="{i}" id="checkbox-{i}">
+                <label class="form-check-label" for="checkbox-{i}">
+                    {flag}
+                </label>
+            </div>
+        """
+
+    return checkboxes
 
 
 def create_crowdsourcing_page(campaign_id, config):
@@ -816,6 +832,7 @@ def create_crowdsourcing_page(campaign_id, config):
     content = content.replace(
         "{ FACTGENIE_PLACEHOLDER: display_overlay }", 'style="display: none"' if not display_overlay else ""
     )
+    content = content.replace("{ FACTGENIE_PLACEHOLDER: flags }", generate_checkboxes(config.get("flags", [])))
 
     with open(html_path, "w") as f:
         f.write(content)

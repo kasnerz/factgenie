@@ -197,51 +197,36 @@ function submitAnnotations(campaign_id) {
     });
 }
 
+function collectFlags() {
+    // collect values of all checkboxes within divs of class `flag-checkbox`, save values sequentially (for each id)
+    const flags = [];
+    $(".flag-checkbox").each(function () {
+        const value = $(this).find("input[type='checkbox']").prop("checked");
+        flags.push(value);
+    });
+    console.log("collected flags", flags);
+    return flags;
+}
+
 function saveCurrentOnly() {
     var collection = YPet[`p${example_idx}`].currentView.collection.parentDocument.get('annotations').toJSON();
-
-    const checkbox_correct = $("#checkbox-correct").is(":checked");
-    const checkbox_missing = $("#checkbox-missing").is(":checked");
-    const checkbox_off_topic = $("#checkbox-off-topic").is(":checked");
-
     annotation_set[example_idx]["annotations"] = collection;
-    annotation_set[example_idx]["flags"] = {
-        "is_fully_correct": checkbox_correct,
-        "is_missing": checkbox_missing,
-        "is_off_topic": checkbox_off_topic,
-    };
+    console.log(example_idx);
+    // annotation_set[example_idx]["flags"] = collectFlags();
 }
 
 
 function markAnnotationAsComplete() {
     var collection = YPet[`p${example_idx}`].currentView.collection.parentDocument.get('annotations').toJSON();
-
-    const checkbox_correct = $("#checkbox-correct").is(":checked");
-    const checkbox_missing = $("#checkbox-missing").is(":checked");
-    const checkbox_off_topic = $("#checkbox-off-topic").is(":checked");
-
-
-    // // if the collection is empty but the `checkbox-correct` is not checked, display an alert
-    // if (collection.length == 0 && !(checkbox_correct || checkbox_missing)) {
-    //     alert("Are you *really* sure that the example does not contain any errors? If so, please check the last box to mark the example as complete.");
-    //     return;
-    // }
-
     annotation_set[example_idx]["annotations"] = collection;
-    annotation_set[example_idx]["flags"] = {
-        "is_fully_correct": checkbox_correct,
-        "is_missing": checkbox_missing,
-        "is_off_topic": checkbox_off_topic,
-    };
+    console.log(example_idx);
+    annotation_set[example_idx]["flags"] = collectFlags();
 
     $('#page-link-' + example_idx).removeClass("bg-incomplete");
     $('#page-link-' + example_idx).addClass("bg-complete");
 
     // uncheck all checkboxes
-    $("#checkbox-correct").prop("checked", false);
-    $("#checkbox-missing").prop("checked", false);
-    $("#checkbox-off-topic").prop("checked", false);
-
+    $(".flag-checkbox input[type='checkbox']").prop("checked", false);
 
     // if all the examples are annotated, post the annotations
     if ($(".bg-incomplete").length == 0) {
@@ -276,14 +261,17 @@ function showAnnotation() {
     const data = examples_cached[example_idx];
     const flags = annotation_set[example_idx].flags;
 
+    console.log("showing annotation", example_idx, data);
+    debugger;
     if (flags !== undefined) {
-        $("#checkbox-correct").prop("checked", flags.is_fully_correct);
-        $("#checkbox-missing").prop("checked", flags.is_missing);
-        $("#checkbox-off-topic").prop("checked", flags.is_off_topic);
+        console.log("setting flags", flags);
+        // flags are an array
+        $(".flag-checkbox").each(function (i) {
+            $(this).find("input[type='checkbox']").prop("checked", flags[i]);
+        });
     } else {
-        $("#checkbox-correct").prop("checked", false);
-        $("#checkbox-missing").prop("checked", false);
-        $("#checkbox-off-topic").prop("checked", false);
+        // uncheck all checkboxes
+        $(".flag-checkbox input[type='checkbox']").prop("checked", false);
     }
     $("#examplearea").html(data.html);
     // $(".text-type").html(`${type}`);
@@ -603,6 +591,7 @@ function gatherConfig() {
         config.idleTime = $("#idleTime").val();
         config.sortOrder = $("#sortOrder").val();
         config.annotationSpanCategories = getAnnotationSpanCategories();
+        config.flags = getKeys($("#flags"));
     } else if (window.mode == "llm_eval") {
         config.metricType = $("#metric-type").val();
         config.modelName = $("#model-name").val();
@@ -671,6 +660,15 @@ function getKeysAndValues(div) {
         args[key] = value;
     });
     return args;
+}
+
+function getKeys(div) {
+    var keys = [];
+    div.children().each(function () {
+        const key = $(this).find("input[name='argName']").val();
+        keys.push(key);
+    });
+    return keys;
 }
 
 function createHumanCampaign() {
@@ -841,9 +839,32 @@ function addExtraArgument() {
     modelArguments.append(newArg);
 }
 
+function addFlag() {
+    const flags = $("#flags");
+    const newFlag = createFlagElem("", "unchecked");
+    flags.append(newFlag);
+}
+
+
 function deleteRow(button) {
     $(button).parent().parent().remove();
 }
+
+function createFlagElem(key, value) {
+    // text area and selectbox for the flag ("checked" or "unchecked" based on the value)
+    const newFlag = $(`
+        <div class="row mt-1">
+        <div class="col-11">
+        <input type="text" class="form-control" name="argName" value="${key}" placeholder="Question or statement">
+        </div>
+        <div class="col-1">
+        <button type="button" class="btn btn-danger" onclick="deleteRow(this);">x</button>
+        </div>
+        </div>
+    `);
+    return newFlag;
+}
+
 
 function createArgElem(key, value) {
     const newArg = $(`
