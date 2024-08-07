@@ -1,12 +1,14 @@
-<div class="row g-3 mb-3 align-items-center">
+<div class="row mb-3 mt-3 align-items-center">
     <div class="col-auto">
         <i class="fa fa-pencil"></i>
         <span style="margin-left: 10px; margin-right: 10px;">Annotation span categories</span>
-        <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="Categories used for annotation. The order of the category (0
-        to n) corresponds to value of the `type` field in the annotation JSON. These
-        categories will be available to human annotators. For LLM
-          eval, you also need to instruct the model to produce exactly these
-          categories."></i>
+        <div class="mb-2">
+            <small class="form-text text-muted">Categories used for annotation. You should instruct the annotators to
+                use
+                these categories. The order of the category (0
+                to n) corresponds to value of the `type` field in the annotation JSON. .
+            </small>
+        </div>
     </div>
     <div id="annotation-span-categories">
     </div>

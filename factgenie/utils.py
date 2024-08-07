@@ -17,6 +17,7 @@ import shutil
 import inspect
 import importlib
 import zipfile
+import markdown
 
 from io import BytesIO
 from slugify import slugify
@@ -26,6 +27,7 @@ from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset, DATA_DIR
+from jinja2 import Template
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
@@ -297,13 +299,13 @@ def select_batch_idx(db, seed):
     return batch_idx
 
 
-def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
+def get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id):
     # simple locking over the CSV file to prevent double writes
     with app.db["lock"]:
-        logging.info(f"Acquiring lock for {prolific_pid}")
+        logging.info(f"Acquiring lock for {annotator_id}")
         start = int(time.time())
 
-        seed = random.seed(str(start) + prolific_pid + session_id + study_id)
+        seed = random.seed(str(start) + annotator_id + session_id + study_id)
 
         try:
             batch_idx = select_batch_idx(db, seed)
@@ -311,13 +313,13 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
             # no available batches
             return []
 
-        if prolific_pid != "test":
+        if annotator_id != "test":
             db = free_idle_examples(db)
 
             # update the CSV
             db.loc[batch_idx, "status"] = "assigned"
             db.loc[batch_idx, "start"] = start
-            db.loc[batch_idx, "annotator_id"] = prolific_pid
+            db.loc[batch_idx, "annotator_id"] = annotator_id
 
             campaign.update_db(db)
 
@@ -328,14 +330,14 @@ def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
                 {
                     "campaign_id": campaign.campaign_id,
                     "batch_idx": batch_idx,
-                    "annotator_id": prolific_pid,
+                    "annotator_id": annotator_id,
                     "session_id": session_id,
                     "study_id": study_id,
                     "start_timestamp": start,
                 }
             )
 
-        logging.info(f"Releasing lock for {prolific_pid}")
+        logging.info(f"Releasing lock for {annotator_id}")
 
     return annotator_batch
 
@@ -780,14 +782,71 @@ def parse_llm_config(config):
 
 def parse_crowdsourcing_config(config):
     config = {
+        "annotator_instructions": config.get("annotatorInstructions"),
+        "annotator_prompt": config.get("annotatorPrompt"),
+        "has_display_overlay": config.get("hasDisplayOverlay"),
+        "final_message": config.get("finalMessage"),
         "examples_per_batch": int(config.get("examplesPerBatch")),
         "idle_time": int(config.get("idleTime")),
-        "completion_code": config.get("completionCode"),
         "sort_order": config.get("sortOrder"),
         "annotation_span_categories": config.get("annotationSpanCategories"),
+        "flags": config.get("flags"),
     }
 
     return config
+
+
+def generate_checkboxes(flags):
+    if not flags:
+        return ""
+
+    checkboxes = "<p>Please also <b>check if you agree with any of the following statements</b>, then mark the example as complete:</p>"
+    for i, flag in enumerate(flags):
+        checkboxes += f"""
+            <div class="form-check flag-checkbox">
+                <input class="form-check-input" type="checkbox" value="{i}" id="checkbox-{i}">
+                <label class="form-check-label" for="checkbox-{i}">
+                    {flag}
+                </label>
+            </div>
+        """
+
+    return checkboxes
+
+
+def create_crowdsourcing_page(campaign_id, config):
+    html_path = os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html")
+
+    os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
+
+    parts = []
+    for part in ["header", "body", "footer"]:
+        part_path = os.path.join(TEMPLATES_DIR, "campaigns", "annotate_{}.html".format(part))
+
+        with open(part_path, "r") as f:
+            parts.append(f.read())
+
+    instructions_html = markdown.markdown(config["annotator_instructions"])
+    annotator_prompt = config["annotator_prompt"]
+    final_message_html = markdown.markdown(config["final_message"])
+    has_display_overlay = config.get("has_display_overlay", True)
+
+    # format only the body, keeping the unfilled templates in header and footer
+    template = Template(parts[1])
+
+    rendered_content = template.render(
+        instructions=instructions_html,
+        annotator_prompt=annotator_prompt,
+        final_message=final_message_html,
+        has_display_overlay='style="display: none"' if not has_display_overlay else "",
+        flags=generate_checkboxes(config.get("flags", [])),
+    )
+
+    # concatenate with header and footer
+    content = parts[0] + rendered_content + parts[2]
+
+    with open(html_path, "w") as f:
+        f.write(content)
 
 
 def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):

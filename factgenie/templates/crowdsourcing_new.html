@@ -11,6 +11,9 @@
   <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
   <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
   <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+  <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 </head>
 
 {% include 'navbar.html' %}
@@ -72,42 +75,109 @@
             </div>
             <div class="col-auto">
               <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="Add your custom preset to
-          factgenie/config/crowdsourcing"></i>
+          factgenie/config/crowdsourcing or save your current configuration."></i>
             </div>
           </div>
 
           <div class="rounded-box mt-4">
+            <!-- textarea for annotator instructions -->
+            <div class="form-group">
+              <label for="annotatorInstructions">Annotator instructions</label>
+              <div class="mb-2">
+                <small class="form-text text-muted">Instructions shown to the annotators. Use Markdown syntax.</small>
+              </div>
+              <textarea class="form-control" id="annotatorInstructions" name="annotatorInstructions"
+                required></textarea>
+            </div>
+            <!-- checkbox for displaying overlay -->
+            <div class="form-group">
+              <label for="displayOverlay">Show overlay</label>
+              <div class="mb-2">
+                <small class="form-text text-muted">Display an introductory overlay with the instructions.</small>
+              </div>
+              <div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input" id="displayOverlay" name="displayOverlay" checked>
+              </div>
+            </div>
+            <!-- textarea for annotator prompt -->
+            <div class="form-group mt-3">
+              <label for="annotatorPrompt">Annotator prompt</label>
+              <div class="mb-2">
+                <small class="form-text text-muted">The message shown right before the annotated text.</small>
+              </div>
+              <textarea class="form-control" id="annotatorPrompt" name="annotatorPrompt" rows="1" required></textarea>
+            </div>
+            <!-- textarea for final message -->
+            <div class="form-group  mt-4">
+              <label for="finalMessage">Final message</label>
+              <div class="mb-2">
+                <small class="form-text text-muted">The message shown after the annotator has submitted the annotations.
+                  Use Markdown syntax. You should include the completion code here. </small>
+              </div>
+              <textarea class="form-control" id="finalMessage" name="finalMessage" required></textarea>
+            </div>
             <div class="form-group">
               <label for="examplesPerBatch">Examples per batch</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
-                title="Number of examples shown to each annotator"></i>
+              <div class="mb-2">
+                <small class="form-text text-muted">Number of examples shown to each annotator </small>
+              </div>
               <input type="number" class="form-control" id="examplesPerBatch" name="examplesPerBatch" min="1" required>
             </div>
-            <div class="form-group mt-2">
+            <div class="form-group mt-4">
               <!-- select for sort order -->
               <label for="sortOrder">Shuffle outputs</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="How to shuffle outputs before batching. `dataset-level`: shuffles all outputs in the dataset
-               `example-level`: shuffles outputs for each example keeping the order of examples"></i>
+              <div class="mb-2">
+                <small class="form-text text-muted">How to shuffle examples before batching (model outputs are
+                  shuffled always).</small>
+              </div>
               <select class="form-select" id="sortOrder" name="sortOrder">
-                <option value="dataset-level">Dataset-level</option>
-                <option value="example-level">Example-level</option>
+                <option value="dataset-level">Shuffle the examples</option>
+                <option value="example-level">Keep the order of examples</option>
               </select>
             </div>
-            <div class="form-group mt-2">
+            <div class="form-group mt-4">
               <label for="idleTime">Idle Time (minutes)</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="The time after which an unfinished example can be re-assigned to a
-                new annotator"></i>
+              <div class="mb-2">
+                <small class="form-text text-muted">The time after which an unfinished example can be re-assigned to a
+                  new annotator.
+                </small>
+              </div>
               <input type="number" class="form-control" id="idleTime" name="idleTime" min="0">
-            </div>
-            <div class="form-group mt-2">
-              <label for="completionCode">Prolific Completion Code</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="The code that will be shown to the annotator after submitting the
-                annotations"></i>
-              <input type="text" class="form-control" id="completionCode" name="completionCode">
             </div>
 
             {% include 'forms/annotation_span_categories.html' %}
+            <div class="accordion " id="advancedAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingAdvanced">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
+                    Advanced
+                  </button>
+                </h2>
+                <div id="collapseAdvanced" class="accordion-collapse collapse" aria-labelledby="headingAdvanced"
+                  data-bs-parent="#advancedAccordion">
+                  <div class="accordion-body">
+                    <div class="row mb-1 align-items-center">
+                      <div class="col-auto">
+                        <i class="fa fa-list-ul"></i>
+                        <span style="margin-left: 5px; margin-right: 10px;">Flags</span>
+                        <div class="mb-2">
+                          <small class="form-text text-muted">Checkboxes that the annotators can mark for each
+                            example.</small>
+                        </div>
+                      </div>
+                      <div id="flags"></div>
+                      <div class="col-auto mt-1">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addFlag();">+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+
 
           <div style="text-align: center;">
             <button type="button" class="btn btn-outline-secondary mt-3"
@@ -181,5 +251,14 @@
   window.model_outs = {{ model_outs | tojson | safe }};
   window.configs = {{ configs | tojson | safe }};
   window.mode = "crowdsourcing";
+
+  var annotatorInstructionsMDE = new SimpleMDE({
+    element: $("#annotatorInstructions")[0], spellChecker: false,
+    // autosave: { enabled: true, unique_id: "annotatorInstructionsText" } 
+  });
+  var finalMessageMDE = new SimpleMDE({
+    element: $("#finalMessage")[0], spellChecker: false,
+    // autosave: { enabled: true, unique_id: "finalMessageText" } 
+  });
 </script>
 <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

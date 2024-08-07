@@ -11,6 +11,7 @@ install_requires = [
     "gunicorn",
     "json2table",
     "lxml",
+    "markdown",
     "natsort",
     "openai",
     "python-slugify",

@@ -8,10 +8,32 @@ annotation_span_categories:
   - name: "Other"
     color: "#bbbbbb"
 examples_per_batch: 10
-# options:
-# - `dataset-level`: shuffles all outputs in the dataset
-# - `example-level`: shuffles outputs for each example keeping the order of examples
 sort_order: dataset-level
-# time after which an unfinished example can be re-assigned to a new annotator (minutes)
 idle_time: 120
-completion_code: "ABCDE"
+has_display_overlay: true
+annotator_instructions: |
+  In this task, you will annotate outputs of an automatic text generation system. For each example, you will see **data** on the left side and the corresponding generated **text** on the right side. Your task is to **annotate errors** in the text with respect to the data.
+
+  There are five types of errors that you can mark in the generated text:
+
+  1.  <span style="background-color: #FFBCBC"><b>Incorrect fact</b></span>: The fact in the text contradicts the data.
+  2.  <span style="background-color: #e9d2ff"><b>Not checkable</b></span> : The fact in the text cannot be checked given the data.
+  3.  <span style="background-color: #FFF79F"><b>Misleading</b></span>: The fact in the text is misleading in the given context.
+  4.  <span style="background-color: #bbbbbb"><b>Other</b></span> : The text is problematic for another reason, e.g. grammatically or stylistically incorrect, irrelevant, or repetitive.
+
+  You can annotate the errors by dragging your mouse over the text, highlighting the error span.
+  
+  Once you think you have marked all the errors present in the text, click the **✅ Mark example as complete** button (you can still update the annotation later). 
+  
+  You will be able to submit the annotations once they are all are marked as complete.
+annotator_prompt: "Please annotate all the errors in the text:"
+final_message: |
+  Your annotations have been submitted.
+
+  Your Prolific completion code is **CK388WFU**.
+
+  **[Return to Prolific](https://app.prolific.co/submissions/complete?cc=CK388WFU)**
+flags:
+  - The text 100% accurate and does not contain any errors.
+  - The text is missing or incomplete.
+  - The text is severely off-topic (seems completely unrelated to the data).
