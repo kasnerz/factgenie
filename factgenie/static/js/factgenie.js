@@ -580,7 +580,7 @@ function gatherConfig() {
         config.annotatorInstructions = annotatorInstructionsMDE.value();
         config.annotatorPrompt = $("#annotatorPrompt").val();
         config.finalMessage = finalMessageMDE.value();
-        config.displayOverlay = $("#displayOverlay").is(":checked");
+        config.hasDisplayOverlay = $("#displayOverlay").is(":checked");
         config.examplesPerBatch = $("#examplesPerBatch").val();
         config.idleTime = $("#idleTime").val();
         config.sortOrder = $("#sortOrder").val();

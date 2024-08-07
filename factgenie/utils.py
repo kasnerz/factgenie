@@ -27,6 +27,7 @@ from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset, DATA_DIR
+from jinja2 import Template
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
@@ -783,7 +784,7 @@ def parse_crowdsourcing_config(config):
     config = {
         "annotator_instructions": config.get("annotatorInstructions"),
         "annotator_prompt": config.get("annotatorPrompt"),
-        "display_overlay": config.get("displayOverlay"),
+        "has_display_overlay": config.get("hasDisplayOverlay"),
         "final_message": config.get("finalMessage"),
         "examples_per_batch": int(config.get("examplesPerBatch")),
         "idle_time": int(config.get("idleTime")),
@@ -798,7 +799,7 @@ def parse_crowdsourcing_config(config):
 def generate_checkboxes(flags):
     if not flags:
         return ""
-    
+
     checkboxes = "<p>Please also <b>check if you agree with any of the following statements</b>, then mark the example as complete:</p>"
     for i, flag in enumerate(flags):
         checkboxes += f"""
@@ -814,28 +815,35 @@ def generate_checkboxes(flags):
 
 
 def create_crowdsourcing_page(campaign_id, config):
-    template_path = os.path.join(TEMPLATES_DIR, "campaigns", "annotate_default.html")
     html_path = os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html")
 
     os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
-    shutil.copy(template_path, html_path)
 
-    # load the annotate.html file and replace placeholders
-    with open(html_path, "r") as f:
-        content = f.read()
+    parts = []
+    for part in ["header", "body", "footer"]:
+        part_path = os.path.join(TEMPLATES_DIR, "campaigns", "annotate_{}.html".format(part))
+
+        with open(part_path, "r") as f:
+            parts.append(f.read())
 
     instructions_html = markdown.markdown(config["annotator_instructions"])
     annotator_prompt = config["annotator_prompt"]
     final_message_html = markdown.markdown(config["final_message"])
-    display_overlay = config.get("display_overlay", True)
+    has_display_overlay = config.get("has_display_overlay", True)
 
-    content = content.replace("{ FACTGENIE_PLACEHOLDER: instructions }", instructions_html)
-    content = content.replace("{ FACTGENIE_PLACEHOLDER: annotator_prompt }", annotator_prompt)
-    content = content.replace("{ FACTGENIE_PLACEHOLDER: final_message }", final_message_html)
-    content = content.replace(
-        "{ FACTGENIE_PLACEHOLDER: display_overlay }", 'style="display: none"' if not display_overlay else ""
+    # format only the body, keeping the unfilled templates in header and footer
+    template = Template(parts[1])
+
+    rendered_content = template.render(
+        instructions=instructions_html,
+        annotator_prompt=annotator_prompt,
+        final_message=final_message_html,
+        has_display_overlay='style="display: none"' if not has_display_overlay else "",
+        flags=generate_checkboxes(config.get("flags", [])),
     )
-    content = content.replace("{ FACTGENIE_PLACEHOLDER: flags }", generate_checkboxes(config.get("flags", [])))
+
+    # concatenate with header and footer
+    content = parts[0] + rendered_content + parts[2]
 
     with open(html_path, "w") as f:
         f.write(content)

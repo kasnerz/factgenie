@@ -10,7 +10,7 @@ annotation_span_categories:
 examples_per_batch: 10
 sort_order: dataset-level
 idle_time: 120
-display_overlay: true
+has_display_overlay: true
 annotator_instructions: |
   In this task, you will annotate outputs of an automatic text generation system. For each example, you will see **data** on the left side and the corresponding generated **text** on the right side. Your task is to **annotate errors** in the text with respect to the data.
 
@@ -33,3 +33,7 @@ final_message: |
   Your Prolific completion code is **CK388WFU**.
 
   **[Return to Prolific](https://app.prolific.co/submissions/complete?cc=CK388WFU)**
+flags:
+  - The text 100% accurate and does not contain any errors.
+  - The text is missing or incomplete.
+  - The text is severely off-topic (seems completely unrelated to the data).
