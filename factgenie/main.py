@@ -409,12 +409,13 @@ def render_example():
 
     try:
         example_data = utils.get_example_data(app, dataset_id, split, example_idx)
+        return jsonify(example_data)
     except Exception as e:
         traceback.print_exc()
         logger.error(f"Error while getting example data: {e}")
         logger.error(f"{dataset_id=}, {split=}, {example_idx=}")
+        return jsonify({"error": f"Error\n\t{e}\nwhile getting example data: {dataset_id=}, {split=}, {example_idx=}"})
 
-    return jsonify(example_data)
 
 
 @app.route("/export_annotations", methods=["GET", "POST"])
