@@ -1,0 +1,9 @@
+<script>
+  window.url_prefix = "{{ host_prefix }}";
+  window.annotation_set = {{ annotation_set | tojson | safe }};
+  window.mode = "annotate";
+  window.annotator_id = "{{ annotator_id }}";
+  window.metadata = {{ metadata | tojson | safe }};
+</script>
+
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
