@@ -11,7 +11,8 @@ Visualize and annotate LLM outputs 🌈
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
 ## 📢  News
-- **31/07/2024** - We updated and expanded the README into a set of tutorials. The tutorials are available on our [Github wiki](../../wiki/)!
+- **09/08/2024** - Instructions for the annotators can be now configured directly in the web interace and in the configuration file – no need for coding HTML!
+- **31/07/2024** - We updated and expanded the README into a set of tutorials. The tutorials are available on our [Github wiki](../../wiki/).
 - **31/07/2024** - We substantially improved the data management. You can now manage the datasets both through the configuration file and the web interface.
 - **25/07/2024** - We published an [arXiv pre-print](https://arxiv.org/abs/2407.17863) about factgenie. The paper is accepted to the INLG 2024 System Demonstrations track.
 
