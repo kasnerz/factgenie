@@ -72,3 +72,5 @@ For citing us, please use the following BibTeX entry:
       url       = {https://arxiv.org/abs/2407.17863}, 
 }
 ```
+
+<img src="img/EU_FLAG.jpg" alt="drawing" height="11"/> This work was co-funded by the European Union (ERC, NG-NLG, 101039303)
