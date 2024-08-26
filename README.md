@@ -73,4 +73,6 @@ For citing us, please use the following BibTeX entry:
 }
 ```
 
-<img src="img/EU_FLAG.jpg" alt="drawing" height="11"/> This work was co-funded by the European Union (ERC, NG-NLG, 101039303)
+## Acknowledgements
+This work was co-funded by the European Union (ERC, NG-NLG, 101039303).
+<img src="img/LOGO_ERC-FLAG_FP.png" alt="erc-logo" height="150"/> 
