@@ -1,8 +1,8 @@
 ---
-debug: true
+debug: true #false
 host_prefix: ""
-logging_level: INFO
+logging_level: DEBUG #INFO
 login:
   active: true
   username: admin
-  password: factgenie
+  password: admin

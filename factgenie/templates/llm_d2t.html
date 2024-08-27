@@ -19,23 +19,12 @@
 
 <div class="container w-75 mt-5">
   <a href="{{ host_prefix }}/" class="btn btn-outline-secondary mb-5">← Main page</a>
-  <a href="{{ host_prefix }}/crowdsourcing/new" class="btn btn-primary mb-5">New campaign</a>
+  <a href="{{ host_prefix }}/llm_d2t/new" class="btn btn-primary mb-5">New LLM
+    generation</a>
 
   <div class="mt-1">
-
-    <!-- if login is not enabled in the app config, show red warning -->
-    {% if not is_password_protected %}
-    <div class="alert alert-danger" role="alert">
-      <i class="fa fa-exclamation-triangle"></i>
-      <span>Warning: The app is unprotected. You should enable authentication in <code>factgenie/config.yml</code>
-        before sharing
-        the URL with the
-        public.</span>
-    </div>
-    {% endif %}
-
-    <h3><img src="{{ host_prefix }}/static/img/pencil.png" class="heading-img-inline">
-      <b>List of crowdsourcing campaigns</b>
+    <h3><img src="{{ host_prefix }}/static/img/d2t.png" class="heading-img-inline">
+      <b>List of LLM generation campaigns</b>
     </h3>
     <div id="campaigns">
       <table class="table table-hover">
@@ -44,15 +33,13 @@
             <th scope="col">Id</th>
             <th scope="col">Created</th>
             <th scope="col">Status</th>
-            <th scope="col">Prolific Code</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for name, campaign in campaigns.items() %}
           <tr>
-            <td><a href="{{ host_prefix }}/crowdsourcing/detail?campaign={{ campaign.metadata.id }}"
-                class="blue-link">{{
+            <td><a href="{{ host_prefix }}/llm_d2t/detail?campaign={{ campaign.metadata.id }}" class="blue-link">{{
                 campaign.metadata.id }}</a></td>
             <td>{{ campaign.metadata.created }}</td>
             <!-- <td>{{ campaign.stats }}</td> -->
@@ -60,21 +47,16 @@
               <span class="badge bg-secondary">{{ status }}: {{ count }}</span>
               {% endfor %}
             </td>
-            <td>{{ campaign.metadata.completion_code }}</td>
             <td>
-              <a href="{{ host_prefix }}/annotate?campaign={{ campaign.metadata.id }}" class="btn btn-outline-secondary"
-                data-bs-toggle="tooltip" title="Preview the crowdsourcing page">
-                <i class="fa fa-eye"></i>
-              </a>
               <a href="{{ host_prefix }}/export_annotations?campaign={{ campaign.metadata.id }}"
                 class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Export annotations">
                 <i class="fa fa-download"></i>
               </a>
-              <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-                data-bs-target="#duplicate-eval-modal-{{ campaign.metadata.id }}">
+              <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#duplicate-eval-modal-{{
+                  campaign.metadata.id }}">
                 <i class="fa fa-clone"></i>
               </a>
-              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'crowdsourcing')" class="btn btn-outline-danger"
+              <a onclick="deleteCampaign('{{ campaign.metadata.id }}', 'llm_d2t')" class="btn btn-outline-danger"
                 data-bs-toggle="tooltip" title="Delete the campaign">
                 <i class="fa fa-trash"></i>
               </a>
@@ -85,13 +67,14 @@
         </tbody>
 
     </div>
+
   </div>
 
-</div>
-<script>
-  // variable to be used in factgenie.js
-  window.url_prefix = "{{ host_prefix }}";
-  window.campaigns = {{ campaigns | tojson | safe }};
-  window.mode = "crowdsourcing";
-</script>
-<script src="{{ host_prefix }}/static/js/factgenie.js"></script>
+
+
+  <script>
+    // variable to be used in factgenie.js
+    window.url_prefix = "{{ host_prefix }}";
+    window.mode = "llm_d2t";
+  </script>
+  <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

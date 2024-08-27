@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>factgenie</title>
+  <meta name="viewport" content="width=1024">
+  <link rel="stylesheet" media="screen" href="{{ host_prefix }}/static/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ host_prefix }}/static/css/custom.css">
+  <link rel="shortcut icon" href="{{ host_prefix }}/static/img/favicon.ico">
+  <link href="{{ host_prefix }}/static/css/font-awesome.css" rel="stylesheet">
+  <script src="{{ host_prefix }}/static/js/jquery.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/popper.min.js"></script>
+  <script src="{{ host_prefix }}/static/js/bootstrap.min.js"></script>
+</head>
+
+{% include 'navbar.html' %}
+
+<div class="container w-50 mt-5">
+
+  <div class="mt-5">
+    <a href="{{ host_prefix }}/llm_eval" class="btn btn-outline-secondary mb-5">← List of LLM generations</a>
+    <h3><b>{{ campaign_id }}</b></h3>
+
+    <div id="metadata-block" class="mt-3">
+      <hr>
+      <dl class="row">
+        <dt class="col-sm-3"> Created </dt>
+        <dd class="col-sm-9" id="metadata-created"> {{ metadata.created }} </dd>
+        <dt class="col-sm-3"> Status </dt>
+        <dd class="col-sm-9" id="metadata-status"> {{ metadata.status }} </dd>
+        <dt class="col-sm-3"> Examples </dt>
+        <dd class="col-sm-9" id="metadata-example-cnt"> {{ finished_examples | length }} / {{ overview | length }} </dd>
+      </dl>
+      <div>
+        <a onclick="runLlmD2T('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+          id="run-button" title="Run evaluation" {% if metadata.status=='finished' or metadata.status=='running' %}
+          style="display: none;" {% endif %}>
+          <i class="fa fa-play"></i> {{ 'Continue' if metadata.status == 'paused' else 'Run' }} generation
+        </a>
+        <a onclick="pauseLlmD2T('{{ campaign_id }}')" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+          id="stop-button" title="Stop evaluation" {% if metadata.status!='running' %} style="display: none;" {% endif
+          %}>
+          <i class="fa fa-pause"></i> Pause evaluation
+        </a>
+        <a href="{{ host_prefix }}/export_annotations?campaign={{ campaign_id }}" class="btn btn-outline-secondary"
+          data-bs-toggle="tooltip" id="download-button" title="Export annotations" {% if metadata.status=='new' %}
+          style="display: none;" {% endif %}>
+          <i class="fa fa-download"></i> Download generated summaries
+        </a>
+        <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#config-modal"><i
+            class="fa fa-cog"></i> Show
+          configuration</a>
+      </div>
+      <div class="progress mt-3" style="display: {{ 'none' if metadata.status != 'running' else block }};"
+        id="llm-eval-progress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0"
+          id="llm-eval-progress-bar" aria-valuemax="100"
+          style="width: {{ (finished_examples|length) / (overview | length) * 100 }}%;">
+        </div>
+      </div>
+      <div id="log-area" class="font-monospace mt-3"></div>
+      <hr>
+    </div>
+
+    <div id="progress-block" class="mt-3">
+
+      <div id="finished-examples" class="mt-3">
+        <h4>Examples</h4>
+        <div id="llm-status">
+          <table class="table table-sm table-striped">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Dataset</th>
+                <th scope="col">Setup</th>
+                <th scope="col">Split</th>
+                <th scope="col">Example</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for example in overview %}
+              {% set rowId = example.dataset + "-" + example.split + "-" + example.setup_id + "-" +
+              (example.example_idx|string) %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ example.dataset }}</td>
+                <td>{{ example.setup_id }}</td>
+                <td>{{ example.split }}</td>
+                <td>{{ example.example_idx }}</td>
+                <td id="statusBtn{{ rowId }}">
+                  {{ example.status }}</td>
+                <!-- use collapse for hiding annotations -->
+                <td>
+                  <a class="btn btn-sm btn-outline-secondary"
+                    href="{{host_prefix}}/browse?dataset={{ example.dataset }}&split={{ example.split }}&example_idx={{ example.example_idx }}"
+                    role="button">
+                    <i class="fa fa-eye"></i>
+                  </a>
+                  <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
+                    href="#collapseExample{{ rowId }}" role="button" aria-expanded="false" id="annotBtn{{ rowId }}"
+                    aria-controls="collapseExample" {% if example.status !="finished" %} style="display: none;" {% endif
+                    %}>
+                    <i class="fa fa-list"></i>
+                  </a>
+                </td>
+              <tr class="collapse" id="collapseExample{{ rowId }}">
+                <td colspan="7">
+                  <div class="card card-body">
+                    <pre id="annotPre{{ rowId }}">{{ example.annotations }}</pre>
+                  </div>
+                </td>
+              </tr>
+              </tr>
+              <tr>
+
+              </tr>
+              {% endfor %}
+            </tbody>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'forms/config_modal.html' %}
+
+<script>
+  // variable to be used in factgenie.js
+  window.url_prefix = "{{ host_prefix }}";
+  window.campaigns = "{{ campaigns }}";
+  window.llm_eval_examples = "{{ overview | length }}";
+</script>
+<script>
+  $(document).ready(function () {
+    if ("{{ metadata.status }}" == "running") {
+      startLLMD2TListener("{{ campaign_id }}");
+    }
+  });
+</script>
+<script src="{{ host_prefix }}/static/js/factgenie.js"></script>

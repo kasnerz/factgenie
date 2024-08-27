@@ -80,11 +80,8 @@
               <div class="col-auto">
                 <i class="fa fa-code"></i>
                 <span style="margin-left: 5px; margin-right: 10px;">API</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">Select one of the available metric types (or add your own class to
-                    <code>factgenie/metrics.py</code>).
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Select one of the available metric types (or add your own class to `factgenie/metrics.py`)."></i>
               </div>
               <div class="form-group mt-1">
                 <select class="form-select" id="metric-type" name="metric-type">
@@ -99,10 +96,8 @@
               <div class="col-auto">
                 <i class="fa fa-cube"></i>
                 <span style="margin-left: 5px; margin-right: 10px;">Model</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">The identifier of the model you are querying.
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Name of the model used as the LLM evaluator"></i>
               </div>
               <div class="form-group mt-1">
                 <textarea class="form-control" id="model-name" name="model-name" rows="1"></textarea>
@@ -113,13 +108,8 @@
               <div class="col-auto">
                 <i class="fa fa-align-left"></i>
                 <span style="margin-left: 5px; margin-right: 10px;">Prompt template</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">Prompt for the model. See the instructions for configuring the
-                    prompt at <a
-                      href="https://github.com/kasnerz/factgenie/wiki/03-LLM-Annotations#-configuring-the-prompt">factgenie
-                      wiki</a>.
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Prompt for the model. The prompt is preprocessed by the respective class."></i>
               </div>
 
               <div class="form-group mt-1">
@@ -131,11 +121,8 @@
               <div class="col-auto">
                 <i class="fa fa-user"></i>
                 <span style="margin-left: 5px; margin-right: 10px;">System message</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">For OpenAI API, this will be sent in the
-                    <code>system_message</code> parameter.
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Role that the system is playing in the conversation. May not be available for the selected model."></i>
               </div>
 
               <div class="form-group mt-1">
@@ -147,12 +134,8 @@
               <div class="col-auto">
                 <i class="fa fa-link"></i>
                 <span style=" margin-left: 10px; margin-right: 10px;">API URL</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">For Ollama API, this is the API URL, e.g.
-                    <code>http://my-server.com:11434/api/generate</code>. The parameter is ignored for OpenAI API.
-                  </small>
-                </div>
-
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API URL. Not required for OpenAI models."></i>
               </div>
               <div class="form-group mt-1">
                 <textarea class="form-control" id="api-url" name="api-url" rows="1"></textarea>
@@ -163,10 +146,8 @@
               <div class="col-auto">
                 <i class="fa fa-cogs"></i>
                 <span style="margin-left: 10px; margin-right: 10px;">Model arguments</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">API arguments to be passed to the model
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API arguments to be passed to the model"></i>
               </div>
               <div id="model-arguments">
               </div>
@@ -181,10 +162,8 @@
               <div class="col-auto">
                 <i class="fa fa-list-ul"></i>
                 <span style="margin-left: 5px; margin-right: 10px;">Extra arguments</span>
-                <div class="mb-2">
-                  <small class="form-text text-muted">Any other parameters used by the metric.
-                  </small>
-                </div>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Any other parameters used by the metric."></i>
               </div>
 
               <div id="extra-arguments">

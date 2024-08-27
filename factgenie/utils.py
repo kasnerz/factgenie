@@ -17,7 +17,6 @@ import shutil
 import inspect
 import importlib
 import zipfile
-import markdown
 
 from io import BytesIO
 from slugify import slugify
@@ -27,13 +26,13 @@ from pathlib import Path
 from factgenie.campaigns import Campaign, HumanCampaign, ModelCampaign
 from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset, DATA_DIR
-from jinja2 import Template
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
 ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
 LLM_CONFIG_DIR = os.path.join(DIR_PATH, "config", "llm-eval")
+LLM_D2T_DIR = os.path.join(DIR_PATH, "config", "llm-d2t")
 CROWDSOURCING_CONFIG_DIR = os.path.join(DIR_PATH, "config", "crowdsourcing")
 
 DATASET_CONFIG_PATH = "factgenie/loaders/datasets.yml"
@@ -102,7 +101,14 @@ def load_configs(mode):
     """
     configs = {}
 
-    config_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+    if mode == "llm_eval":
+        config_dir = LLM_CONFIG_DIR
+    elif mode == "llm_d2t":
+        config_dir = LLM_D2T_DIR
+    else:
+        config_dir = CROWDSOURCING_CONFIG_DIR
+
+    #config_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
 
     for file in os.listdir(config_dir):
         if file.endswith(".yaml"):
@@ -114,7 +120,6 @@ def load_configs(mode):
                 logger.error(f"Error while loading metric {file}")
                 traceback.print_exc()
                 continue
-
     return configs
 
 
@@ -134,6 +139,8 @@ def generate_campaign_index(app):
             if campaign_source == "crowdsourcing":
                 campaign = HumanCampaign(campaign_id=campaign_id)
             elif campaign_source == "llm_eval":
+                campaign = ModelCampaign(campaign_id=campaign_id)
+            elif campaign_source == 'llm_d2t':
                 campaign = ModelCampaign(campaign_id=campaign_id)
             elif campaign_source == "hidden":
                 continue
@@ -299,13 +306,13 @@ def select_batch_idx(db, seed):
     return batch_idx
 
 
-def get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id):
+def get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id):
     # simple locking over the CSV file to prevent double writes
     with app.db["lock"]:
-        logging.info(f"Acquiring lock for {annotator_id}")
+        logging.info(f"Acquiring lock for {prolific_pid}")
         start = int(time.time())
 
-        seed = random.seed(str(start) + annotator_id + session_id + study_id)
+        seed = random.seed(str(start) + prolific_pid + session_id + study_id)
 
         try:
             batch_idx = select_batch_idx(db, seed)
@@ -313,13 +320,13 @@ def get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id):
             # no available batches
             return []
 
-        if annotator_id != "test":
+        if prolific_pid != "test":
             db = free_idle_examples(db)
 
             # update the CSV
             db.loc[batch_idx, "status"] = "assigned"
             db.loc[batch_idx, "start"] = start
-            db.loc[batch_idx, "annotator_id"] = annotator_id
+            db.loc[batch_idx, "annotator_id"] = prolific_pid
 
             campaign.update_db(db)
 
@@ -330,14 +337,14 @@ def get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id):
                 {
                     "campaign_id": campaign.campaign_id,
                     "batch_idx": batch_idx,
-                    "annotator_id": annotator_id,
+                    "annotator_id": prolific_pid,
                     "session_id": session_id,
                     "study_id": study_id,
                     "start_timestamp": start,
                 }
             )
 
-        logging.info(f"Releasing lock for {annotator_id}")
+        logging.info(f"Releasing lock for {prolific_pid}")
 
     return annotator_batch
 
@@ -653,6 +660,44 @@ def llm_eval_new(campaign_id, config, campaign_data, datasets, overwrite=False):
     campaign = ModelCampaign(campaign_id=campaign_id)
     return campaign
 
+def llm_d2t_new(campaign_id, config, campaign_data, datasets, overwrite=False):
+    campaign_id = slugify(campaign_id)
+
+    # create a new directory
+    if os.path.exists(os.path.join(ANNOTATIONS_DIR, campaign_id)):
+        if not overwrite:
+            raise ValueError(f"Campaign {campaign_id} already exists")
+        else:
+            shutil.rmtree(os.path.join(ANNOTATIONS_DIR, campaign_id))
+
+    os.makedirs(os.path.join(ANNOTATIONS_DIR, campaign_id, "files"), exist_ok=True)
+
+    # create the annotation CSV
+    db = generate_llm_eval_db(datasets, campaign_data)
+    db_path = os.path.join(ANNOTATIONS_DIR, campaign_id, "db.csv")
+    logger.info(f"DB with {len(db)} free examples created for {campaign_id} at {db_path}")
+    db.to_csv(db_path, index=False)
+
+    # save metadata
+    metadata_path = os.path.join(ANNOTATIONS_DIR, campaign_id, "metadata.json")
+    logger.info(f"Metadata for {campaign_id} saved at {metadata_path}")
+    with open(metadata_path, "w") as f:
+        json.dump(
+            {
+                "id": campaign_id,
+                "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "source": "llm_d2t",
+                "status": "new",
+                "config": config,
+            },
+            f,
+            indent=4,
+        )
+
+    # create the campaign object
+    campaign = ModelCampaign(campaign_id=campaign_id)
+    return campaign
+
 
 def generate_default_id(campaign_index, prefix):
     i = 1
@@ -760,7 +805,14 @@ def save_config(filename, config, mode):
 
     yaml.add_representer(str, yaml_multiline_string_pipe)
 
-    save_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
+    if mode == "llm_eval":
+        save_dir = LLM_CONFIG_DIR
+    elif mode == "llm_d2t":
+        save_dir = LLM_D2T_DIR
+    else:
+        save_dir = CROWDSOURCING_CONFIG_DIR
+
+    #save_dir = LLM_CONFIG_DIR if mode == "llm_eval" else CROWDSOURCING_CONFIG_DIR
 
     with open(os.path.join(save_dir, filename), "w") as f:
         yaml.dump(config, f, indent=2, allow_unicode=True)
@@ -782,71 +834,14 @@ def parse_llm_config(config):
 
 def parse_crowdsourcing_config(config):
     config = {
-        "annotator_instructions": config.get("annotatorInstructions"),
-        "annotator_prompt": config.get("annotatorPrompt"),
-        "has_display_overlay": config.get("hasDisplayOverlay"),
-        "final_message": config.get("finalMessage"),
         "examples_per_batch": int(config.get("examplesPerBatch")),
         "idle_time": int(config.get("idleTime")),
+        "completion_code": config.get("completionCode"),
         "sort_order": config.get("sortOrder"),
         "annotation_span_categories": config.get("annotationSpanCategories"),
-        "flags": config.get("flags"),
     }
 
     return config
-
-
-def generate_checkboxes(flags):
-    if not flags:
-        return ""
-
-    checkboxes = "<p>Please also <b>check if you agree with any of the following statements</b>, then mark the example as complete:</p>"
-    for i, flag in enumerate(flags):
-        checkboxes += f"""
-            <div class="form-check flag-checkbox">
-                <input class="form-check-input" type="checkbox" value="{i}" id="checkbox-{i}">
-                <label class="form-check-label" for="checkbox-{i}">
-                    {flag}
-                </label>
-            </div>
-        """
-
-    return checkboxes
-
-
-def create_crowdsourcing_page(campaign_id, config):
-    html_path = os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html")
-
-    os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
-
-    parts = []
-    for part in ["header", "body", "footer"]:
-        part_path = os.path.join(TEMPLATES_DIR, "campaigns", "annotate_{}.html".format(part))
-
-        with open(part_path, "r") as f:
-            parts.append(f.read())
-
-    instructions_html = markdown.markdown(config["annotator_instructions"])
-    annotator_prompt = config["annotator_prompt"]
-    final_message_html = markdown.markdown(config["final_message"])
-    has_display_overlay = config.get("has_display_overlay", True)
-
-    # format only the body, keeping the unfilled templates in header and footer
-    template = Template(parts[1])
-
-    rendered_content = template.render(
-        instructions=instructions_html,
-        annotator_prompt=annotator_prompt,
-        final_message=final_message_html,
-        has_display_overlay='style="display: none"' if not has_display_overlay else "",
-        flags=generate_checkboxes(config.get("flags", [])),
-    )
-
-    # concatenate with header and footer
-    content = parts[0] + rendered_content + parts[2]
-
-    with open(html_path, "w") as f:
-        f.write(content)
 
 
 def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
@@ -883,6 +878,67 @@ def run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads):
 
         if "error" in annotation_set:
             return error(annotation_set["error"])
+
+        annotation = save_annotation(
+            save_dir, metric, dataset_id, split, setup_id, example_idx, annotation_set, start_time
+        )
+
+        db.loc[i, "status"] = "finished"
+        campaign.update_db(db)
+
+        # overview = campaign.get_overview()
+        # finished_examples = overview[overview["status"] == "finished"]
+
+        finished_examples_cnt = len(campaign.get_finished_examples())
+        payload = {"finished_examples_cnt": finished_examples_cnt, "annotation": annotation}
+
+        msg = format_sse(data=json.dumps(payload))
+        if announcer is not None:
+            announcer.announce(msg=msg)
+        logger.info(f"{campaign_id}: {finished_examples_cnt}/{len(db)} examples")
+
+    # if all fields are finished, set the metadata to finished
+    if len(db.status.unique()) == 1 and db.status.unique()[0] == "finished":
+        campaign.metadata["status"] = "finished"
+        campaign.update_metadata()
+
+    return jsonify(success=True, status=campaign.metadata["status"])
+
+
+def run_llm_d2t(campaign_id, announcer, campaign, datasets, metric, threads):
+    start_time = int(time.time())
+
+    save_dir = os.path.join(ANNOTATIONS_DIR, campaign_id, "files")
+    os.makedirs(save_dir, exist_ok=True)
+
+    # set metadata status
+    campaign.metadata["status"] = "running"
+    campaign.update_metadata()
+    db = campaign.db
+
+    logger.info(f"Starting LLM generation for {campaign_id}")
+
+    for i, row in db.iterrows():
+        if threads[campaign_id]["running"] == False:
+            break
+
+        if row["status"] == "finished":
+            continue
+
+        dataset_id = row["dataset"]
+        split = row["split"]
+        setup_id = row["setup_id"]
+        example_idx = row["example_idx"]
+
+        dataset = datasets[dataset_id]
+        example = dataset.get_example(split, example_idx)
+
+        output = dataset.get_generated_output_by_idx(split=split, output_idx=example_idx, setup_id=setup_id)
+
+        annotation_set = metric.annotate_example(example, output)
+
+        #if "error" in annotation_set:
+        #    return error(annotation_set["error"])
 
         annotation = save_annotation(
             save_dir, metric, dataset_id, split, setup_id, example_idx, annotation_set, start_time

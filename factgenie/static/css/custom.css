@@ -829,8 +829,3 @@ a:hover {
     border-radius: 10px;
     padding: 30px;
 }
-
-.CodeMirror,
-.CodeMirror-scroll {
-    min-height: 150px !important;
-}

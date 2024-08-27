@@ -138,13 +138,14 @@ def annotate():
     utils.generate_campaign_index(app)
     campaign_id = request.args.get("campaign")
     campaign = app.db["campaign_index"]["crowdsourcing"][campaign_id]
-    annotator_id = request.args.get("PROLIFIC_PID", "test")
+    compl_code = campaign.metadata["config"]["completion_code"]
+    prolific_pid = request.args.get("PROLIFIC_PID", "test")
     session_id = request.args.get("SESSION_ID", "test")
     study_id = request.args.get("STUDY_ID", "test")
 
     db = campaign.db
     metadata = campaign.metadata
-    annotation_set = utils.get_annotator_batch(app, campaign, db, annotator_id, session_id, study_id)
+    annotation_set = utils.get_annotator_batch(app, campaign, db, prolific_pid, session_id, study_id)
 
     if not annotation_set:
         # no more available examples
@@ -158,7 +159,8 @@ def annotate():
         f"campaigns/{campaign.campaign_id}/annotate.html",
         host_prefix=app.config["host_prefix"],
         annotation_set=annotation_set,
-        annotator_id=annotator_id,
+        annotator_id=prolific_pid,
+        compl_code=compl_code,
         metadata=metadata,
     )
 
@@ -194,12 +196,12 @@ def browse():
 
 @app.route("/crowdsourcing", methods=["GET", "POST"])
 @login_required
-def crowdsourcing():
+def crowdsourcing(mode):
     logger.info(f"Crowdsourcing page loaded")
 
     utils.generate_campaign_index(app)
 
-    llm_configs = utils.load_configs(mode="llm_eval")
+    llm_configs = utils.load_configs(mode=mode)
     crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
 
     campaign_index = app.db["campaign_index"]["crowdsourcing"]
@@ -288,8 +290,13 @@ def crowdsourcing_create():
             indent=4,
         )
 
-    # prepare the crowdsourcing HTML page
-    utils.create_crowdsourcing_page(campaign_id, config)
+    # copy templates/campaigns/annotate_default.html into templates/campaigns/{campaign_id} as "annotate.html"
+    os.makedirs(os.path.join(TEMPLATES_DIR, "campaigns", campaign_id), exist_ok=True)
+
+    shutil.copy(
+        os.path.join(TEMPLATES_DIR, "campaigns", "annotate_default.html"),
+        os.path.join(TEMPLATES_DIR, "campaigns", campaign_id, "annotate.html"),
+    )
 
     # create the campaign object
     campaign = HumanCampaign(campaign_id=campaign_id)
@@ -409,13 +416,12 @@ def render_example():
 
     try:
         example_data = utils.get_example_data(app, dataset_id, split, example_idx)
-        return jsonify(example_data)
     except Exception as e:
         traceback.print_exc()
         logger.error(f"Error while getting example data: {e}")
         logger.error(f"{dataset_id=}, {split=}, {example_idx=}")
-        return jsonify({"error": f"Error\n\t{e}\nwhile getting example data: {dataset_id=}, {split=}, {example_idx=}"})
 
+    return jsonify(example_data)
 
 
 @app.route("/export_annotations", methods=["GET", "POST"])
@@ -454,6 +460,160 @@ def login():
             return "Login failed", 401
     return render_template("login.html", host_prefix=app.config["host_prefix"])
 
+#START MODIFICATION
+
+@app.route("/llm_d2t", methods=["GET", "POST"])
+@login_required
+def llm_d2t():
+    logger.info(f"LLM D2T page loaded")
+
+    utils.generate_campaign_index(app)
+
+    campaign_index = app.db["campaign_index"]["llm_d2t"]
+    campaigns = defaultdict(dict)
+
+    llm_configs = utils.load_configs(mode="llm_d2t")
+    crowdsourcing_configs = utils.load_configs(mode="crowdsourcing")
+
+    for campaign_id, campaign in sorted(campaign_index.items(), key=lambda x: x[1].metadata["created"], reverse=True):
+        campaigns[campaign_id]["metadata"] = campaign.metadata
+        campaigns[campaign_id]["stats"] = campaign.get_stats()
+
+    return render_template(
+        "llm_d2t.html",
+        llm_configs=llm_configs,
+        crowdsourcing_configs=crowdsourcing_configs,
+        campaigns=campaigns,
+        host_prefix=app.config["host_prefix"],
+    )
+
+@app.route("/llm_d2t/create", methods=["GET", "POST"])
+@login_required
+def llm_d2t_create():
+    data = request.get_json()
+
+    campaign_id = data.get("campaignId")
+    campaign_data = data.get("campaignData")
+    config = data.get("config")
+
+    config = utils.parse_llm_config(config)
+    datasets = app.db["datasets_obj"]
+
+    try:
+        campaign = utils.llm_d2t_new(campaign_id, config, campaign_data, datasets)
+    except Exception as e:
+        return utils.error(f"Error while creating campaign: {e}")
+
+    app.db["campaign_index"][campaign_id] = campaign
+
+    return utils.success()
+
+
+@app.route("/llm_d2t/detail", methods=["GET", "POST"])
+@login_required
+def llm_d2t_detail():
+    utils.generate_campaign_index(app)
+
+    campaign_id = request.args.get("campaign")
+    campaign = app.db["campaign_index"]["llm_d2t"][campaign_id]
+
+    if campaign.metadata["status"] == "running" and not app.db["announcers"].get(campaign_id):
+        campaign.metadata["status"] = "paused"
+        campaign.update_metadata()
+
+    overview = campaign.get_overview()
+    finished_examples = overview[overview["status"] == "finished"]
+
+    overview = overview.to_dict(orient="records")
+    finished_examples = finished_examples.to_dict(orient="records")
+
+    return render_template(
+        "llm_d2t_detail.html",
+        campaign_id=campaign_id,
+        overview=overview,
+        finished_examples=finished_examples,
+        metadata=campaign.metadata,
+        host_prefix=app.config["host_prefix"],
+    )
+
+
+@app.route("/llm_d2t/new", methods=["GET", "POST"])
+@login_required
+def llm_d2t_new():
+    model_outs = utils.get_model_outs(app)
+
+    # get a list of available metrics
+    llm_configs = utils.load_configs(mode="llm_d2t")
+    metric_types = list(LLMMetricFactory.metric_classes().keys())
+
+    utils.generate_campaign_index(app)
+    campaign_index = app.db["campaign_index"]["llm_d2t"]
+
+    default_campaign_id = utils.generate_default_id(campaign_index=campaign_index, prefix="llm_d2t")
+
+    return render_template(
+        "llm_d2t_new.html",
+        default_campaign_id=default_campaign_id,
+        model_outs=model_outs,
+        configs=llm_configs,
+        metric_types=metric_types,
+        host_prefix=app.config["host_prefix"],
+    )
+
+
+@app.route("/llm_d2t/run", methods=["POST"])
+@login_required
+def llm_d2t_run():
+    data = request.get_json()
+    campaign_id = data.get("campaignId")
+
+    app.db["announcers"][campaign_id] = announcer = utils.MessageAnnouncer()
+
+    app.db["threads"][campaign_id] = {
+        "running": True,
+    }
+    utils.generate_campaign_index(app)
+    campaign = app.db["campaign_index"]["llm_d2t"][campaign_id]
+
+    threads = app.db["threads"]
+    datasets = app.db["datasets_obj"]
+
+    config = campaign.metadata["config"]
+    metric = LLMMetricFactory.from_config(config)
+
+    return utils.run_llm_d2t(campaign_id, announcer, campaign, datasets, metric, threads)
+
+
+#@app.route("/llm_d2t/progress/<campaign_id>", methods=["GET"])
+#@login_required
+#def listen(campaign_id):
+#    if not app.db["announcers"].get(campaign_id):
+#        return Response(status=404)
+#
+#    def stream():
+#        messages = app.db["announcers"][campaign_id].listen()
+#        while True:
+#            msg = messages.get()
+#            yield msg
+#
+#    return Response(stream(), mimetype="text/event-stream")
+
+
+@app.route("/llm_d2t/pause", methods=["POST"])
+@login_required
+def llm_d2t_pause():
+    data = request.get_json()
+    campaign_id = data.get("campaignId")
+    app.db["threads"][campaign_id]["running"] = False
+
+    campaign = app.db["campaign_index"]["llm_d2t"][campaign_id]
+    campaign.metadata["status"] = "paused"
+    campaign.update_metadata()
+
+    resp = jsonify(success=True, status=campaign.metadata["status"])
+    return resp
+
+#END MODIFICATION
 
 @app.route("/llm_eval", methods=["GET", "POST"])
 @login_required

@@ -39,6 +39,7 @@ class LLMMetricFactory:
         metric_type = config["type"]
         classes = LLMMetricFactory.metric_classes()
 
+
         if metric_type not in classes:
             raise ValueError(f"Metric type {metric_type} is not implemented.")
 

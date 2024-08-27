@@ -17,11 +17,11 @@
 
 
 <div class="container w-50  mt-5">
-  <a href="{{ host_prefix }}/crowdsourcing" class="btn btn-outline-secondary mb-5">← Crowdsourcing campaigns</a>
+  <a href="{{ host_prefix }}/llm_d2t" class="btn btn-outline-secondary mb-5">← LLM generation</a>
   <div class="mt-1">
 
     <form id="annotation-campaign-form">
-      <h3>New crowdsourcing campaign</h3>
+      <h3>New LLM generation campaign</h3>
 
       <ul class="nav nav-tabs nav-justified mt-5">
         <li class="nav-item">
@@ -59,11 +59,10 @@
         <div id="tab-config" role="tabpanel" class="tab-pane new-campaign-form" tabindex="1">
           <div class="row g-3 mb-3 align-items-center">
             <div class="col-auto">
-              <span style="margin-left: 5px; margin-right: 10px;">Preset</span>
+              <span style="margin-left: 5px;">Preset</span>
             </div>
             <div class="col-auto">
-              <select class="form-select" id="crowdsourcingConfig" name="crowdsourcingConfig"
-                onchange="updateCrowdsourcingConfig();">
+              <select class="form-select" id="llmConfig" name="llmConfig" onchange="updateLLMMetricConfig();">
                 <option value="[None]">[None]</option>
                 {% for config_name in configs.keys() %}
                 <option value="{{ config_name }}">{{ config_name }}</option>
@@ -72,43 +71,108 @@
             </div>
             <div class="col-auto">
               <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="Add your custom preset to
-          factgenie/config/crowdsourcing"></i>
+          factgenie/config/llm-d2t"></i>
             </div>
           </div>
 
           <div class="rounded-box mt-4">
-            <div class="form-group">
-              <label for="examplesPerBatch">Examples per batch</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
-                title="Number of examples shown to each annotator"></i>
-              <input type="number" class="form-control" id="examplesPerBatch" name="examplesPerBatch" min="1" required>
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-code"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">API</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Select one of the available metric types (or add your own class to `factgenie/metrics.py`)."></i>
+              </div>
+              <div class="form-group mt-1">
+                <select class="form-select" id="metric-type" name="metric-type">
+                  {% for metric_type in metric_types %}
+                  <option value="{{ metric_type }}">{{ metric_type }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
-            <div class="form-group mt-2">
-              <!-- select for sort order -->
-              <label for="sortOrder">Shuffle outputs</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="How to shuffle outputs before batching. `dataset-level`: shuffles all outputs in the dataset
-               `example-level`: shuffles outputs for each example keeping the order of examples"></i>
-              <select class="form-select" id="sortOrder" name="sortOrder">
-                <option value="dataset-level">Dataset-level</option>
-                <option value="example-level">Example-level</option>
-              </select>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-cube"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Model</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Name of the model used as the LLM generator"></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="model-name" name="model-name" rows="1"></textarea>
+              </div>
             </div>
-            <div class="form-group mt-2">
-              <label for="idleTime">Idle Time (minutes)</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="The time after which an unfinished example can be re-assigned to a
-                new annotator"></i>
-              <input type="number" class="form-control" id="idleTime" name="idleTime" min="0">
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-align-left"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Prompt template</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Prompt for the model. The prompt is preprocessed by the respective class."></i>
+              </div>
+
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="prompt-template" name="prompt-template" rows="8"></textarea>
+              </div>
             </div>
-            <div class="form-group mt-2">
-              <label for="completionCode">Prolific Completion Code</label>
-              <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip" title="The code that will be shown to the annotator after submitting the
-                annotations"></i>
-              <input type="text" class="form-control" id="completionCode" name="completionCode">
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-user"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">System message</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Role that the system is playing in the conversation. May not be available for the selected model."></i>
+              </div>
+
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="system-message" name="system-message" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-link"></i>
+                <span style=" margin-left: 10px; margin-right: 10px;">API URL</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API URL. Not required for OpenAI models."></i>
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-control" id="api-url" name="api-url" rows="1"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-cogs"></i>
+                <span style="margin-left: 10px; margin-right: 10px;">Model arguments</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="API arguments to be passed to the model"></i>
+              </div>
+              <div id="model-arguments">
+              </div>
+              <div class="col-auto mt-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addModelArgument();">+</button>
+              </div>
             </div>
 
             {% include 'forms/annotation_span_categories.html' %}
-          </div>
 
+            <div class="row g-3 mb-3 align-items-center">
+              <div class="col-auto">
+                <i class="fa fa-list-ul"></i>
+                <span style="margin-left: 5px; margin-right: 10px;">Extra arguments</span>
+                <i class="fa fa-question-circle opacity-25" aria-hidden="true" data-bs-toggle="tooltip"
+                  title="Any other parameters used by the metric."></i>
+              </div>
+
+              <div id="extra-arguments">
+              </div>
+              <div class="col-auto mt-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addExtraArgument();">+</button>
+              </div>
+            </div>
+          </div>
           <div style="text-align: center;">
             <button type="button" class="btn btn-outline-secondary mt-3"
               onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-campaign")).show()'>Back</button>
@@ -126,7 +190,7 @@
           <div style="text-align: center;">
             <button type="button" class="btn btn-outline-secondary mt-3"
               onclick='bootstrap.Tab.getOrCreateInstance($("#nav-tabs-config")).show()'>Back</button>
-            <button type="button" class="btn btn-primary mt-3" onclick="createHumanCampaign();">Create campaign</button>
+            <button type="button" class="btn btn-primary mt-3" onclick="createLLMD2T();">Create campaign</button>
           </div>
         </div>
       </div>
@@ -135,7 +199,6 @@
 
     </div>
   </div>
-
 
   <div class="modal fade" id="save-cfg-modal" tabindex="-1">
     <div class="modal-dialog">
@@ -154,22 +217,20 @@
               <span class="input-group-text" id="basic-addon2">.yaml</span>
             </div>
             <datalist id="datalistOptions">
-              {% for config_filename in configs.keys() %}
+              {% for filename in configs.keys() %}
               <!-- save the name without suffix to variable -->
-              {% set config_name = config_filename.rstrip(".yaml") %}
-              <option value="{{ config_name }}">{{ config_filename }}</option>
+              {% set config_name = filename.rstrip(".yaml") %}
+              <option value="{{ config_name }}">{{ filename }}</option>
               {% endfor %}
             </datalist>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" id="save-cfg-submit" class="btn btn-primary mt-3"
-            onclick="saveConfig('crowdsourcing')">Save
+          <button type="submit" id="save-cfg-submit" class="btn btn-primary mt-3" onclick="saveConfig('llm_d2t')">Save
             config</button>
         </div>
       </div>
     </div>
-
   </div>
 
 </div>
@@ -180,6 +241,6 @@
   window.url_prefix = "{{ host_prefix }}";
   window.model_outs = {{ model_outs | tojson | safe }};
   window.configs = {{ configs | tojson | safe }};
-  window.mode = "crowdsourcing";
+  window.mode = "llm_d2t";
 </script>
 <script src="{{ host_prefix }}/static/js/factgenie.js"></script>

@@ -1,17 +1,13 @@
 type: ollama
 model: llama3
-# You can run ollama alson on other machine than factgenie 
-#  e.g. we run it on a machine tdll-3gpu3 and access it from any machine which is withing the same firewall
-#  in that case we use api_url: http://tdll-3gpu3.ufal.hide.ms.mff.cuni.cz:11434/api/generate
-# If you run ollama at the same machine as factgenie let's use just localhost.
-api_url: http://localhost:11434/api/generate
+api_url: http://tdll-3gpu3.ufal.hide.ms.mff.cuni.cz:11434/api/generate
 model_args:
   max_tokens: 1024
   num_beams: 1
   temperature: 0.0
   top_p: 1.0
   top_k: 0.0
-  do_sample: false
+  do_sample: false 
   seed: 42
 system_msg: "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON."
 annotation_span_categories:
