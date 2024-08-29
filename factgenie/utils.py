@@ -29,14 +29,16 @@ from factgenie.metrics import LLMMetric, LLMMetricFactory
 from factgenie.loaders.dataset import Dataset, DATA_DIR
 from jinja2 import Template
 
-DIR_PATH = os.path.dirname(__file__)
-TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
-STATIC_DIR = os.path.join(DIR_PATH, "static")
-ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
-LLM_CONFIG_DIR = os.path.join(DIR_PATH, "config", "llm-eval")
-CROWDSOURCING_CONFIG_DIR = os.path.join(DIR_PATH, "config", "crowdsourcing")
+DIR_PATH = Path(__file__).parent
+TEMPLATES_DIR = DIR_PATH / "templates"
+STATIC_DIR = DIR_PATH / "static"
+ANNOTATIONS_DIR = DIR_PATH / "annotations"
+LLM_CONFIG_DIR = DIR_PATH / "config" / "llm-eval"
+CROWDSOURCING_CONFIG_DIR = DIR_PATH / "config" / "crowdsourcing"
 
-DATASET_CONFIG_PATH = "factgenie/loaders/datasets.yml"
+DATASET_CONFIG_PATH = DIR_PATH / "loaders" / "datasets.yml"
+MAIN_CONFIG = DIR_PATH / "config.yml"
+assert MAIN_CONFIG.exists(), f"Invalid path to config.yml {MAIN_CONFIG=}. Please rename config_TEMPLATE.yml to config.yml. Change the password, update the host profix, etc."
 
 file_handler = logging.FileHandler("error.log")
 file_handler.setLevel(logging.ERROR)
@@ -107,7 +109,7 @@ def load_configs(mode):
     for file in os.listdir(config_dir):
         if file.endswith(".yaml"):
             try:
-                with open(os.path.join(config_dir, file)) as f:
+                with open(config_dir / file) as f:
                     config = yaml.safe_load(f)
                     configs[file] = config
             except Exception as e:
@@ -127,7 +129,7 @@ def generate_campaign_index(app):
             if not campaign_dir.is_dir():
                 continue
 
-            metadata = json.load(open(os.path.join(campaign_dir, "metadata.json")))
+            metadata = json.load(open(campaign_dir / "metadata.json"))
             campaign_source = metadata.get("source")
             campaign_id = metadata["id"]
 
@@ -156,14 +158,14 @@ def generate_annotation_index(app):
     for subdir in os.listdir(ANNOTATIONS_DIR):
         try:
             # find metadata for the campaign
-            metadata_path = os.path.join(ANNOTATIONS_DIR, subdir, "metadata.json")
-            if not os.path.exists(metadata_path):
+            metadata_path = ANNOTATIONS_DIR / subdir / "metadata.json"
+            if not metadata_path.exists():
                 continue
 
             with open(metadata_path) as f:
                 metadata = json.load(f)
 
-            jsonl_files = glob.glob(os.path.join(ANNOTATIONS_DIR, subdir, "files/*.jsonl"))
+            jsonl_files = (ANNOTATIONS_DIR / subdir / "files").glob("*.jsonl")
 
             for jsonl_file in jsonl_files:
                 with open(jsonl_file) as f:
@@ -192,7 +194,7 @@ def export_annotations(app, campaign_id):
     zip_buffer = BytesIO()
 
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for root, dirs, files in os.walk(os.path.join(ANNOTATIONS_DIR, campaign_id)):
+        for root, _dirs, files in (ANNOTATIONS_DIR / campaign_id).walk():
             for file in files:
                 zip_file.write(
                     os.path.join(root, file),

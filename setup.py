@@ -48,6 +48,7 @@ setup(
         "dev": [
             "wheel",
             "black",
+            "ipdb",
         ],
         "deploy": [
             "gunicorn",
