@@ -66,7 +66,10 @@ class LogicNLG(Dataset):
                 for table_out in j["generated"]:
                     if table_out["table_id"] != current_table_id:
                         current_table_id = table_out["table_id"]
-                        outputs[split][setup_id]["generated"].append({"out": "\\n\\n".join(all_claims)})
+                        prefixed_claims = [] 
+                        for i, claim in enumerate(all_claims):
+                            prefixed_claims.append(f"----- {i+1} ----- \n{claim}")
+                        outputs[split][setup_id]["generated"].append({"out": "\n\n".join(prefixed_claims)})
                         all_claims = []
 
                     all_claims.append(table_out["out"])

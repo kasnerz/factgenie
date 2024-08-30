@@ -344,7 +344,7 @@ function getAnnotatedOutput(output, campaign_id) {
     // if the campaign_id is in output.annotations, show the annotated content
     const annotations_campaign = output.annotations.filter(a => a.metadata.id == campaign_id);
 
-    var placeholder = $('<div>', { id: `out-${setup_id}-${campaign_id}-placeholder`, class: `font-mono out-placeholder out-${campaign_id}-placeholder` });
+    var placeholder = $('<pre>', { id: `out-${setup_id}-${campaign_id}-placeholder`, class: `font-mono out-placeholder out-${campaign_id}-placeholder` });
     var annotated_content;
 
     if (annotations_campaign.length > 0) {
