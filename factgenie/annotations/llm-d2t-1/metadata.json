@@ -1,0 +1,24 @@
+{
+    "id": "llm-d2t-1",
+    "created": "2024-09-11 15:38:07",
+    "source": "llm_d2t",
+    "status": "finished",
+    "config": {
+        "type": "ollama",
+        "model": "llama3",
+        "prompt_template": "Given the data:\n```\n{data}\n```\nGenerate a summary in plain text, describing facts and values contained in the input:\n\n*Example:*\ndata:\n```\nNokia 3310\n-----\n- **color**: black, blue, grey\n- **display**: 320x240px\n```\noutput (product description):\n```\nNokia 3310 features a 320x240 display. It is available in black, blue and grey color.\n```\nDo not add or fabricate any detail not reflected in the data. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.).\n",
+        "system_msg": "You are an expert data-to-text system. You understand structured data and you can correctly operate with units and numerical values. You are designed to output plain text summaries from structured data input.",
+        "api_url": "http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate",
+        "model_args": {
+            "do_sample": "false",
+            "max_tokens": "1024",
+            "num_beams": "1",
+            "seed": "42",
+            "temperature": "0",
+            "top_k": "0",
+            "top_p": "1"
+        },
+        "extra_args": {},
+        "annotation_span_categories": []
+    }
+}

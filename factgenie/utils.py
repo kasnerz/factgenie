@@ -931,17 +931,17 @@ def run_llm_d2t(campaign_id, announcer, campaign, datasets, metric, threads):
         example_idx = row["example_idx"]
 
         dataset = datasets[dataset_id]
-        example = dataset.get_example(split, example_idx)
+        #example = dataset.get_example(split, example_idx)
 
         output = dataset.get_generated_output_by_idx(split=split, output_idx=example_idx, setup_id=setup_id)
 
-        annotation_set = metric.annotate_example(example, output)
+        #annotation_set = metric.annotate_example(example, output)
 
         #if "error" in annotation_set:
         #    return error(annotation_set["error"])
 
         annotation = save_annotation(
-            save_dir, metric, dataset_id, split, setup_id, example_idx, annotation_set, start_time
+            save_dir, metric, dataset_id, split, setup_id, example_idx, output, start_time #annotation_set, start_time
         )
 
         db.loc[i, "status"] = "finished"

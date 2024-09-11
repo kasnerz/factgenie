@@ -156,8 +156,6 @@
               </div>
             </div>
 
-            {% include 'forms/annotation_span_categories.html' %}
-
             <div class="row g-3 mb-3 align-items-center">
               <div class="col-auto">
                 <i class="fa fa-list-ul"></i>
@@ -185,7 +183,7 @@
 
         <div id="tab-data" class="tab-pane new-campaign-form" role="tabpanel" tabindex="2">
 
-          {% include 'forms/data_selection.html' %}
+          {% include 'forms/data_selection_d2t.html' %}
 
           <div style="text-align: center;">
             <button type="button" class="btn btn-outline-secondary mt-3"
@@ -216,7 +214,7 @@
                 aria-label="Click to see existing configurations..." aria-describedby="basic-addon2">
               <span class="input-group-text" id="basic-addon2">.yaml</span>
             </div>
-            <datalist id="datalistOptions">
+            <datalist \id="datalistOptions">
               {% for filename in configs.keys() %}
               <!-- save the name without suffix to variable -->
               {% set config_name = filename.rstrip(".yaml") %}

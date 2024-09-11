@@ -56,14 +56,14 @@ def run_llm_eval(campaign_id: str, dataset_id: str, split: str, setup_id: str, l
     return utils.run_llm_eval(campaign_id, announcer, campaign, datasets, metric, threads)
 
 @click.option("--overwrite", is_flag=True, default=False, help="Remove existing campaign if it exists.")
-def run_llm_d2t(campaign_id: str, dataset_id: str, split: str, setup_id: str, llm_metric_config: str, overwrite: bool):
+def run_llm_d2t(campaign_id: str, dataset_id: str, split: str, llm_metric_config: str, overwrite: bool):
     """Runs the LLM generation from CLI with no web server."""
     from slugify import slugify
     from factgenie import utils
     from factgenie.metrics import LLMMetricFactory
 
     campaign_id = slugify(campaign_id)
-    campaign_data = [{"dataset": dataset_id, "split": split, "setup_id": setup_id}]
+    campaign_data = [{"dataset": dataset_id, "split": split}]
 
     config = utils.load_dataset_config()
     dataset_config = config["datasets"][dataset_id]

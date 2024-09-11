@@ -1,0 +1,41 @@
+{
+    "id": "llm-eval-1",
+    "created": "2024-09-11 13:57:32",
+    "source": "llm_eval",
+    "status": "paused",
+    "config": {
+        "type": "ollama",
+        "model": "llama3",
+        "prompt_template": "Given the data:\n```\n{data}\n```\nAnnotate all the errors in the following text:\n```\n{text}\n```\nOutput the errors as a JSON list \"annotations\" in which each object contains fields  \"reason\", \"text\", and \"type\". The value of \"text\" is the text of the error. The value of \"reason\" is the reason for the error. The value of \"type\" is one of {{0, 1, 2, 3}} based on the following list:\n- 0: Incorrect fact: The fact in the text contradicts the data.\n- 1: Not checkable: The fact in the text cannot be checked in the data.\n- 2: Misleading: The fact in the text is misleading in the given context.\n- 3: Other: The text is problematic for another reason, e.g. grammatically or stylistically incorrect, irrelevant, or repetitive.\n\nThe list should be sorted by the position of the error in the text.\n\n*Example:*\ndata:\n```\nNokia 3310\n-----\n- **color**: black, blue, grey\n- **display**: 320x240px\n```\ntext (product description):\n```\nNokia 3310 is produced in Finland and features a 320x320 display. It is available in black color. The data seem to provide only partial information about the phone.\n```\noutput:\n```{{ \"annotations\": [{{\"reason\": \"The country where the phone is produced is not mentioned in the data.\", \"text\": \"produced in Finland\", \"type\": 1}}, {{\"reason\": \"The data mentions that the display has resolution 320x240px.\", \"text\": \"320x320\", type: 0}}, {{\"reason\": \"Misleadingly suggests that the phone is not available in other colors.\", \"text\": \"available in black color\", type: 2}}, {{\"reason\", \"Nationality is not mentioned in the data\", \"text\": \"Indian\", type: 1}}, {{\"reason\": \"The note is irrelevant for the phone description.\", \"text\": \"The data seem to provide only partial information about the phone.\", type: 3}}] }}\n```\nNote that some details may not be mentioned in the text: do not count omissions as errors. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.), do not count these as errors. If there are no errors in the text, \"annotations\" will be an empty list.\n",
+        "system_msg": "You are an expert data-to-text error annotation system. You undestand structured data and you can correcly operate with units and numerical values. You are designed to output token-level annotations in JSON.",
+        "api_url": "http://tdll-3gpu4.ufal.hide.ms.mff.cuni.cz:11434/api/generate",
+        "model_args": {
+            "do_sample": "false",
+            "max_tokens": "1024",
+            "num_beams": "1",
+            "seed": "42",
+            "temperature": "0",
+            "top_k": "0",
+            "top_p": "1"
+        },
+        "extra_args": {},
+        "annotation_span_categories": [
+            {
+                "name": "Incorrect",
+                "color": "#ffbcbc"
+            },
+            {
+                "name": "Not checkable",
+                "color": "#e9d2ff"
+            },
+            {
+                "name": "Misleading",
+                "color": "#fff79f"
+            },
+            {
+                "name": "Other",
+                "color": "#bbbbbb"
+            }
+        ]
+    }
+}
