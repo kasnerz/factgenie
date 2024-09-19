@@ -640,7 +640,7 @@ $(".btn-err-cat").change(function () {
 });
 
 function updateSelectedDatasets() {
-    var selectedData = gatherCampaignData();
+    var selectedData = gatherComparisonData();
 
     if (mode == 'llm_eval' || mode == 'crowdsourcing') {
         $("#selectedDatasetsContent").html(
@@ -685,7 +685,7 @@ function gatherSelectedCombinations() {
 }
 
 
-function gatherCampaignData() {
+function gatherComparisonData() {
     var campaign_datasets = [];
     var campaign_splits = [];
     var campaign_outputs = [];
@@ -1093,7 +1093,7 @@ function createOptionElem(type, label, values) {
 
 function createArgElem(key, value) {
     // escape quotes in the value
-    if (value !== undefined) {
+    if (typeof value === 'string') {
         value = value.replace(/"/g, "&quot;");
     }
     const newArg = $(`

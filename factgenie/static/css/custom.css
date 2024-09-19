@@ -274,8 +274,8 @@ pre {
 .btn-primary.disabled,
 .btn-primary:disabled {
     color: #fff;
-    background-color: 0175ac;
-    border-color: 0175ac;
+    background-color: #9bafb9;
+    border-color: #9bafb9;
 }
 
 .btn-primary:not(:disabled):not(.disabled):active,

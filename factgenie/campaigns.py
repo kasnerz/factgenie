@@ -101,6 +101,7 @@ class HumanCampaign(Campaign):
                     "split": row["split"],
                     "setup": {"id": row["setup_id"]},
                     "example_idx": row["example_idx"],
+                    "annotator_group": row["annotator_group"],
                 }
             )
         return annotator_batch
@@ -123,6 +124,7 @@ class HumanCampaign(Campaign):
                 "start": "first",
                 "end": "first",
                 "annotator_id": "first",
+                "annotator_group": "first",
             }
         )
 

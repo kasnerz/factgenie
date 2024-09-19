@@ -17,6 +17,7 @@ install_requires = [
     "python-slugify",
     "pyyaml",
     "requests",
+    "scipy",
     "tinyhtml",
 ]
 

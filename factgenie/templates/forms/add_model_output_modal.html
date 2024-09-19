@@ -1,0 +1,45 @@
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Upload model outputs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-left">
+                <div class="row mb-3 mt-3 align-items-center">
+                    <div class="col-auto">
+                        <span>Dataset</span>
+                    </div>
+                    <div class="col-auto">
+                        <select id="dataset-select" class="form-select form-select-sm"
+                            style="display: inline-block; margin-right: 10px; max-width: 250px;">
+                            {% for name, dataset in datasets.items() %}
+                            <option value="{{ name }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <span>Split</span>
+                    </div>
+                    <div class="col-auto">
+                        <select id="split-select" class="form-select form-select-sm"
+                            style="display: inline-block; margin-right: 10px; max-width: 200px;">
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="setup-id" class="form-label">Setup ID</label>
+                    <input type="text" class="form-control" id="setup-id" name="setup-id" placeholder="my-custom-input">
+                </div>
+                <label for="model-output-upload" class="form-label">Outputs</label>
+                <div class="mb-1"><small class="text-muted">Upload a plain text file containing an output per
+                        line.</small>
+                </div>
+                <div class="mb-3">
+                    <input type="file" class="form-control" id="model-output-upload" name="model-output-upload">
+                </div>
+                <button type="submit" class="btn btn-primary" onclick="uploadModelOutputs()">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>

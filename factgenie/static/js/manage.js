@@ -269,7 +269,7 @@ function enableTooltips() {
 
 
 $(document).ready(function () {
-    if (window.mode == "outputs") {
+    if (window.mode == "manage") {
         $("#dataset-select-overview").val(Object.keys(datasets)[0]).trigger("change");
         updateSplits();
     }

@@ -50,7 +50,7 @@ function sortCheckboxes(container) {
     });
 }
 
-function updateCombinations() {
+function updateComparisonData() {
     const selectedDatasets = getSelectedDatasets();
     const selectedSplits = getSelectedSplits();
 
@@ -113,5 +113,5 @@ function updateCombinations() {
 }
 
 
-$(document).on('change', '.btn-check-dataset', updateCombinations);
-$(document).on('change', '.btn-check-split', updateCombinations);
+$(document).on('change', '.btn-check-dataset', updateComparisonData);
+$(document).on('change', '.btn-check-split', updateComparisonData);

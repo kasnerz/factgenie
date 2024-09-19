@@ -63,6 +63,10 @@
           <a type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#config-modal"><i
               class="fa fa-cog"></i> Show
             configuration</a>
+          {% if mode == 'llm_eval' %}
+          <a href="{{ host_prefix }}/analyze/detail?campaign={{ campaign_id }}&source={{ mode }}" type="button"
+            class="btn btn-outline-secondary"><i class="fa fa-area-chart"></i> View statistics</a>
+          {% endif %}
         </div>
         <div class="progress mt-3" style="display: {{ 'none' if metadata.status != 'running' else block }};"
           id="llm-progress">

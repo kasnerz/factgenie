@@ -25,17 +25,16 @@ from collections import defaultdict
 import urllib.parse
 from slugify import slugify
 
-from factgenie.campaigns import HumanCampaign, CampaignStatus, ExampleStatus
+from factgenie.campaigns import HumanCampaign, CampaignStatus, ExampleStatus, ANNOTATIONS_DIR, GENERATIONS_DIR
 from factgenie.models import ModelFactory
 import factgenie.utils as utils
+import factgenie.analysis as analysis
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 DIR_PATH = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(DIR_PATH, "templates")
 STATIC_DIR = os.path.join(DIR_PATH, "static")
-ANNOTATIONS_DIR = os.path.join(DIR_PATH, "annotations")
-GENERATIONS_DIR = os.path.join(DIR_PATH, "generations")
 
 
 app = Flask("factgenie", template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
@@ -137,6 +136,48 @@ def about():
 
     return render_template(
         "about.html",
+        host_prefix=app.config["host_prefix"],
+    )
+
+
+@app.route("/analyze", methods=["GET", "POST"])
+@login_required
+def analyze():
+    logger.info(f"Analysis page loaded")
+
+    utils.generate_campaign_index(app)
+    campaign_index = app.db["campaign_index"]
+
+    campaigns = list(campaign_index["llm_eval"].values()) + list(campaign_index["crowdsourcing"].values())
+    campaigns.sort(key=lambda x: x.metadata["created"], reverse=True)
+    campaigns = {
+        c.metadata["id"]: {"metadata": c.metadata, "stats": c.get_stats(), "data": c.db.to_dict(orient="records")}
+        for c in campaigns
+    }
+
+    return render_template(
+        "analyze.html",
+        campaigns=campaigns,
+        host_prefix=app.config["host_prefix"],
+    )
+
+
+@app.route("/analyze/detail", methods=["GET", "POST"])
+@login_required
+def analyze_detail():
+    utils.generate_campaign_index(app)
+    campaign_id = request.args.get("campaign")
+    source = request.args.get("source")
+    campaign = app.db["campaign_index"][source][campaign_id]
+
+    datasets = utils.get_dataset_overview(app)
+    statistics = analysis.compute_statistics(app, campaign, datasets)
+
+    return render_template(
+        "analyze_detail.html",
+        statistics=statistics,
+        campaign=campaign,
+        source=source,
         host_prefix=app.config["host_prefix"],
     )
 
@@ -319,6 +360,27 @@ def crowdsourcing_new():
         configs=configs,
         host_prefix=app.config["host_prefix"],
     )
+
+
+@app.route("/compute_agreement", methods=["POST"])
+@login_required
+def compute_agreement():
+    data = request.get_json()
+    combinations = data.get("combinations")
+    selected_campaigns = data.get("selectedCampaigns")
+    utils.generate_campaign_index(app)
+
+    campaigns = app.db["campaign_index"]
+    # flatten the campaigns
+    campaigns = {k: v for source in campaigns.values() for k, v in source.items()}
+
+    datasets = utils.get_dataset_overview(app)
+
+    results = analysis.compute_inter_annotator_agreement(
+        app, selected_campaigns=selected_campaigns, combinations=combinations, campaigns=campaigns, datasets=datasets
+    )
+
+    return jsonify(results)
 
 
 @app.route("/delete_campaign", methods=["POST"])
@@ -662,34 +724,21 @@ def llm_campaign_pause():
     return resp
 
 
-@app.route("/datasets", methods=["GET", "POST"])
+@app.route("/manage", methods=["GET", "POST"])
 @login_required
-def manage_datasets():
+def manage():
     datasets = utils.get_dataset_overview(app)
     dataset_classes = list(utils.get_dataset_classes().keys())
 
+    datasets_enabled = {k: v for k, v in datasets.items() if v["enabled"]}
+    model_outputs = utils.get_model_outputs_overview(app, datasets_enabled)
+
     return render_template(
-        "manage_datasets.html",
+        "manage.html",
         datasets=datasets,
         dataset_classes=dataset_classes,
         host_prefix=app.config["host_prefix"],
-    )
-
-
-@app.route("/model_outputs", methods=["GET", "POST"])
-@login_required
-def manage_model_outputs():
-    # utils.generate_annotation_index(app)
-
-    datasets = utils.get_dataset_overview(app)
-    datasets = {k: v for k, v in datasets.items() if v["enabled"]}
-    model_outputs = utils.get_model_outputs_overview(app, datasets)
-
-    return render_template(
-        "manage_model_outputs.html",
-        datasets=datasets,
         model_outputs=model_outputs,
-        host_prefix=app.config["host_prefix"],
     )
 
 
