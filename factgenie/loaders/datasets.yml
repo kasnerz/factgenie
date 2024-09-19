@@ -1,0 +1,90 @@
+datasets:
+  d2t-capitals-openweather:
+    class: openweather.OpenWeather
+    description: <p>The 5-day forcast from Thursday September 19 2024 for country capitals obtained using <a href="https://openweathermap.org/forecast5">OpenWeather</a>. Country capitals obtained using <a href="https://gist.github.com/ofou/df09a6834a8421b4f376c875194915c9">Ofou Gist</a>. Learn about factgenies dataset from a <a href="https://arxiv.org/abs/2407.17863">pre-print</a> or <a href="https://github.com/ufal/factgenie">GitHub ufal/factgenie</a>.
+    enabled: true
+    splits:
+    - first10
+    - guess01
+    - guess02
+    - guess03
+    - guess04
+    - all
+    type: json
+  quintd1-openweather:
+    class: openweather.OpenWeather
+    description: <p>The <code>openweather</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
+      dataset</a>. </p><p>Contains weather forecasts from <a href="https://openweathermap.org/forecast5">OpenWeather</a>.</p>
+    enabled: true
+    splits:
+    - dev
+    - test
+    type: json
+  quintd1-owid:
+    class: owid.OurWorldInData
+    description: <p>The <code>owid</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
+      dataset</a>. </p><p>Contains health-related time series from <a href="https://ourworldindata.org">Our
+      World in Data</a>.</p>
+    enabled: true
+    splits:
+    - dev
+    - test
+    type: table
+  quintd1-wikidata:
+    class: wikidata.Wikidata
+    description: <p>The <code>wikidata</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
+      dataset</a>. </p><p>Contains <a href="https://www.wikidata.org/wiki/Wikidata:Main_Page">wikidata</a>
+      entities and their properties.</p>
+    enabled: true
+    splits:
+    - dev
+    - test
+    type: table
+  easy-vqa:
+    class: base.HTMLDataset
+    description: ''
+    enabled: true
+    splits:
+    - test
+    type: default
+  logicnlg:
+    class: logicnlg.LogicNLG
+    description: Sample of 100 examples from the  <a href="https://github.com/wenhuchen/LogicNLG">LogicNLG</a>
+      dataset.
+    enabled: true
+    splits:
+    - test
+    type: table
+  quintd1-gsmarena:
+    class: gsmarena.GSMArena
+    description: <p>The <code>gsmarena</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
+      dataset</a>. </p><p>Contains mobile phone specifications from GSMArena.com.</p>
+    enabled: true
+    splits:
+    - dev
+    - test
+    type: json
+  quintd1-ice_hockey:
+    class: ice_hockey.IceHockey
+    description: <p>The <code>ice_hockey</code> subset of the <a href="https://github.com/kasnerz/quintd/">quintd-1
+      dataset</a>. </p><p>Contains ice hockey game summaries from <a href="https://rapidapi.com/fluis.lacasse/api/icehockeyapi">RapidAPI.com</a>.</p>
+    enabled: true
+    splits:
+    - dev
+    - test
+    type: json
+  xsum:
+    class: base.PlainTextDataset
+    description: Sample of 100 examples from the <a href="https://github.com/EdinburghNLP/XSum">XSum</a>
+      dataset.
+    enabled: true
+    splits:
+    - test
+    type: text
+  xsum-debug:
+    class: base.PlainTextDataset
+    description: ''
+    enabled: true
+    splits:
+    - test
+    type: default
