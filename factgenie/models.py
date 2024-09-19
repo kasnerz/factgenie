@@ -72,12 +72,13 @@ class Model:
         if "model_args" not in self.config:
             return
 
-        # TODO more robust typing
-        for arg in ["temperature", "top_p"]:
+        # TODO more robust typing. See https://github.com/ufal/factgenie/issues/93
+        # The argument list taken from https://github.com/ollama/ollama/blob/main/docs/modelfile.md
+        for arg in ["mirostat_eta", "mirostat_tau", "repeat_penalty", "temperature", "tfs_z", "top_p", "min_p"]:
             if arg in self.config["model_args"]:
                 self.config["model_args"][arg] = float(self.config["model_args"][arg])
 
-        for arg in ["max_tokens", "top_k", "seed"]:
+        for arg in ["mirostat", "num_ctx", "repeat_last_n", "seed", "max_tokens", "num_predict", "top_k"]:
             if arg in self.config["model_args"]:
                 self.config["model_args"][arg] = int(self.config["model_args"][arg])
 
