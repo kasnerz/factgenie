@@ -101,7 +101,10 @@ class Dataset(ABC):
         outputs = defaultdict(dict)
 
         for split in self.get_splits():
-            outs = Path.glob(Path(output_path) / split, "*.json")
+            split_dir = Path(output_path) / split
+            if not split_dir.exists():
+                outs = []
+            outs = list(split_dir.glob("*.json"))
 
             outputs[split] = defaultdict()
 
