@@ -1,4 +1,5 @@
 factgenie/config.yml
+factgenie/loaders/datasets.yml
 __pycache__/
 *.py[cod]
 # data

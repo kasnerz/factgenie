@@ -250,8 +250,6 @@ function markAnnotationAsComplete() {
     $('#page-link-' + example_idx).removeClass("bg-incomplete");
     $('#page-link-' + example_idx).addClass("bg-complete");
 
-    // uncheck all checkboxes
-    $(".flag-checkbox input[type='checkbox']").prop("checked", false);
 
     // if all the examples are annotated, post the annotations
     if ($(".bg-incomplete").length == 0) {
@@ -264,6 +262,9 @@ function markAnnotationAsComplete() {
         }, 500);
 
     } else if (example_idx < total_examples - 1) {
+        // uncheck all checkboxes
+        $(".flag-checkbox input[type='checkbox']").prop("checked", false);
+
         nextBtn();
     }
 }

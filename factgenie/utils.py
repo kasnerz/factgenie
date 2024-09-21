@@ -139,7 +139,28 @@ def load_configs(mode):
     return configs
 
 
-def generate_campaign_index(app):
+def load_campaign(app, campaign_id, mode):
+    campaign_index = generate_campaign_index(app, force_reload=False)
+
+    if campaign_id in campaign_index[mode]:
+        return campaign_index[mode][campaign_id]
+
+    if mode == "llm_eval":
+        campaign = LLMCampaignEval(campaign_id=campaign_id)
+    elif mode == "llm_gen":
+        campaign = LLMCampaignGen(campaign_id=campaign_id)
+    elif mode == "crowdsourcing":
+        campaign = HumanCampaign(campaign_id=campaign_id)
+
+    campaign_index[mode][campaign_id] = campaign
+
+    return campaign
+
+
+def generate_campaign_index(app, force_reload=True):
+    if not force_reload and "campaign_index" in app.db:
+        return app.db["campaign_index"]
+
     campaigns = defaultdict(dict)
 
     # find all subdirs in CROWDSOURCING_DIR
@@ -170,6 +191,8 @@ def generate_campaign_index(app):
                 logger.error(f"Error while loading campaign {campaign_dir}")
 
     app.db["campaign_index"] = campaigns
+
+    return app.db["campaign_index"]
 
 
 def load_annotations_for_campaign(subdir):

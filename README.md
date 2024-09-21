@@ -6,11 +6,14 @@
 <!-- ![PyPI](https://img.shields.io/pypi/v/factgenie) -->
 <!-- ![PyPI downloads](https://img.shields.io/pypi/dm/factgenie) -->
 
-Visualize and annotate LLM outputs 🌈
+Annotate LLM outputs with a lightweight, self-hosted web application 🌈
 
 <img src="factgenie/static/img/github/browse.png" width="100%" alt="Main screen" />
 
 ## 📢  News
+- **19/09/2024** - On the Analytics page, you can now see detailed statistics about annotations and compute inter-annotator agreement 📈
+- **16/09/2024** - You can now collect extra inputs from the annotators for each example using sliders and selectboxes. 
+- **16/09/2024** - We added an option to generate outputs for the inputs with LLMs directly within factgenie! 🦾
 - **10/09/2024** - We improved UX for the annotation and browsing interfaces. See the summary of changes [here](https://github.com/ufal/factgenie/pull/71).
 - **09/08/2024** - Instructions for the annotators can be now configured directly in the web interace and in the configuration file – no need for coding HTML!
 - **31/07/2024** - We updated and expanded the README into a set of tutorials. The tutorials are available on our [Github wiki](../../wiki/).
@@ -30,7 +33,7 @@ Factgenie can provide you:
 3. **A visualization interface** for visualizing the data and inspecting the annotated outputs.
 
 ---
-*What does factgenie **not help with** is collecting the data or model outputs (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).*
+*What does factgenie **not help with** is collecting the data (we assume that you already have these), starting the crowdsourcing campaign (for that, you need to use a service such as [Prolific.com](https://prolific.com)) or running the LLM evaluators (for that, you need a local framework such as [Ollama](https://ollama.com) or a proprietary API).*
 
 ## 🏃 Quickstart
 Make sure you have Python 3 installed (the project is tested with Python 3.10).
@@ -46,31 +49,43 @@ factgenie run --host=127.0.0.1 --port 5000
 
 See the following **wiki pages** that that will guide you through various use-cases of factgenie:
 
-| Topic                                                                  | Description                                       |
-| ---------------------------------------------------------------------- | ------------------------------------------------- |
-| 🔧 [Setup](../../wiki/01-Setup)                                         | How to install factgenie.                         |
-| 🗂️ [Data Management](../../wiki/02-Data-Management)                     | How to manage datasets and model outputs.         |
-| 🤖 [LLM Annotations](../../wiki/03-LLM-Annotations)                     | How to annotate outputs using LLMs.               |
-| 👥 [Crowdsourcing Annotations](../../wiki/04-Crowdsourcing-Annotations) | How to annotate outputs using human crowdworkers. |
-| 🧑‍💻 [Developer Notes](../../wiki/05-Developer-Notes)                     | How to contribute to the framework.               |
+| Topic                                                                  | Description                                        |
+| ---------------------------------------------------------------------- | -------------------------------------------------- |
+| 🔧 [Setup](../../wiki/01-Setup)                                         | How to install factgenie.                          |
+| 🗂️ [Data Management](../../wiki/02-Data-Management)                     | How to manage datasets and model outputs.          |
+| 🤖 [LLM Annotations](../../wiki/03-LLM-Annotations)                     | How to annotate outputs using LLMs.                |
+| 👥 [Crowdsourcing Annotations](../../wiki/04-Crowdsourcing-Annotations) | How to annotate outputs using human crowdworkers.  |
+| ✍️  [Generating Outputs](../../wiki/05-Generating-Outputs)              | How to generate outputs using LLMs.                |
+| 📊 [Analyzing Annotations](../../wiki/06-Analyzing-Annotations)         | How to obtain statistics on collected annotations. |
+| 🧑‍💻 [Developer Notes](../../wiki/07-Developer-Notes)                     | How to contribute to the framework.                |
 
  
 We provide multiple examples for you to get inspired when preparing your own experiments. In simple cases, you can even get without writing Python code completely!
 
 ## 💬 Cite us
-You can find our paper on [arXiv](https://arxiv.org/abs/2407.17863).
 
-The paper is also accepted for INLG 2024 System Demonstrations.
+[Our paper](https://aclanthology.org/2024.inlg-demos.5/) is accepted for INLG 2024 System Demonstrations!
+
+You can also find it on [arXiv](https://arxiv.org/abs/2407.17863).
 
 For citing us, please use the following BibTeX entry:
 ```bibtex
-@misc{kasner2024factgenie,
-      title     = {factgenie: A Framework for Span-based Evaluation of Generated Texts}, 
-      author    = {Zdeněk Kasner and Ondřej Plátek and Patrícia Schmidtová and Simone Balloccu and Ondřej Dušek},
-      year      = {2024},
-      booktitle = {Proceedings of the 17th International Natural Language Generation Conference (System Demonstrations)},
-      note      = {To appear},
-      url       = {https://arxiv.org/abs/2407.17863}, 
+@inproceedings{kasner2024factgenie,
+    title = "factgenie: A Framework for Span-based Evaluation of Generated Texts",
+    author = "Kasner, Zden{\v{e}}k  and
+      Platek, Ondrej  and
+      Schmidtova, Patricia  and
+      Balloccu, Simone  and
+      Dusek, Ondrej",
+    editor = "Mahamood, Saad  and
+      Minh, Nguyen Le  and
+      Ippolito, Daphne",
+    booktitle = "Proceedings of the 17th International Natural Language Generation Conference: System Demonstrations",
+    year = "2024",
+    address = "Tokyo, Japan",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.inlg-demos.5",
+    pages = "13--15",
 }
 ```
 

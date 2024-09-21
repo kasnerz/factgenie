@@ -404,7 +404,7 @@ YPet = new Backbone.Marionette.Application();
 YPet.currentAnnotationType = 0; // Default to the first annotation type
 
 YPet.setCurrentAnnotationType = function (typeIndex) {
-  YPet.currentAnnotationType = typeIndex;
+  YPet.currentAnnotationType = parseInt(typeIndex, 10);
 };
 
 

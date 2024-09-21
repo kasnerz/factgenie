@@ -42,7 +42,7 @@ def load_annotations(line, campaign_id):
     r = get_example_info(j, campaign_id)
 
     for annotation in j["annotations"]:
-        r["annotation_type"] = annotation["type"]
+        r["annotation_type"] = int(annotation["type"])
         r["annotation_start"] = annotation["start"]
         r["annotation_text"] = annotation["text"]
 

@@ -2,7 +2,7 @@ datasets:
   easy-vqa:
     class: base.HTMLDataset
     description: ''
-    enabled: true
+    enabled: false
     splits:
     - test
     type: default
@@ -65,14 +65,14 @@ datasets:
     class: base.PlainTextDataset
     description: Sample of 100 examples from the <a href="https://github.com/EdinburghNLP/XSum">XSum</a>
       dataset.
-    enabled: true
+    enabled: false
     splits:
     - test
     type: text
   xsum-debug:
     class: base.PlainTextDataset
     description: ''
-    enabled: true
+    enabled: false
     splits:
     - test
     type: default
