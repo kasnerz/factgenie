@@ -1,0 +1,55 @@
+type: ollama_metric
+model: llama3.1:8b
+# You can run ollama alson on other machine than factgenie
+#  e.g. we run it on a machine tdll-3gpu3 and access it from any machine which is withing the same firewall
+#  in that case we use api_url: http://tdll-3gpu3.ufal.hide.ms.mff.cuni.cz:11434/api/
+# If you run ollama at the same machine as factgenie let's use just 127.0.0.1.
+api_url: http://127.0.0.1:15000/api/
+model_args:
+  max_tokens: 1024
+  num_beams: 1
+  temperature: 0.7
+  top_p: 1.0
+  top_k: 0.0
+  min_p: 0.05
+  do_sample: true
+  seed: 424242
+annotation_span_categories:
+  - name: "Incorrect"
+    color: "#ffbcbc"
+  - name: "Not checkable"
+    color: "#e9d2ff"
+  - name: "Misleading"
+    color: "#fff79f"
+prompt_template: |
+  Given the data:
+  ```
+  {data}
+  ```
+  Annotate all the errors in the following text:
+  ```
+  {text}
+  ```
+  Output the errors as a JSON list "annotations" in which each object contains fields  "reason", "text", and "type". The value of "text" is the text of the error. The value of "reason" is the reason for the error. The value of "type" is one of {{0, 1, 2, 3}} based on the following list:
+  - 0: Incorrect fact: The fact in the text contradicts the data.
+  - 1: Not checkable: The fact in the text cannot be checked in the data.
+  - 2: Misleading: The fact in the text is misleading in the given context.
+
+  The list should be sorted by the position of the error in the text.
+
+  *Example about phone data, but the logic applies to weather forecasting:*
+  data:
+  ```
+  Nokia 3310
+  -----
+  - **color**: black, blue, grey
+  - **display**: 320x240px
+  ```
+  text (product description):
+  ```
+  Nokia 3310 is produced in Finland and features a 320x320 display. It is available in black color. The data seem to provide only partial information about the phone.
+  ```
+  output:
+  ```{{ "annotations": [{{"reason": "The country where the phone is produced is not mentioned in the data.", "text": "produced in Finland", "type": 1}}, {{"reason": "The data mentions that the display has resolution 320x240px.", "text": "320x320", type: 0}}, {{"reason": "Misleadingly suggests that the phone is not available in other colors.", "text": "available in black color", type: 2}}, {{"reason", "Nationality is not mentioned in the data", "text": "Indian", type: 1}}, {{"reason": "The note is irrelevant for the phone description.", "text": "The data seem to provide only partial information about the phone.", type: 3}}] }}
+  ```
+  Note that some details may not be mentioned in the text: do not count omissions as errors. Also do not be too strict: some facts can be less specific than in the data (rounded values, shortened or abbreviated text, etc.), do not count these as errors. If there are no errors in the text, "annotations" will be an empty list.
