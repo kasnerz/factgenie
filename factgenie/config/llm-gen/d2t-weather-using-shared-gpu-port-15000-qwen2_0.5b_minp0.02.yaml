@@ -1,0 +1,21 @@
+api_url: http://127.0.0.1:15000/api/
+extra_args: {}
+model: qwen2:0.5b
+model_args:
+  seed: 424242
+  do_sample: true
+  temperature: 0.7
+  min_p: 0.02
+prompt_template: |-
+  Given the weather data in JSON format:
+  ```
+  {data}
+  ```
+  Generate an informative weather forecast in plain text, describing facts and values contained in the input:
+
+  Do not add or fabricate any detail not reflected in the data. Also, do not be too strict: some facts can be less specific than those in the data (rounded values, shortened or abbreviated text, etc.).
+start_with: ''
+system_msg: You are an expert data-to-text system for weather forecasts. You understand
+  structured data and can correctly operate with units and numerical values. You are
+  designed to output plain text forecasts from structured data input.
+type: ollama_gen
