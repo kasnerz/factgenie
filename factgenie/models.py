@@ -205,6 +205,7 @@ class OpenAIMetric(LLMMetric):
 
             return self.postprocess_annotations(text=text, model_json=j)
         except Exception as e:
+            traceback.print_exc()
             logger.error(e)
             return {"error": str(e)}
 
@@ -346,6 +347,7 @@ class OpenAIGen(LLMGen):
 
             return {"prompt": prompt, "output": self.postprocess_output(output)}
         except Exception as e:
+            traceback.print_exc()
             logger.error(e)
             return {"error": str(e)}
 

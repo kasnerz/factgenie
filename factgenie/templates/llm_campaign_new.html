@@ -263,9 +263,9 @@
               </div>
               <datalist id="datalistOptions">
                 {% for filename in configs.keys() %}
-                <!-- save the name without suffix to variable -->
-                {% set config_name = filename.rstrip(".yaml") %}
-                <option value="{{ config_name }}">{{ filename }}</option>
+                <option value="{{ filename.split('.')[0] }}">
+                  {{ filename }}
+                </option>
                 {% endfor %}
               </datalist>
             </div>

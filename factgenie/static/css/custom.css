@@ -317,8 +317,14 @@ pre {
     /* border: 1px solid #ddd;
     border-radius: 2%; */
     margin-bottom: 10px;
+    /* make it fill the entire width of its parent element */
+    width: 100%;
     /* position: relative; */
     /* font-size: 16px !important; */
+}
+
+.output-group {
+    width: 100%;
 }
 
 .card-text>pre {
@@ -905,4 +911,8 @@ a:hover {
     flex-grow: 1;
     text-align: center;
     text-wrap: wrap;
+}
+
+.card-header-collapse {
+    cursor: pointer;
 }

@@ -487,8 +487,8 @@ function createOutputBox(content, campaign_id, setup) {
     </div>
     `
 
-    var cardHeader = $('<div>', { class: "card-header small" }).html(headerHTML);
-    var cardBody = $('<div>', { class: "card-body" });
+    var cardHeader = $('<div>', { class: "card-header card-header-collapse small", "data-bs-toggle": "collapse", "data-bs-target": `#out-${setup_id}-${campaign_id}` }).html(headerHTML);
+    var cardBody = $('<div>', { class: "card-body show", id: `out-${setup_id}-${campaign_id}`, "aria-expanded": "true" });
     var cardTitle = $('<h5>', { class: "card-title" }).text(model);
     var cardText = $('<div>', { class: "card-text" }).html(content);
 

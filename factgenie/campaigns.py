@@ -45,11 +45,8 @@ class Campaign:
         self.db_path = os.path.join(self.dir, "db.csv")
         self.metadata_path = os.path.join(self.dir, "metadata.json")
 
-        with open(self.db_path) as f:
-            self.db = pd.read_csv(f)
-
-        with open(self.metadata_path) as f:
-            self.metadata = json.load(f)
+        self.load_db()
+        self.load_metadata()
 
         # temporary fix for the old campaigns
         if self.metadata.get("status") in ["new", "paused"]:
@@ -76,9 +73,17 @@ class Campaign:
     def update_db(self, db):
         db.to_csv(self.db_path, index=False)
 
+    def load_db(self):
+        with open(self.db_path) as f:
+            self.db = pd.read_csv(f)
+
     def update_metadata(self):
         with open(self.metadata_path, "w") as f:
             json.dump(self.metadata, f, indent=4)
+
+    def load_metadata(self):
+        with open(self.metadata_path) as f:
+            self.metadata = json.load(f)
 
     def get_stats(self):
         # group by batch_idx, keep the first row of each group
@@ -107,6 +112,7 @@ class HumanCampaign(Campaign):
         return annotator_batch
 
     def get_overview(self):
+        self.load_db()
         overview_db = self.db.copy()
         # replace NaN with empty string
         overview_db = overview_db.where(pd.notnull(overview_db), "")
@@ -153,6 +159,7 @@ class LLMCampaignEval(LLMCampaign):
             (ex["dataset"], ex["split"], ex["setup"]["id"], ex["example_idx"]): str(ex) for ex in finished_examples
         }
 
+        self.load_db()
         overview_db = self.db.copy()
         overview_db["output"] = ""
 
@@ -178,6 +185,7 @@ class LLMCampaignGen(LLMCampaign):
 
         example_index = {(ex["dataset"], ex["split"], ex["example_idx"]): str(ex) for ex in finished_examples}
 
+        self.load_db()
         overview_db = self.db.copy()
         overview_db["output"] = ""
 

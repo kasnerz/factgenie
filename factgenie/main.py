@@ -366,11 +366,18 @@ def compute_agreement():
 
     datasets = utils.get_dataset_overview(app)
 
-    results = analysis.compute_inter_annotator_agreement(
-        app, selected_campaigns=selected_campaigns, combinations=combinations, campaigns=campaigns, datasets=datasets
-    )
-
-    return jsonify(results)
+    try:
+        results = analysis.compute_inter_annotator_agreement(
+            app,
+            selected_campaigns=selected_campaigns,
+            combinations=combinations,
+            campaigns=campaigns,
+            datasets=datasets,
+        )
+        return jsonify(results)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error while computing agreement: {e}"})
 
 
 @app.route("/delete_campaign", methods=["POST"])
@@ -575,10 +582,10 @@ def llm_campaign_create():
 
     try:
         utils.llm_campaign_new(mode, campaign_id, config, campaign_data, datasets)
+        utils.load_campaign(app, campaign_id=campaign_id, mode=mode)
     except Exception as e:
+        traceback.print_exc()
         return utils.error(f"Error while creating campaign: {e}")
-
-    utils.load_campaign(app, campaign_id=campaign_id, mode=mode)
 
     return utils.success()
 
@@ -812,6 +819,7 @@ def upload_dataset():
     try:
         utils.upload_dataset(dataset_id, dataset_description, dataset_format, dataset_data)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": f"Error while uploading dataset: {e}"})
 
     return utils.success()
@@ -832,6 +840,7 @@ def upload_model_outputs():
     try:
         utils.upload_model_outputs(dataset, split, setup_id, model_outputs)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": f"Error while adding model outputs: {e}"})
 
     return utils.success()

@@ -257,10 +257,11 @@
                 <span class="input-group-text" id="basic-addon2">.yaml</span>
               </div>
               <datalist id="datalistOptions">
-                {% for config_filename in configs.keys() %}
+                {% for filename in configs.keys() %}
                 <!-- save the name without suffix to variable -->
-                {% set config_name = config_filename.rstrip(".yaml") %}
-                <option value="{{ config_name }}">{{ config_filename }}</option>
+                <option value="{{ filename.split('.')[0] }}">
+                  {{ filename }}
+                </option>
                 {% endfor %}
               </datalist>
             </div>
