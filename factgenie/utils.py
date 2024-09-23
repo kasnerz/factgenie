@@ -1125,7 +1125,7 @@ def save_generation_outputs(app, campaign_id, model_name):
     Load the files from the `GENERATIONS_DIR` and convert them to a single JSON file which we save into the `OUTPUT_DIR`.
     """
 
-    campaign = load_campaign(app, campaign_id)
+    campaign = load_campaign(app, campaign_id, mode="llm_gen")
     metadata = campaign.metadata
 
     # load the metadata
